@@ -77,8 +77,68 @@ Un seul poste (`r_out`) est modélisé physiquement ; les deux autres en hérite
 - La génération séquentielle (decode) est le régime le mieux caractérisé par la littérature publique (Ecologits, ainsi que les études sur le memory-bandwidth-bound decoding), car il est observable de l'extérieur via la latence de génération, elle-même mesurable empiriquement sur n'importe quelle API, y compris fermée.
 - Le prix de l'output, à l'inverse, est le plus éloigné du coût physique réel : il intègre la rareté perçue de la capacité de génération (latence utilisateur, files d'attente) et une marge commerciale plus visible que sur l'input, ce qui en fait un proxy énergétique de moins bonne qualité que pour l'input (voir §4.3).
 
-**Formule et hypothèses** : voir le document de spécification détaillé (§3bis), non reproduit ici. Les points clés à retenir pour cette note :
-- Le PUE générique intégré à la régression Ecologits (1.20) est retiré : le calculateur applique son propre `PUE(pays, fournisseur)`, plus précis, une seule fois en fin de chaîne (§4.2).
+**Constantes internes du modèle** (aucune n'est modifiable par l'utilisateur — seuls `P_act` et `P_tot` varient, selon le modèle sélectionné) :
+
+| Constante | Valeur | Rôle |
+|---|---|---|
+| `BATCH_SIZE` | 64 | nombre de requêtes servies en parallèle |
+| `GPU_INSTALLED_PER_SERVER` | 8 | GPU physiquement présents dans un serveur |
+| `SERVER_POWER_WITHOUT_GPU_W` | 1200 | puissance du serveur hors GPU (CPU, RAM, alim, ventilation), en watts |
+| `GPU_MEMORY_GB` | 80 | VRAM par GPU (classe A100/H100 80 Go) |
+| `QUANTIZATION_BITS` | 16 | quantification supposée des poids en inférence |
+| `MEMORY_OVERHEAD` | 1.2 | marge mémoire (KV cache, activations, fragmentation) |
+| `ENERGY_ALPHA` | 1.17e-6 | régression énergie GPU — terme proportionnel aux paramètres |
+| `ENERGY_BETA` | -1.12e-2 | régression énergie GPU — effet du batch |
+| `ENERGY_GAMMA` | 4.05e-5 | régression énergie GPU — offset constant |
+| `LATENCY_ALPHA` | 6.78e-4 | régression latence — terme proportionnel aux paramètres |
+| `LATENCY_BETA` | 3.12e-4 | régression latence — effet du batch |
+| `LATENCY_GAMMA` | 1.94e-2 | régression latence — offset constant |
+
+> **Le PUE générique de 1.20 intégré à la régression Ecologits d'origine est délibérément retiré de cette liste** : le calculateur applique à la place son propre `PUE(pays, fournisseur)`, plus précis, une seule fois en fin de chaîne énergétique (§4.2), plutôt que de le laisser mélangé dans le calcul de `r_out`.
+
+**Étapes de calcul :**
+
+**(a) Nombre de GPU mobilisés — dérivé de `P_tot`**, car sur un modèle MoE tous les experts doivent être chargés en VRAM même si un seul sous-ensemble est activé par token (c'est le seul endroit du pipeline où `P_tot` intervient, d'où la nécessité de distinguer `P_tot` et `P_act`) :
+
+```
+model_required_memory_gb = MEMORY_OVERHEAD × P_tot × QUANTIZATION_BITS / 8
+gpu_count = ceil( model_required_memory_gb / GPU_MEMORY_GB )
+```
+
+**(b) Énergie GPU par token de sortie — dépend de `P_act`** :
+
+```
+gpu_energy_per_token_wh =
+    ENERGY_ALPHA × exp(ENERGY_BETA × BATCH_SIZE) × P_act
+    + ENERGY_GAMMA
+```
+
+**(c) Temps de calcul par token — dépend de `P_act`** :
+
+```
+token_compute_time_seconds =
+    LATENCY_ALPHA × P_act
+    + LATENCY_BETA × BATCH_SIZE
+    + LATENCY_GAMMA
+```
+
+**(d) Énergie du serveur hors GPU, amortie par token** (le temps de calcul du token détermine combien de temps le serveur est mobilisé, dont seule la fraction de GPU concernée et la part du batch sont imputées à ce token) :
+
+```
+server_energy_without_gpu_per_token_wh =
+    token_compute_time_seconds
+    × (SERVER_POWER_WITHOUT_GPU_W / 3600)     # W → Wh/s
+    × (gpu_count / GPU_INSTALLED_PER_SERVER)  # part du serveur mobilisée
+    / BATCH_SIZE                              # amortie sur les requêtes du batch
+```
+
+**(e) Résultat — énergie IT par token de sortie**, en Wh, valeur brute avant tout PUE :
+
+```
+r_out(P_act, P_tot) = gpu_energy_per_token_wh + server_energy_without_gpu_per_token_wh
+```
+
+**Forme affine (pour information) :** à `gpu_count = n` fixé, `r_out` est affine en `P_act` : `r_out(P_act) = C(n) + S(n) × P_act`, avec des sauts aux seuils où `gpu_count` s'incrémente — `r_out` est donc continue et croissante par morceaux en `P_act`. Cette forme fermée n'est utile que pour la documentation et les tests ; l'implémentation doit utiliser les étapes (a)–(e) ci-dessus, plus lisibles et robustes à un changement de constantes.
 
 ### 4.2 Énergie des tokens d'entrée et de cache (`r_in`, `r_cache`) — approche price-based
 
@@ -103,7 +163,7 @@ Ces ratios sont recalculés **par modèle et par fournisseur**, à partir des ta
    - Le prix d'un token lu en cache **surestime probablement son coût énergétique réel**. Un token en cache n'est pas recalculé — son coût marginal est proche de zéro (lecture mémoire, participation à l'attention des nouveaux tokens). Le prix facturé (typiquement une fraction non négligeable du prix de l'input, jamais proche de zéro) reflète surtout l'amortissement de l'infrastructure de cache et une logique commerciale, pas uniquement l'électricité consommée. → **biais à la hausse** sur `r_cache`.
    - À l'inverse, le modèle physique de `r_out` (§4.1) traite **tous les tokens de sortie comme ayant le même coût énergétique**, quelle que soit leur position dans la génération (hypothèse « TPS/TTFT fixes »). En réalité, le coût d'un token d'output **croît** avec le nombre de tokens déjà générés : chaque étape de decode relit un KV-cache qui grandit, ce qui augmente le trafic mémoire et le temps de calcul par token au fil de la génération. Le calculateur **sous-estime donc systématiquement** le coût réel des complétions longues. → **biais à la baisse** sur `r_out`, non corrigé (cf. §5).
 
-   Ces deux biais jouent en sens opposé et sur des grandeurs du même ordre dans une conversation typique (le cache grossit à mesure que l'output s'accumule d'un tour à l'autre, §8 du document de spécification). Le choix méthodologique assumé ici est de **ne pas corriger séparément chacun des deux biais**, mais de considérer qu'ils se compensent approximativement à l'échelle d'une conversation, et d'ancrer `κ_cache` sur le prix tel quel plutôt que de tenter une correction physique partielle qui laisserait l'autre biais non traité. C'est une simplification, pas une élimination de l'erreur — voir §5 pour sa portée exacte.
+   Ces deux biais jouent en sens opposé et sur des grandeurs du même ordre dans une conversation typique : à chaque nouveau tour, l'historique mis en cache (`history`) intègre les tokens de sortie du tour précédent, donc le volume facturé au tarif « cache » grossit mécaniquement à mesure que la conversation avance et que l'output s'accumule d'un tour à l'autre. Le choix méthodologique assumé ici est de **ne pas corriger séparément chacun des deux biais**, mais de considérer qu'ils se compensent approximativement à l'échelle d'une conversation, et d'ancrer `κ_cache` sur le prix tel quel plutôt que de tenter une correction physique partielle qui laisserait l'autre biais non traité. C'est une simplification, pas une élimination de l'erreur — voir §5 pour sa portée exacte.
 
 4. **Précédent méthodologique.** Ce raisonnement — s'appuyer sur le prix comme proxy observable quand la donnée physique d'un modèle fermé est inaccessible — est le même principe que celui déjà utilisé dans ce calculateur pour estimer `P_act` des modèles propriétaires par régression à partir de données publiques (méthodologie Ecologits). Le price-based n'est donc pas une entorse à la rigueur du reste du document, mais une application cohérente du même principe à un autre poste.
 
@@ -156,7 +216,7 @@ Le risque de sécheresse (`dry_risk_request`) reste un simple lookup catégoriel
 | `WUE(pays, fournisseur)` | Eau consommée par kWh (L/kWh) | Données fournisseur / extrapolation |
 | `dry_risk(pays, fournisseur)` | Risque de sécheresse (catégoriel) | WRI Aqueduct |
 
-Le détail des constantes internes du modèle Ecologits (`ENERGY_ALPHA`, `LATENCY_ALPHA`, `GPU_MEMORY_GB`, etc.) figure dans le document de spécification technique, §3bis.
+Le détail des constantes internes du modèle Ecologits (`ENERGY_ALPHA`, `LATENCY_ALPHA`, `GPU_MEMORY_GB`, etc.) et des formules (a)–(e) qui les combinent est donné au §4.1.
 
 ---
 
