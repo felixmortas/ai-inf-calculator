@@ -1,8 +1,8 @@
 ---
 title: Calculateur d’empreinte environnementale des LLM
-status: draft
+status: final
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-18
 ---
 
 # PRD — Calculateur d’empreinte environnementale des LLM
@@ -68,7 +68,7 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 - **Artifact :** contenu produit suivi dans un champ distinct au fil de ses versions.
 - **Token estimé :** unité approximée localement par le nombre de mots divisé par 0,7 par défaut.
 - **Historique :** échanges antérieurs, dernière version complète d’artifact et tokens du prompt système ; convention de cache à 100 %.
-- **Résultat périmé :** résultat dont une entrée ou un paramètre dépendant a changé depuis le calcul.
+- **Résultat périmé :** résultat dont une entrée ou un paramètre utilisé a changé depuis le calcul.
 - **Pays d’hébergement :** pays de référence du fournisseur, modifiable ; ce n’est pas une localisation mesurée de la requête.
 - **Pays utilisateur :** pays détecté puis corrigeable, utilisé pour la référence de douche.
 - **PUE :** coefficient transformant l’énergie informatique en énergie datacenter.
@@ -171,7 +171,7 @@ Camille peut coller la version complète d’un artifact à chaque échange. Le 
 
 La granularité de comparaison sera spécifiée par le responsable technique avant développement (D-2). Cette règle concerne les tokens de sortie ; pour l’historique d’entrée, seule la dernière version complète disponible avant l’échange est retenue, selon FR-19.
 
-Le premier artifact est compté intégralement en sortie. Un champ artifact vide signifie qu’aucune nouvelle version n’est fournie ; il ne supprime pas la dernière version disponible. Le parcours de lancement prévoit un artifact suivi au fil de ses versions.
+Le premier artifact est compté intégralement en sortie. [ASSUMPTION A-2] Un champ artifact vide signifie qu’aucune nouvelle version n’est fournie ; il ne supprime pas la dernière version disponible. Le parcours de lancement prévoit un artifact suivi au fil de ses versions.
 
 #### FR-19 — Reconstituer automatiquement l’historique en cache
 
@@ -224,6 +224,8 @@ Les formules, constantes initiales, hypothèses et sources sont réunies dans [a
 #### FR-10 — Déclencher le calcul d’un bloc
 
 Camille dispose d’une action de calcul sur chaque bloc de conversation. Le calcul des impacts est déclenché à sa demande ; une modification de champ ne lance pas automatiquement ce calcul. L’action individuelle calcule le résultat du bloc concerné sans déclencher le calcul des impacts des autres blocs.
+
+Cette action actualise également l’équivalence douche de ce bloc avec les paramètres courants. Si seule cette équivalence est périmée, les impacts déjà valides peuvent être réutilisés. « Tout calculer » actualise les équivalences de tous les blocs ; « Recalculer le total » actualise uniquement celle du total. Une équivalence individuelle périmée est masquée et signalée comme à recalculer, même si l’équivalence du total est à jour.
 
 Un bloc peut être calculé même si les blocs précédents n’ont pas encore de résultat : leur texte suffit à reconstituer son historique. Un résultat périmé est signalé comme à recalculer et n’est jamais présenté comme actuel.
 
@@ -336,7 +338,7 @@ Camille peut consulter une équivalence des émissions carbone estimées en dur�
 
 **Référence par défaut confirmée :** douche chauffée à l’électricité, débit de 15 L/min, eau chauffée de 18 à 38 °C avec une consommation de 0,0232 kWh/L. La consommation de référence est donc de 0,348 kWh/min. Ses émissions par minute sont calculées avec le facteur d’émission du pays de l’utilisateur. Ces paramètres sont modifiables dans la section avancée (FR-17). Les formules et unités sont conservées dans [addendum.md](addendum.md#référence-de-douche-chaude).
 
-Le pays utilisateur est corrigible dans les paramètres avancés (FR-17). Une modification ne recalcule pas automatiquement les résultats. Les facteurs manquants utilisent « Monde » (FR-23). Si la détection échoue, la correction manuelle reste disponible ; aucune localisation certaine n’est affirmée.
+Le pays de l’utilisateur peut être corrigé dans les paramètres avancés (FR-17). Une modification ne recalcule pas automatiquement les résultats. Les facteurs manquants utilisent « Monde » (FR-23). Si la détection échoue, la correction manuelle reste disponible ; aucune localisation certaine n’est affirmée.
 
 #### FR-6 — Présenter des bonnes pratiques après les résultats
 
@@ -393,6 +395,8 @@ L’interface, les messages de validation, les explications et les bonnes pratiq
 
 ### NFR-6 — Refuser les paramètres invalides et préserver la cohérence
 
+[ASSUMPTION A-3] Les contrôles minimaux ci-dessous concrétisent les contraintes de calcul ; leurs bornes détaillées seront arrêtées en conception.
+
 Les champs avancés indiquent leurs unités et les erreurs empêchant le calcul. Des valeurs non numériques, infinies ou hors domaine ne doivent pas produire un résultat présenté comme valide.
 
 Les quantités physiques non négatives le restent ; les diviseurs sont strictement positifs, le PUE est au moins égal à 1 et les paramètres activés ne dépassent pas les paramètres totaux. Les coefficients de régression conservent leur domaine propre, notamment le coefficient exponentiel négatif prévu par la source.
@@ -403,6 +407,8 @@ Les données de catalogue indispensables manquantes ne sont pas inventées : le 
 
 
 ### NFR-7 — Rendre le parcours utilisable au clavier et sur petit écran
+
+[ASSUMPTION A-3] Ces critères de base concrétisent l’usage grand public demandé et seront précisés lors de la conception UX.
 
 Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Un résultat périmé ou un risque de sécheresse ne se distingue pas uniquement par sa couleur. Sur mobile, les actions de calcul, les résultats et la correction des champs restent accessibles sans dépendre du survol.
 
@@ -424,8 +430,8 @@ Le cadrage produit est établi. Les points ci-dessous relèvent de la conception
 | ID | Livrable ou décision restante | Responsable | À résoudre avant |
 |---|---|---|---|
 | D-1 | Fournir le catalogue, paramètres totaux/activés, tokens système, pays fournisseurs, facteurs, risques et valeurs « Monde » ; contrôler leur cohérence avec les modèles ChatGPT imposés. | Felix pour la fourniture ; responsable technique pour la validation | Intégration des données et publication |
-| D-2 | Définir segmentation des mots, précision d’affichage, granularité du diff et bornes avancées ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
-| D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; fallback de saisie manuelle, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
+| D-2 | Définir segmentation des mots, précision d’affichage, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche pour éviter des paramètres contradictoires ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
+| D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; saisie manuelle en cas d’échec, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
 | D-4 | Étudier l’import par lien depuis le navigateur : accès, restrictions réseau, données présentes et compatibilité avec l’absence de serveur. | Responsable technique ; Felix pour la décision d’inclusion | Tout engagement de livraison de l’import |
 | D-5 | Rédiger les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; arrêter disposition responsive et précision des unités. | Responsable UX ; Felix pour la validation éditoriale | Publication |
 | D-6 | Préparer la calibration des ratios tarifaires et la provenance datée des données ; choisir le processus de maintenance du catalogue. | Responsable technique ; Felix pour la maintenance | Publication, puis toute mise à jour de données |

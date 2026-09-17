@@ -21,6 +21,8 @@ Paramètres fournis par Felix pour une douche électrique de référence :
 
 La référence utilise ces paramètres par défaut, et non les caractéristiques mesurées de la douche personnelle de l’utilisateur. Les paramètres peuvent être modifiés dans la section avancée, conformément à FR-17. Les valeurs numériques des formules ci-dessous correspondent aux valeurs par défaut.
 
+Pour les valeurs personnalisées, l’énergie par minute est le débit choisi multiplié par l’énergie par litre applicable. La relation entre températures et énergie par litre doit être définie en D-2 avant développement : la valeur de 0,0232 kWh/L correspond à une élévation de 20 °C et ne doit pas rester inchangée implicitement si cette élévation est modifiée. La conception précisera les paramètres indépendants et les valeurs dérivées, en conservant la référence fournie par Felix.
+
 Pour un facteur d’émission `EF_utilisateur` en gCO2e/kWh et un résultat carbone `C` en gCO2e :
 
 ```text
@@ -30,7 +32,7 @@ duree_equivalente_minutes = C / (0.348 × EF_utilisateur)
 duree_equivalente_secondes = 60 × duree_equivalente_minutes
 ```
 
-Ces formules de durée s’appliquent lorsque le facteur d’émission est disponible et strictement positif. Un facteur manquant utilise la référence « Monde », signalée à l’utilisateur. Le traitement d’un facteur nul et les règles d’arrondi restent à préciser ; aucune division par zéro n’est permise.
+Ces formules de durée s’appliquent lorsque le facteur d’émission est disponible et strictement positif. Un facteur manquant utilise la référence « Monde », signalée à l’utilisateur. Si les émissions de la douche de référence sont nulles, la durée est indiquée comme non calculable, conformément à NFR-6 ; aucune division par zéro n’est permise. Les règles d’arrondi restent à préciser avant développement (D-2).
 
 `EF_utilisateur` dépend du pays détecté automatiquement ou corrigé manuellement par l’utilisateur. Il est sélectionné indépendamment du facteur d’émission du pays d’hébergement utilisé pour calculer `C`. Le changement du pays utilisateur modifie l’équivalence, pas `C`.
 
@@ -131,7 +133,7 @@ La décision finale du §3ter.2 prévaut sur les mentions antérieures de rendem
 
 La calibration utilise les tarifs publics comparables d’un même modèle et fournisseur, ramenés à la même devise et à la même quantité de tokens. Les ratios ne sont pas universels. Le script de calibration demandé par la source relève de la préparation des données, hors du navigateur : il relève les tarifs à la date d’implémentation et conserve leur date avec les ratios. Ne pas coder les prix dans les formules. La source tarifaire exacte et les valeurs utilisées doivent accompagner les données pour permettre leur vérification et leur actualisation. Aucune valeur tarifaire contemporaine n’est postulée ici.
 
-Les cas de prix absent ou nul, de cache non commercialisé et de grilles multiples demandent un contrat de données avant intégration ; une division par zéro ne produit pas un ratio valide. La fréquence et le responsable de la calibration restent à fixer. Une modification avancée de ratio est une surcharge de session ; la restauration reprend les valeurs de référence du modèle.
+Les cas de prix absent ou nul, de cache non commercialisé et de grilles multiples demandent un contrat de données avant intégration ; une division par zéro ne produit pas un ratio valide. La fréquence et le responsable de la calibration restent à fixer. Une modification avancée de ratio remplace la valeur de référence uniquement pour la session en cours ; la restauration reprend les valeurs de référence du modèle.
 
 ### Énergie, carbone, eau et sécheresse
 
@@ -147,7 +149,7 @@ water_request(i) = (nrj_request(i) / 1000)
 dry_risk_request(i) = lookup(pays_hebergement, fournisseur)        [catégorie]
 ```
 
-Conformément aux §0 et §3–7, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO2e → kgCO2e divisent par 1000. Le risque de sécheresse n’est ni une émission ni une grandeur additive. La source annonce un lookup pays/fournisseur mais décrit une table de risque par pays ; le contrat de données devra préciser cette résolution sans inventer une granularité par datacenter.
+Conformément aux §0 et §3–7, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO2e → kgCO2e divisent par 1000. Le risque de sécheresse n’est ni une émission ni une grandeur additive. La source annonce une recherche par pays et fournisseur mais décrit une table de risque par pays ; le contrat de données devra préciser cette correspondance sans inventer une granularité par datacenter.
 
 Un facteur géographique manquant utilise la valeur « Monde » de ce facteur, signalée à l’utilisateur. Ce repli ne remplace pas les autres valeurs disponibles et n’est pas une règle de remplacement des données modèle ou des prix. Si la valeur « Monde » manque également, la donnée reste indisponible ; elle ne devient jamais implicitement zéro.
 
@@ -159,7 +161,7 @@ co2_total = Σ co2_request(i)       [gCO2e]
 water_total = Σ water_request(i)  [L]
 ```
 
-Ces sommes portent sur tous les blocs renseignés dont les résultats sont à jour. Leur recalcul seul réutilise les résultats existants, sans réexécuter l’estimation des blocs. Un bloc renseigné non calculé ou périmé empêche l’affichage d’un total complet ; un bloc vide ne le bloque pas.
+Ces sommes portent sur tous les blocs renseignés dont les résultats sont à jour. Le recalcul des seuls totaux réutilise les résultats existants, sans réexécuter l’estimation des blocs. Un bloc renseigné non calculé ou périmé empêche l’affichage d’un total complet ; un bloc vide ne le bloque pas.
 
 Exemple purement arithmétique, sans valeur de référence fournisseur : avec une énergie IT de 1 Wh, `PUE = 1,2`, `EF = 100 gCO2e/kWh` et `WUE = 0,5 L/kWh`, on obtient 1,2 Wh au datacenter, 0,12 gCO2e et 0,0006 L. Si le facteur utilisateur vaut aussi 100 gCO2e/kWh, la douche de référence émet 34,8 gCO2e/min et l’équivalence est `0,12 / 34,8 × 60 ≈ 0,207 seconde`. Cette illustration vérifie les conversions, pas la fiabilité des hypothèses.
 
