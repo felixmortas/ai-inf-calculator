@@ -13,7 +13,7 @@ Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte
 
 Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le parcours courant garde le chatbot, le modèle et la conversation visibles ; les réglages mathématiques restent dans une section avancée discrète. Les conversations et les calculs restent dans le navigateur ; la session n’est pas sauvegardée après fermeture.
 
-Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables ; FR-9 a été retirée et n’est pas réutilisée.
+Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables.
 
 ## 2. Public et parcours
 
@@ -29,10 +29,10 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 
 1. Elle colle son premier message dans un champ dédié, puis la réponse finale dans un autre champ.
 2. Elle colle le contenu de l’artifact, s’il y en a un, et le texte de toutes les étapes de raisonnement si elles sont visibles, dans les champs associés.
-3. Elle déclenche le calcul du bloc et découvre les estimations de consommation électrique, de consommation d’eau et d’émissions carbone de ce premier échange, accompagnées d’un indicateur du risque de sécheresse associé au pays d’hébergement retenu pour le calcul. Celui-ci est prérempli avec le pays de référence du fournisseur ; Camille peut le modifier dans les paramètres avancés.
+3. Elle déclenche le calcul du bloc et découvre les estimations de consommation électrique, de consommation d’eau et d’émissions carbone de ce premier échange.
 4. Après un deuxième échange dans la même conversation ChatGPT, elle ajoute un bloc dans le calculateur et y colle son nouveau message, la réponse, le raisonnement visible et l’artifact éventuel.
 5. Elle colle la nouvelle version complète de l’artifact. Le calculateur détecte automatiquement les passages ajoutés ou modifiés par rapport à la version précédente et ne comptabilise que ceux-ci en tokens de sortie.
-6. Elle peut lancer le calcul d’un bloc individuellement ou calculer tous les blocs et leur total en un clic. Elle peut aussi recalculer uniquement le total à partir des résultats déjà disponibles, sans relancer le calcul des blocs.
+6. Elle peut lancer le calcul d’un bloc individuellement ou calculer tous les blocs et leur total en un clic. Le total s'accompagne d'un indicateur du risque de sécheresse associé au pays d’hébergement retenu pour le calcul. Celui-ci est prérempli avec le pays de référence du fournisseur ; Camille peut le modifier dans les paramètres avancés. Elle peut aussi recalculer uniquement le total à partir des résultats déjà disponibles, sans relancer le calcul des blocs.
 
 **Résultat.** Camille voit l’impact de chaque échange et le cumul de la conversation. Elle peut comparer les émissions carbone estimées à une durée de douche chaude. Cette équivalence utilise le facteur d’émission du pays où elle se trouve, déterminé séparément de celui retenu pour le modèle. La quantité d’eau ne fait pas l’objet d’une comparaison.
 
@@ -54,7 +54,7 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 
 **Inclus :** saisie manuelle de blocs, ajout/modification/suppression, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable.
 
-**Catalogue :** les chatbots et modèles disponibles sont ceux du fichier fourni, nommé `model_params` puis `models_param` dans les échanges. Le nom exact sera aligné lors de l’intégration. Son contenu n’est pas un préalable à la finalisation du PRD.
+**Catalogue :** les chatbots et modèles disponibles, avec la tarification par type de tokens sont ceux du fichier fourni, nommé `models_params`.
 
 **Conditionnel :** l’import par URL de partage (UJ-2) fera l’objet d’une étude de faisabilité. Il n’est pas promis au lancement. Si le contenu n’est pas accessible programmatiquement dans les contraintes retenues, cette fonction ne sera pas proposée.
 
@@ -66,7 +66,7 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 - **Modèle :** modèle de référence choisi pour toute la conversation et issu du catalogue.
 - **Bloc / échange :** un message, une réponse finale, un raisonnement visible éventuel et une version d’artifact éventuelle.
 - **Artifact :** contenu produit suivi dans un champ distinct au fil de ses versions.
-- **Token estimé :** unité approximée localement par le nombre de mots divisé par 0,7 par défaut.
+- **Token estimé :** unité calculée avec le Tokenizer d'OpenAI par défaut, ou bien approximée localement par le nombre de mots divisé par 0,75 en fallback.
 - **Historique :** échanges antérieurs, dernière version complète d’artifact et tokens du prompt système ; convention de cache à 100 %.
 - **Résultat périmé :** résultat dont une entrée ou un paramètre utilisé a changé depuis le calcul.
 - **Pays d’hébergement :** pays de référence du fournisseur, modifiable ; ce n’est pas une localisation mesurée de la requête.
@@ -94,11 +94,9 @@ La correspondance sans abonnement → `gpt-5.6-luna` est une règle du projet fo
 
 #### FR-2 — Choisir le modèle pour les autres fournisseurs
 
-Pour les autres fournisseurs, notamment Claude et Gemini lorsqu’ils figurent dans le catalogue, la personne peut choisir le modèle indiqué dans le chatbot. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc.
+Pour les autres fournisseurs, la personne peut choisir le modèle indiqué dans le chatbot. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc.
 
-Le catalogue `model_params`, qui sera fourni, détermine les chatbots et modèles proposés. Les choix de l’interface doivent correspondre à ce catalogue ; le PRD n’en impose pas une liste séparée. Les modèles absents ne sont pas proposés à la sélection. La fourniture et l’intégration du catalogue constituent une dépendance de réalisation, pas un préalable à la rédaction du PRD.
-
-Ce catalogue, également nommé `models_param` par Felix, fournira le nombre de tokens du prompt système pour chaque modèle. Le nom exact du fichier sera aligné lors de sa fourniture ; ces deux appellations désignent ici la même dépendance.
+Le catalogue `models_params`, détermine les chatbots et modèles proposés. Les choix de l’interface doivent correspondre à ce catalogue. Les modèles absents ne sont pas proposés à la sélection. Ce catalogue fournira également le nombre de tokens du prompt système pour chaque modèle.
 
 #### FR-16 — Garder le chatbot, le modèle et la conversation visibles
 
@@ -145,16 +143,16 @@ Le calculateur comptabilise les textes fournis pour la conversation, auxquels s�
 
 Cette règle définit le périmètre du calcul ; elle n’affirme pas que le chatbot n’a effectué aucun raisonnement lorsque ce champ est vide. La règle spécifique de différence entre versions d’un artifact reste applicable.
 
-#### FR-8 — Estimer les tokens à partir du nombre de mots
+#### FR-8 — Estimer les tokens à partir de tiktoken par défaut et du nombre de mots en fallback
 
-Le calculateur estime les tokens des textes comptabilisés en divisant leur nombre de mots par 0,7 par défaut. Ce coefficient est modifiable dans les paramètres avancés (FR-17). Cette convention, choisie par Felix, s’applique indépendamment du modèle sélectionné, sans tokenizer propre au modèle. Ce comptage est effectué exclusivement dans le navigateur, sans clé API ni envoi de données à OpenAI.
+Le calculateur calcule les tokens des textes comptabilisés en utilisant le tokenizer Tiktoken d'OpenAI par défaut. En fallback il estime les tokens des textes en divisant leur nombre de mots par 0,75. Ce coefficient est modifiable dans les paramètres avancés (FR-17). Cette convention, choisie par Felix, s’applique indépendamment du modèle sélectionné, sans tokenizer propre au modèle. Ce calcul ou comptage est effectué exclusivement dans le navigateur, sans clé API ni envoi de données à OpenAI.
 
 **Conséquences vérifiables :**
 
-- Un texte compté à 70 mots correspond à une estimation de 100 tokens.
+- Un texte est converti en tokens via Tiktoken par défaut.
+- Si échec de Tiktoken, un fallback est utilisé avec la règle qu'un texte compté à 75 mots correspond à une estimation de 100 tokens.
 - Un texte vide contribue pour zéro token.
 - Pour les versions successives d’un artifact, seuls les passages retenus par FR-4 sont comptés en sortie.
-- Les volumes obtenus sont des estimations, et non des décomptes exacts du fournisseur.
 
 La segmentation des mots, le traitement du code et l’arrondi seront fixés avant développement (D-2). Le même compteur doit s’appliquer à toutes les catégories de texte.
 
@@ -171,11 +169,11 @@ Camille peut coller la version complète d’un artifact à chaque échange. Le 
 
 La granularité de comparaison sera spécifiée par le responsable technique avant développement (D-2). Cette règle concerne les tokens de sortie ; pour l’historique d’entrée, seule la dernière version complète disponible avant l’échange est retenue, selon FR-19.
 
-Le premier artifact est compté intégralement en sortie. [ASSUMPTION A-2] Un champ artifact vide signifie qu’aucune nouvelle version n’est fournie ; il ne supprime pas la dernière version disponible. Le parcours de lancement prévoit un artifact suivi au fil de ses versions.
+Le premier artifact est compté intégralement en sortie. Un champ artifact vide signifie qu’aucune nouvelle version n’est fournie ; il ne supprime pas la dernière version disponible. Le parcours de lancement prévoit un artifact suivi au fil de ses versions.
 
 #### FR-19 — Reconstituer automatiquement l’historique en cache
 
-Pour calculer un bloc, le calculateur reprend automatiquement les échanges précédents de la conversation comme historique. Tous les tokens de cet historique sont comptabilisés au taux des tokens en cache, selon la convention de la spécification initiale confirmée par Felix.
+Pour calculer un bloc, le calculateur reprend automatiquement les échanges précédents de la conversation comme historique. Tous les tokens de cet historique sont comptabilisés au taux des tokens en cache.
 
 **Conséquences vérifiables :**
 
@@ -185,12 +183,11 @@ Pour calculer un bloc, le calculateur reprend automatiquement les échanges pré
 - Pour l’artifact, l’historique inclut une seule fois la dernière version complète disponible avant le bloc courant. Les versions antérieures et leurs différences successives ne sont pas cumulées dans cet historique.
 - Une nouvelle version produite dans le bloc courant intervient en sortie selon FR-4 ; elle devient la version complète de référence pour l’historique des échanges suivants.
 - L’historique est établi à partir des textes précédents, sans imposer de calculer leurs impacts pour calculer individuellement le bloc courant.
-- Le taux de cache de 100 % est une hypothèse du calculateur, pas une observation du fonctionnement réel du fournisseur.
 - Le nombre de tokens du prompt système fourni par le catalogue pour le modèle sélectionné est ajouté une seule fois à l’historique de chaque bloc, y compris le premier. Il est compté au taux du cache et n’est pas reconverti depuis des mots.
 
 #### FR-20 — Intégrer automatiquement le prompt système du modèle
 
-Le calculateur utilise le nombre de tokens du prompt système associé au modèle dans le catalogue fourni. Camille n’a pas à connaître l’existence de ce prompt ni à fournir son contenu ou son volume pour utiliser le calculateur. Le parcours courant ne lui demande aucune information à ce sujet.
+Le calculateur utilise le nombre de tokens du prompt système associé au modèle dans le catalogue fourni. Camille n’a pas à connaître l’existence de ce prompt ni à fournir son contenu ou son volume pour utiliser le calculateur.
 
 Cette donnée constitue une exception explicite à la règle du seul texte fourni (FR-3). Elle ne conduit pas à estimer du raisonnement non visible. Sa contribution au calcul suit FR-19.
 
@@ -199,7 +196,6 @@ Cette donnée constitue une exception explicite à la règle du seul texte fourn
 - Le nombre de tokens du prompt système est fixé exclusivement par le catalogue pour le modèle sélectionné.
 - Aucun champ, contrôle ou détail de résultat ne révèle cette donnée dans l’interface, y compris dans les paramètres avancés.
 - La restauration des paramètres avancés ne modifie pas cette donnée du catalogue.
-- Il s’agit d’une discrétion d’interface, et non d’une exigence de secret technique pour les données utilisées par le calcul local.
 
 ### 5.3 Calculs et validité des résultats
 
@@ -210,11 +206,11 @@ Pour chaque bloc renseigné, le calculateur distingue tokens d’entrée nouvell
 **Conséquences vérifiables :**
 
 - Le taux énergétique de sortie dépend des paramètres totaux et activés du modèle selon les formules Ecologits adaptées ; aucun second multiplicateur de taille du modèle n’est ajouté.
-- Les taux d’entrée et de cache proviennent des ratios tarifaires par modèle et fournisseur, avec date de calibration.
+- Les taux d’entrée et de cache proviennent des ratios tarifaires par modèle et fournisseur, avec date de calibration, calculés à partir des tarifs fournis dans `models_params`.
 - Le PUE du pays/fournisseur est appliqué exactement une fois à l’énergie informatique ; le PUE générique Ecologits n’est pas ajouté.
 - Le carbone et l’eau sont dérivés de cette même énergie datacenter. Les unités restent cohérentes : Wh, gCO₂e et litres ; les conversions d’affichage ne modifient pas les valeurs de calcul.
 - L’eau représente uniquement l’eau consommée sur site, hors eau liée à la production électrique.
-- Le risque de sécheresse est affiché à côté de l’eau selon le pays retenu. Il n’est ni sommé ni multiplié par le volume d’eau.
+- Le risque de sécheresse est affiché à côté de l’eau selon le pays retenu. Il n’est ni sommé ni multiplié par le volume d’eau. Il est présent uniquement comme indicateur du total, et non de chaque bloc.
 - Le total additionne les valeurs non arrondies des blocs valides ; les arrondis relèvent uniquement de l’affichage.
 - Une mention visible précise que les résultats couvrent l’usage, hors fabrication et amortissement des équipements (Scope 3).
 
@@ -264,7 +260,6 @@ Le calculateur utilise un pays d’hébergement de référence défini pour chaq
 - Le pays choisi dans les paramètres avancés sert à sélectionner les facteurs environnementaux applicables et l’indicateur de risque de sécheresse pour le modèle.
 - Ce pays est distinct du pays de l’utilisateur : modifier l’un ne modifie pas l’autre.
 - Une modification du pays d’hébergement invalide les résultats des blocs concernés et le total ; Camille doit relancer les calculs selon FR-10 à FR-13.
-- Le pays retenu est une hypothèse de calcul, et non une localisation mesurée de l’exécution réelle de la requête.
 
 Le fournisseur et le modèle étant communs à toute la conversation, ce réglage s’applique à tous ses blocs.
 
@@ -283,7 +278,7 @@ Une section discrète « Paramètres avancés » permet de modifier les paramèt
 - Un changement limité à la référence de douche invalide les équivalences concernées sans invalider les impacts énergie, eau et carbone des blocs.
 - Les noms, unités et valeurs des paramètres modifiables sont disponibles dans la section avancée. Le nombre de tokens du prompt système n’y apparaît pas.
 
-Cette exigence remplace la restriction de la spécification source qui rendait certaines constantes internes non modifiables. Les contrôles minimaux sont définis dans NFR-6 ; les bornes supplémentaires seront arrêtées avant développement (D-2). Les formules restent celles du modèle retenu ; leur édition n’a pas été demandée.
+Les contrôles minimaux sont définis dans NFR-6 ; les bornes supplémentaires seront arrêtées avant développement (D-2). Les formules restent celles du modèle retenu.
 
 #### FR-18 — Rétablir les paramètres par défaut
 
@@ -395,7 +390,7 @@ L’interface, les messages de validation, les explications et les bonnes pratiq
 
 ### NFR-6 — Refuser les paramètres invalides et préserver la cohérence
 
-[ASSUMPTION A-3] Les contrôles minimaux ci-dessous concrétisent les contraintes de calcul ; leurs bornes détaillées seront arrêtées en conception.
+[ASSUMPTION A-1] Les contrôles minimaux ci-dessous concrétisent les contraintes de calcul ; leurs bornes détaillées seront arrêtées en conception.
 
 Les champs avancés indiquent leurs unités et les erreurs empêchant le calcul. Des valeurs non numériques, infinies ou hors domaine ne doivent pas produire un résultat présenté comme valide.
 
@@ -408,7 +403,7 @@ Les données de catalogue indispensables manquantes ne sont pas inventées : le 
 
 ### NFR-7 — Rendre le parcours utilisable au clavier et sur petit écran
 
-[ASSUMPTION A-3] Ces critères de base concrétisent l’usage grand public demandé et seront précisés lors de la conception UX.
+[ASSUMPTION A-1] Ces critères de base concrétisent l’usage grand public demandé et seront précisés lors de la conception UX.
 
 Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Un résultat périmé ou un risque de sécheresse ne se distingue pas uniquement par sa couleur. Sur mobile, les actions de calcul, les résultats et la correction des champs restent accessibles sans dépendre du survol.
 
@@ -419,9 +414,7 @@ Ces critères concrétisent l’usage grand public sur ordinateur et mobile ; il
 
 **SM-1 — Signal retenu par Felix :** recevoir des retours positifs par email ou sur LinkedIn. Felix apprécie directement ces retours ; aucun volume, échéance ni collecte automatisée n’est imposé. Ce signal concerne l’expérience globale, la compréhension des résultats et les conseils ; il ne prouve pas la justesse scientifique ni une baisse réelle des impacts.
 
-**SM-C1 — Contre-indicateur proposé :** examiner aussi les retours signalant une difficulté d’utilisation ou une confusion entre estimation et mesure. [ASSUMPTION A-1] Proposition non bloquante à réexaminer par Felix lors des premiers retours, sans dispositif de suivi supplémentaire.
-
-Avant publication, vérifier des scénarios représentatifs : premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact. Les contrôles réseau doivent confirmer qu’aucun texte de conversation n’est transmis.
+Avant publication, vérifier des scénarios représentatifs : premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact.
 
 ## 8. Dépendances et points à préciser
 
@@ -429,8 +422,8 @@ Le cadrage produit est établi. Les points ci-dessous relèvent de la conception
 
 | ID | Livrable ou décision restante | Responsable | À résoudre avant |
 |---|---|---|---|
-| D-1 | Fournir le catalogue, paramètres totaux/activés, tokens système, pays fournisseurs, facteurs, risques et valeurs « Monde » ; contrôler leur cohérence avec les modèles ChatGPT imposés. | Felix pour la fourniture ; responsable technique pour la validation | Intégration des données et publication |
-| D-2 | Définir segmentation des mots, précision d’affichage, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche pour éviter des paramètres contradictoires ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
+| D-1 | Fournir le catalogue, paramètres totaux/activés, tokens système, tarifs tokens, pays fournisseurs, facteurs, risques et valeurs « Monde » ; contrôler leur cohérence avec les modèles ChatGPT imposés. | Felix pour la fourniture ; responsable technique pour la validation | Intégration des données et publication |
+| D-2 | Définir segmentation des mots en fallback, précision d’affichage, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche pour éviter des paramètres contradictoires ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
 | D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; saisie manuelle en cas d’échec, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
 | D-4 | Étudier l’import par lien depuis le navigateur : accès, restrictions réseau, données présentes et compatibilité avec l’absence de serveur. | Responsable technique ; Felix pour la décision d’inclusion | Tout engagement de livraison de l’import |
 | D-5 | Rédiger les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; arrêter disposition responsive et précision des unités. | Responsable UX ; Felix pour la validation éditoriale | Publication |
@@ -440,8 +433,6 @@ Les intitulés « responsable technique », « responsable architecture » et «
 
 ## 9. Hypothèses de conception à suivre
 
-- **A-1 — Contre-indicateur qualitatif :** proposé en §7 ; Felix peut le confirmer ou l’écarter lors des premiers retours. Il ne modifie aucune fonctionnalité.
-- **A-2 — Artifact absent :** un champ vide n’efface pas une version précédente ; un seul artifact est suivi dans le parcours décrit. Le responsable UX et Felix réexamineront ce point si un besoin multi-artifact ou d’effacement explicite apparaît.
-- **A-3 — Données numériques :** les règles minimales de validation de NFR-6 et les critères d’utilisabilité de NFR-7 concrétisent les contraintes exprimées. Leurs détails seront arrêtés pendant la conception, avant développement.
+- **A-1 — Données numériques :** les règles minimales de validation de NFR-6 et les critères d’utilisabilité de NFR-7 concrétisent les contraintes exprimées. Leurs détails seront arrêtés pendant la conception, avant développement.
 
 Les hypothèses scientifiques (cache intégral, ratios tarifaires, données de modèles, matériel et eau sur site) sont des conventions explicites dans l’addendum. Elles ne deviennent pas des observations du service réel.

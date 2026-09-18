@@ -4,11 +4,11 @@
 
 Felix indique que son site `felixmortas.com` est réalisé en HTML/CSS/JavaScript purs. Le calculateur y constituera une page, utilisable sans compte depuis un ordinateur ou un mobile.
 
-Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages. Aucun framework ni outil de compilation n’est imposé à ce stade. L’étude d’import par URL de partage devra respecter cette contrainte d’hébergement ; aucun serveur complémentaire n’est prévu.
+Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages et compatible avec le site actuel. Aucun framework ni outil de compilation n’est imposé à ce stade. L’étude d’import par URL de partage devra respecter cette contrainte d’hébergement ; aucun serveur complémentaire n’est prévu.
 
 ## Choix de comptage
 
-Le comptage retenu est exclusivement local : nombre de tokens estimé = nombre de mots / 0,7. Le comptage distant OpenAI a été écarté par Felix en raison de la nécessité d’une clé API et de son refus d’un serveur complémentaire. Il n’y a donc aucun parcours de consentement à un envoi pour tokenisation à concevoir.
+Le comptage retenu est exclusivement local : calcul avec Tiktoken par défaut, et en fallback nombre de tokens estimé = nombre de mots / 0,75. Le comptage distant OpenAI a été écarté par Felix en raison de la nécessité d’une clé API et de son refus d’un serveur complémentaire. Il n’y a donc aucun parcours de consentement à un envoi pour tokenisation à concevoir.
 
 ## Référence de douche chaude
 
@@ -48,12 +48,12 @@ Ce contrat reprend les §1–10 de `spec-formules-calculateur-empreinte-llm.md` 
 |---|---|---|
 | `P_tot` (`nb_params`) | milliards de paramètres | estimation IKP (§1) |
 | `P_act` (`nb_params_activated`) | milliards de paramètres activés | régression sur modèles ouverts, étendue aux modèles fermés (§1, §10.2) |
-| `S_tokens` | tokens, sans reconversion en mots | catalogue `model_params` / `models_param` fourni par Felix |
+| `S_tokens` | tokens, sans reconversion en mots | catalogue `models_params` fourni par Felix |
 | `EF(pays)` | gCO2e/kWh | `carbon_emissions_intensity_2025.csv`, `Area`, `Emissions intensity (gCO2e/kWh)` (§1) |
 | `PUE(pays, fournisseur)` | ratio ≥ 1 | données fournisseurs et extrapolation (§1) |
 | `WUE(pays, fournisseur)` | L/kWh | données fournisseurs et extrapolation (§1) |
 | `dry_risk(pays, fournisseur)` | `low`, `med`, `high`, `extreme` | `country_drought_risk.csv`, `Area`, `drought_risk_level` ; WRI Aqueduct annoncé (§1, §7) |
-| `κ_in`, `κ_cache` | ratios sans unité, par modèle/fournisseur | calibration tarifaire datée (§3ter.2) |
+| `κ_in`, `κ_cache` | ratios sans unité, par modèle/fournisseur | calibration tarifaire datée à partir des tarifs dans `models_params` (§3ter.2) |
 
 Le catalogue fournit les modèles et leurs données ; les valeurs non fournies ne sont pas inventées. `P_tot = 37` signifie 37 milliards de paramètres, et non 37 paramètres : une source en unités brutes doit être convertie avant calcul. Les tables environnementales doivent inclure les valeurs de repli « Monde ». Le pays utilisateur sert uniquement à la référence de douche ; le pays d’hébergement sert à l’empreinte du modèle.
 
@@ -62,8 +62,9 @@ Le catalogue fournit les modèles et leurs données ; les valeurs non fournies n
 Les indices ci-dessous suivent l’ordre des blocs renseignés ; un bloc entièrement vide est ignoré, y compris pour le prompt système. Soient `M_i` le message, `R_i` le raisonnement visible, `C_i` la réponse finale et `A_i` l’artifact complet fourni au bloc `i`.
 
 ```text
-T(texte) = nombre_de_mots(texte) / coefficient_mots_par_token
-coefficient_mots_par_token = 0.7 par défaut
+T(texte) = Tiktoken(texte) par défaut
+T(texte) = nombre_de_mots(texte) / coefficient_mots_par_token, en fallback
+coefficient_mots_par_token = 0.75 par défaut
 T(texte vide) = 0
 
 A_precedent(i) = dernière version complète d’artifact fournie avant i
@@ -170,7 +171,7 @@ Exemple purement arithmétique, sans valeur de référence fournisseur : avec un
 - L’empreinte couvre l’usage uniquement : fabrication, amortissement matériel et Scope 3 exclus (§10.8). L’eau correspond au WUE sur site ; l’eau liée à la production électrique est exclue (§6, §10.4).
 - Raisonnement et complétion partagent le taux de sortie. L’augmentation du coût des tokens avec le KV cache n’est pas représentée (§10.1). Les paramètres activés des modèles fermés sont estimés (§10.2).
 - Le cache à 100 %, les hypothèses matérielles, le batch par défaut à 64 et les latences déterministes ne décrivent pas une exécution mesurée (§3bis.1, §10.3, §10.6–7). Les ratios de prix sont un proxy énergétique choisi par la source, pas une mesure physique.
-- Contrairement au §2, la saisie de textes et l’agrégation sont centrales et non optionnelles ; le tokenizer distant est exclu. Les artifacts et la comparaison douche étendent la source. Le prompt système provient du catalogue en tokens, sans texte demandé à l’utilisateur.
+- Contrairement au §2, la saisie de textes et l’agrégation sont centrales et non optionnelles ; le tokenizer local est inclu mais le distant est exclu. Les artifacts et la comparaison douche étendent la source. Le prompt système provient du catalogue en tokens, sans texte demandé à l’utilisateur.
 - Contrairement au §3bis.2, les constantes sont modifiables en paramètres avancés. Le prompt système fait seul exception. Les bornes de validation des paramètres devront empêcher les calculs non définis ou physiquement incohérents ; leurs valeurs détaillées restent à définir en conception.
 - Les renvois source vers §0.1 et §11 sont invalides : lire respectivement le pipeline §0 et les limites §6/§10.4. Aucun contenu absent n’est supposé.
 - La formulation du §3bis.5 sur la continuité est corrigée : à `P_tot` fixé, donc `gpu_count` fixé, `r_out` est affine en `P_act`. Les sauts proviennent des seuils de GPU lorsque `P_tot` varie ; une continuité globale n’est pas garantie. Implémenter les équations successives du §3bis.4, pas les coefficients affines arrondis.

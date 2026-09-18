@@ -54,7 +54,7 @@ Dans le calculateur final, l'utilisateur **saisit directement** `new_input`, `hi
 
 ### 2.1 Comptage des tokens d'un texte
 - **Tokenizer réel** (ex. `tiktoken`) → exact, dépend du modèle.
-- **Approximation** : `nb_tokens ≈ nb_mots / 0.7` → selon OpenAI
+- **Approximation** : `nb_tokens ≈ nb_mots / 0.75` → selon OpenAI
 
 ### 2.2 Répartition new_input / history / output
 
