@@ -16,6 +16,8 @@ import {
 } from '../domain/tokenization';
 import type { TokenizationResponse } from '../workers/tokenizationProtocol';
 import type { ImpactResult } from '../domain/impact';
+import type { ImpactTotal } from '../domain/impactAggregation';
+import type { DroughtRisk } from '../data/modelCatalog';
 
 export interface ConversationState {
   readonly provider: string;
@@ -24,6 +26,7 @@ export interface ConversationState {
   readonly blocks: readonly ConversationBlock[];
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
+  readonly summary?: ConversationSummaryState;
 }
 
 export interface ConversationBlock {
@@ -50,6 +53,11 @@ export type BlockImpactState =
   | { readonly status: 'result'; readonly fingerprint: string; readonly impact: ImpactResult }
   | { readonly status: 'error'; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' };
 
+export type ConversationSummaryState =
+  | { readonly status: 'pending'; readonly fingerprint: string }
+  | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk }
+  | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' };
+
 export type ConversationAction =
   | { readonly type: 'providerSelected'; readonly provider: string }
   | { readonly type: 'subscriptionSelected'; readonly subscription: ChatGptSubscription }
@@ -59,9 +67,12 @@ export type ConversationAction =
   | { readonly type: 'blockRemoved'; readonly blockId: string }
   | { readonly type: 'tokenizationRequested'; readonly blockId: string; readonly requestId: string; readonly encoding: TokenizationEncoding; readonly fingerprint: string }
   | { readonly type: 'tokenizationResponded'; readonly response: TokenizationResponse }
-  | { readonly type: 'impactRequested'; readonly blockId: string; readonly fingerprint: string }
+  | { readonly type: 'impactRequested'; readonly blockId: string; readonly fingerprint: string; readonly preserveSummary?: boolean }
   | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult }
-  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' };
+  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' }
+  | { readonly type: 'summaryRequested'; readonly fingerprint: string }
+  | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk }
+  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' };
 
 const initialSubscription: ChatGptSubscription = 'without-paid-subscription';
 
@@ -109,7 +120,7 @@ function invalidateAllTokenizations(state: ConversationState): ConversationState
 }
 
 function invalidateAllCalculations(state: ConversationState): ConversationState {
-  return Object.keys(state.impacts).length === 0 ? state : { ...state, impacts: {} };
+  return Object.keys(state.impacts).length === 0 && !state.summary ? state : { ...state, impacts: {}, summary: undefined };
 }
 
 function invalidateCalculationsAndTokenizations(state: ConversationState): ConversationState {
@@ -196,7 +207,11 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'impactRequested': {
       const block = state.blocks.find(({ blockId }) => blockId === action.blockId);
       if (!block || isIgnoredConversationBlock(block) || impactFingerprint(state) !== action.fingerprint) return state;
-      return { ...state, impacts: { ...state.impacts, [action.blockId]: { status: 'pending', fingerprint: action.fingerprint } } };
+      return {
+        ...state,
+        summary: action.preserveSummary ? state.summary : undefined,
+        impacts: { ...state.impacts, [action.blockId]: { status: 'pending', fingerprint: action.fingerprint } },
+      };
     }
     case 'impactResolved': {
       const current = state.impacts[action.blockId];
@@ -208,5 +223,21 @@ export function conversationReducer(state: ConversationState, action: Conversati
       if (!block || impactFingerprint(state) !== action.fingerprint) return state;
       return { ...state, impacts: { ...state.impacts, [action.blockId]: { status: 'error', fingerprint: action.fingerprint, code: action.code } } };
     }
+    case 'summaryRequested':
+      return impactFingerprint(state) === action.fingerprint
+        ? { ...state, summary: { status: 'pending', fingerprint: action.fingerprint } }
+        : state;
+    case 'summaryResolved':
+      return state.summary?.status === 'pending'
+        && state.summary.fingerprint === action.fingerprint
+        && impactFingerprint(state) === action.fingerprint
+        ? { ...state, summary: { status: 'result', fingerprint: action.fingerprint, total: action.total, droughtRisk: action.droughtRisk } }
+        : state;
+    case 'summaryUnavailable':
+      return state.summary?.status === 'pending'
+        && state.summary.fingerprint === action.fingerprint
+        && impactFingerprint(state) === action.fingerprint
+        ? { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: action.code } }
+        : state;
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canSelectModel, resolveChatGptModel, selectableModels } from './modelSelection';
-import { hasModel, modelCatalog, resolveImpactParameters } from '../data/modelCatalog';
+import { hasModel, modelCatalog, resolveDroughtRisk, resolveHostingCountry, resolveImpactParameters } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
   const models = [
@@ -28,5 +28,13 @@ describe('sélection de modèle', () => {
       totalParameters: 100, activatedParameters: 10, systemPromptCacheTokens: 1500,
       pue: 1.15, wue: .15, carbonIntensity: 384.403,
     });
+  });
+
+  it('expose le pays d’hébergement et distingue un risque absent', () => {
+    expect(resolveHostingCountry('ChatGPT')).toBe('United States');
+    expect(resolveDroughtRisk('United States')).toEqual({ status: 'available', level: 'Medium (0.4-0.6)' });
+    expect(resolveHostingCountry('Mistral AI')).toBe('Switzerland');
+    expect(resolveDroughtRisk('Switzerland')).toEqual({ status: 'available', level: 'Medium - High (0.6-0.8)' });
+    expect(resolveDroughtRisk('pays absent')).toEqual({ status: 'unavailable' });
   });
 });

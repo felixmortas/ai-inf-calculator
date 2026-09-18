@@ -80,6 +80,45 @@ describe('composition de la conversation', () => {
     expect(screen.getAllByRole('button', { name: 'Calculer' })).toHaveLength(1);
   });
 
+  it('calcule les seuls échanges renseignés puis affiche leur bilan et le risque pays', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getAllByLabelText('Message')[0], 'Premier échange');
+    await user.type(screen.getAllByLabelText('Message')[1], 'Deuxième échange plus long');
+    await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
+    const summaryHeading = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    const individualEnergies = [...document.querySelectorAll('.impact-result')].map((element) => (
+      Number(element.textContent!.match(/[\d,]+/)![0].replace(',', '.'))
+    ));
+    const summaryEnergy = Number(summaryHeading.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1].replace(',', '.'));
+    expect(screen.getAllByText(/Énergie:/)).toHaveLength(3);
+    expect(summaryEnergy).toBeGreaterThan(Math.max(...individualEnergies));
+    expect(summaryEnergy).toBeCloseTo(individualEnergies[0] + individualEnergies[1], 4);
+    expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toBeVisible();
+  });
+
+  it('invite à saisir un échange sans afficher de bilan si tous les blocs sont vides', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
+    expect(screen.getByText('Saisissez au moins un échange avant de calculer le bilan.')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
+  });
+
+  it('signale un risque de sécheresse indisponible sans inventer de niveau', () => {
+    const fingerprint = impactFingerprint(initialConversationState);
+    let state = conversationReducer(initialConversationState, { type: 'summaryRequested', fingerprint });
+    state = conversationReducer(state, {
+      type: 'summaryResolved', fingerprint,
+      total: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
+      droughtRisk: { status: 'unavailable' },
+    });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+    expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toHaveTextContent('Indisponible pour ce pays d’hébergement');
+  });
+
   it('prépare les catégories dérivées complètes pour un bloc avec historique et artifact', () => {
     const blocks = [
       { blockId: 'one', message: 'message avant', visibleReasoning: 'raisonnement avant', finalResponse: 'réponse avant', artifact: 'artifact v1' },
@@ -97,7 +136,7 @@ describe('composition de la conversation', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
     state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state), code: 'invalid-data' });
-    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} />);
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
     expect(screen.getByRole('alert')).toHaveTextContent('donnée indispensable');
   });
 });

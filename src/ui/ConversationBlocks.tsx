@@ -11,6 +11,7 @@ interface ConversationBlocksProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
   readonly onCalculate: (blockId: string) => void;
+  readonly onCalculateAll: () => void;
 }
 
 const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
@@ -24,7 +25,7 @@ export function formatImpact(value: number): string {
   return new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(value);
 }
 
-export function ConversationBlocks({ state, dispatch, onCalculate }: ConversationBlocksProps) {
+export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll }: ConversationBlocksProps) {
   const nextBlockNumber = useRef(1);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -58,8 +59,25 @@ export function ConversationBlocks({ state, dispatch, onCalculate }: Conversatio
     <section aria-labelledby="conversation-title" className="conversation-blocks">
       <div className="conversation-blocks-header">
         <h2 id="conversation-title">{fr.conversationLabel}</h2>
-        <button ref={addButtonRef} type="button" onClick={addBlock}>{fr.addBlockAction}</button>
+        <div className="conversation-actions">
+          <button ref={addButtonRef} type="button" onClick={addBlock}>{fr.addBlockAction}</button>
+          <button type="button" onClick={onCalculateAll} disabled={state.summary?.status === 'pending'}>
+            {state.summary?.status === 'pending' ? fr.calculatingAllAction : fr.calculateAllAction}
+          </button>
+        </div>
       </div>
+      {state.summary?.status === 'unavailable' ? <p role="status" className="summary-message">
+        {state.summary.code === 'no-exchanges' ? fr.noExchangesForSummary : fr.summaryUnavailable}
+      </p> : null}
+      {state.summary?.status === 'result' ? <section className="summary-panel" aria-labelledby="summary-title" role="status">
+        <h3 id="summary-title">{fr.summaryTitle}</h3>
+        <p>{fr.energyLabel}: {formatImpact(state.summary.total.energyWh)} Wh</p>
+        <p>{fr.carbonLabel}: {formatImpact(state.summary.total.carbonGco2e)} gCO2e</p>
+        <p>{fr.waterLabel}: {formatImpact(state.summary.total.waterL)} L</p>
+        <p>{fr.droughtRiskLabel}: {state.summary.droughtRisk.status === 'available'
+          ? state.summary.droughtRisk.level : fr.droughtRiskUnavailable}</p>
+        <p className="impact-note">{fr.summaryLimits}</p>
+      </section> : null}
       {state.blocks.map((block, index) => {
         const ignored = isIgnoredConversationBlock(block);
         const impactState = state.impacts[block.blockId];
@@ -89,7 +107,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate }: Conversatio
               );
             })}
             {!ignored ? <div className="impact-panel">
-              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={impactState?.status === 'pending'}>
+              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={impactState?.status === 'pending' || state.summary?.status === 'pending'}>
                 {impactState?.status === 'pending' ? fr.calculatingAction : fr.calculateAction}
               </button>
               {impactState?.status === 'result' ? <div role="status" className="impact-result">

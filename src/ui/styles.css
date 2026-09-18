@@ -59,6 +59,7 @@ button {
 }
 .conversation-blocks-header { margin-bottom: 1rem; }
 .conversation-blocks-header h2 { margin: 0; }
+.conversation-actions { display: flex; gap: .65rem; }
 .conversation-block {
   margin-top: 1rem;
   padding: 1rem;
@@ -73,11 +74,14 @@ button {
 .impact-result p { margin: .3rem 0; }
 .impact-note { color: #405349; font-size: .9rem; }
 .impact-error { border: 1px solid #9d3030; background: #fff1f1; }
+.summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
+.summary-panel h3 { margin: 0 0 .5rem; }
+.summary-panel p { margin: .3rem 0; }
 
 :focus-visible { outline: 3px solid #0759b8; outline-offset: 3px; }
 
 @media (max-width: 30rem) {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
   .configuration, .conversation-blocks { padding: 1rem; }
-  .conversation-blocks-header, .conversation-block-heading { align-items: stretch; flex-direction: column; }
+  .conversation-blocks-header, .conversation-block-heading, .conversation-actions { align-items: stretch; flex-direction: column; }
 }

@@ -3,6 +3,7 @@ import pueCsv from '../../data/clean/pue.csv?raw';
 import wueCsv from '../../data/clean/wue.csv?raw';
 import providerCountryCsv from '../../data/clean/provider_country.csv?raw';
 import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw';
+import droughtRiskCsv from '../../data/clean/country_drought_risk.csv?raw';
 
 export interface CatalogModel {
   readonly provider: string;
@@ -86,20 +87,38 @@ function finiteLookup(source: string, key: string, value: string, expected: numb
 }
 
 export interface ResolvedImpactParameters extends CatalogModel {
+  readonly hostingCountry: string;
   readonly pue: number;
   readonly wue: number;
   readonly carbonIntensity: number;
 }
 
+export type DroughtRisk =
+  | { readonly status: 'available'; readonly level: string }
+  | { readonly status: 'unavailable' };
+
+/** Pays d'hébergement localement catalogué pour le fournisseur sélectionné. */
+export function resolveHostingCountry(provider: string): string | undefined {
+  return parseRows(providerCountryCsv).find((entry) => entry.provider === provider)?.country;
+}
+
+/** Le niveau reste catégoriel : « No Data » ne devient jamais un niveau inventé. */
+export function resolveDroughtRisk(country: string): DroughtRisk {
+  const level = parseRows(droughtRiskCsv).find((entry) => entry.Area === country)?.drought_risk_level;
+  return level && level !== 'No Data'
+    ? Object.freeze({ status: 'available', level })
+    : Object.freeze({ status: 'unavailable' });
+}
+
 /** Résout exclusivement des données locales ; undefined signifie un blocage explicite. */
 export function resolveImpactParameters(provider: string, modelId: string): ResolvedImpactParameters | undefined {
   const model = modelCatalog.models.find((entry) => entry.provider === provider && entry.id === modelId);
-  const country = parseRows(providerCountryCsv).find((entry) => entry.provider === provider)?.country;
+  const country = resolveHostingCountry(provider);
   if (!model || !country) return undefined;
   const pue = finiteLookup(pueCsv, country, 'pue', 1);
   const wue = finiteLookup(wueCsv, country, 'wue', 0);
   // Ce catalogue existant documente sa provenance et sa date dans son fichier compagnon `.md`.
   const carbonIntensity = finiteLookup(carbonCsv, country, 'Emissions intensity (gCO2e/kWh)', 0, false);
   return pue === undefined || wue === undefined || carbonIntensity === undefined
-    ? undefined : Object.freeze({ ...model, pue, wue, carbonIntensity });
+    ? undefined : Object.freeze({ ...model, hostingCountry: country, pue, wue, carbonIntensity });
 }

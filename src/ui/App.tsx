@@ -1,10 +1,12 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { conversationReducer, impactFingerprint, initialConversationState } from '../application/conversationReducer';
+import { conversationReducer, impactFingerprint, initialConversationState, isIgnoredConversationBlock, type ConversationState } from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { fallbackTokenCount } from '../domain/tokenization';
-import { resolveImpactParameters } from '../data/modelCatalog';
+import { resolveDroughtRisk, resolveImpactParameters } from '../data/modelCatalog';
+import { aggregateImpacts } from '../domain/impactAggregation';
+import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
 import { ConversationConfiguration } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
@@ -31,17 +33,17 @@ export function App() {
     return () => { client.current?.dispose(); client.current = undefined; };
   }, []);
 
-  function calculate(blockId: string) {
-    const fingerprint = impactFingerprint(state);
-    const parameters = resolveImpactParameters(state.provider, state.modelId);
-    const history = parameters && prepareConversationHistory(state.blocks, blockId, parameters.systemPromptCacheTokens);
-    const block = state.blocks.find((entry) => entry.blockId === blockId);
+  function calculate(blockId: string, snapshot: ConversationState = state, fingerprint = impactFingerprint(snapshot), preserveSummary = false): Promise<ImpactResult | undefined> {
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    const history = parameters && prepareConversationHistory(snapshot.blocks, blockId, parameters.systemPromptCacheTokens);
+    const block = snapshot.blocks.find((entry) => entry.blockId === blockId);
     if (!parameters || !history || !block) {
       dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
-      return;
+      return Promise.resolve(undefined);
     }
-    dispatch({ type: 'impactRequested', blockId, fingerprint });
-    const complete = (counts: { newInput: number; cachedInput: number; output: number }) => {
+    dispatch({ type: 'impactRequested', blockId, fingerprint, preserveSummary });
+    return new Promise((resolve) => {
+      const complete = (counts: { newInput: number; cachedInput: number; output: number }) => {
       const result = calculateImpact({
         newInputTokens: counts.newInput,
         cachedInputTokens: counts.cachedInput + history.systemPromptCacheTokens,
@@ -50,19 +52,52 @@ export function App() {
         inputRatio: parameters.inputRatio, cacheRatio: parameters.cacheRatio, pue: parameters.pue,
         carbonIntensity: parameters.carbonIntensity, wue: parameters.wue,
       });
-      if (result.ok) dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact });
-      else dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
-    };
-    const texts = impactTexts(block, history);
-    if (client.current) {
-      client.current.requestImpact(texts, complete);
-    } else {
-      complete({
-        newInput: fallbackTokenCount(texts.newInput),
-        cachedInput: texts.cachedInput.reduce((total, text) => total + fallbackTokenCount(text), 0),
-        output: texts.output.reduce((total, text) => total + fallbackTokenCount(text), 0),
-      });
+        if (result.ok) {
+          dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact });
+          resolve(result.impact);
+        } else {
+          dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
+          resolve(undefined);
+        }
+      };
+      const texts = impactTexts(block, history);
+      if (client.current) client.current.requestImpact(texts, complete);
+      else complete({
+          newInput: fallbackTokenCount(texts.newInput),
+          cachedInput: texts.cachedInput.reduce((total, text) => total + fallbackTokenCount(text), 0),
+          output: texts.output.reduce((total, text) => total + fallbackTokenCount(text), 0),
+        });
+    });
+  }
+
+  async function calculateAll() {
+    const snapshot = state;
+    const fingerprint = impactFingerprint(snapshot);
+    const blocks = snapshot.blocks.filter((block) => !isIgnoredConversationBlock(block));
+    dispatch({ type: 'summaryRequested', fingerprint });
+    if (blocks.length === 0) {
+      dispatch({ type: 'summaryUnavailable', fingerprint, code: 'no-exchanges' });
+      return;
     }
+    const impacts: ImpactResult[] = [];
+    for (const block of blocks) {
+      const impact = await calculate(block.blockId, snapshot, fingerprint, true);
+      if (!impact) {
+        dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
+        return;
+      }
+      impacts.push(impact);
+    }
+    const aggregation = aggregateImpacts(impacts);
+    if (!aggregation.ok) {
+      dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
+      return;
+    }
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    dispatch({
+      type: 'summaryResolved', fingerprint, total: aggregation.total,
+      droughtRisk: parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' },
+    });
   }
 
   return (
@@ -72,7 +107,7 @@ export function App() {
         <p>{fr.introduction}</p>
       </header>
       <ConversationConfiguration state={state} dispatch={dispatch} />
-      <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} />
+      <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} />
     </main>
   );
 }

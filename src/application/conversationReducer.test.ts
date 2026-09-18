@@ -232,4 +232,22 @@ describe('conversationReducer', () => {
     const changedModel = conversationReducer(pending, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
     expect(conversationReducer(changedModel, completion)).toBe(changedModel);
   });
+
+  it('publie le bilan seulement pour son empreinte courante et l’efface à la modification', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint });
+    state = conversationReducer(state, {
+      type: 'summaryResolved', fingerprint, total: { energyWh: 1.25, carbonGco2e: 2.5, waterL: 3.75 },
+      droughtRisk: { status: 'available', level: 'Medium (0.4-0.6)' },
+    });
+    expect(state.summary?.status).toBe('result');
+    const changed = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
+    expect(changed.summary).toBeUndefined();
+    expect(conversationReducer(changed, {
+      type: 'summaryResolved', fingerprint, total: { energyWh: 1, carbonGco2e: 1, waterL: 1 },
+      droughtRisk: { status: 'unavailable' },
+    })).toBe(changed);
+  });
 });
