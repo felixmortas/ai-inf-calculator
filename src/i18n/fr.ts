@@ -9,5 +9,12 @@ export const fr = {
   subscriptionPaid: 'Avec abonnement payant',
   modelLabel: 'Modèle applicable à la conversation',
   conversationLabel: 'Conversation',
-  conversationPlaceholder: 'La composition des échanges sera disponible prochainement.',
+  addBlockAction: 'Ajouter un échange',
+  removeBlockAction: (number: number) => `Supprimer l’échange ${number}`,
+  blockTitle: (number: number) => `Échange ${number}`,
+  messageLabel: 'Message',
+  finalResponseLabel: 'Réponse finale',
+  visibleReasoningLabel: 'Raisonnement visible',
+  artifactLabel: 'Artifact optionnel',
+  ignoredBlockStatus: 'Ce bloc sera ignoré pour les calculs futurs.',
 } as const;

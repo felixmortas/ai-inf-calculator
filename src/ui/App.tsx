@@ -2,6 +2,7 @@ import { useReducer } from 'react';
 import { conversationReducer, initialConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 import { ConversationConfiguration } from './ConversationConfiguration';
+import { ConversationBlocks } from './ConversationBlocks';
 import './styles.css';
 
 export function App() {
@@ -14,10 +15,7 @@ export function App() {
         <p>{fr.introduction}</p>
       </header>
       <ConversationConfiguration state={state} dispatch={dispatch} />
-      <section aria-labelledby="conversation-title" className="conversation-placeholder">
-        <h2 id="conversation-title">{fr.conversationLabel}</h2>
-        <p>{fr.conversationPlaceholder}</p>
-      </section>
+      <ConversationBlocks state={state} dispatch={dispatch} />
     </main>
   );
 }
