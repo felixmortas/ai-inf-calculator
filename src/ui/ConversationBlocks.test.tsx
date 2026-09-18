@@ -5,7 +5,12 @@ import { App } from './App';
 import { impactTexts } from './App';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { ConversationBlocks, formatImpact } from './ConversationBlocks';
-import { conversationReducer, impactFingerprint, initialConversationState } from '../application/conversationReducer';
+import {
+  conversationReducer,
+  impactFingerprint,
+  initialConversationState,
+  summaryFingerprint,
+} from '../application/conversationReducer';
 
 describe('composition de la conversation', () => {
   it('ajoute un bloc avec quatre champs libellés accessibles', async () => {
@@ -135,8 +140,57 @@ describe('composition de la conversation', () => {
     expect(formatImpact(0.00123456)).toBe('0,001235');
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
-    state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state), code: 'invalid-data' });
+    state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state, 'one'), code: 'invalid-data' });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
     expect(screen.getByRole('alert')).toHaveTextContent('donnée indispensable');
+  });
+
+  it('masque un impact périmé, explique le recalcul et liste les échanges bloquants', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, {
+      type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
+    });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
+    state = conversationReducer(state, { type: 'summaryRecalculationRequested', fingerprint: summaryFingerprint(state) });
+
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+
+    expect(screen.getByText(/Ce résultat est périmé/)).toBeVisible();
+    expect(screen.queryByText('Énergie: 1 Wh')).not.toBeInTheDocument();
+    expect(screen.getByText('L’échange 1 doit être calculé ou recalculé.')).toBeVisible();
+  });
+
+  it('déclenche seulement le recalcul du total sans appeler de calcul individuel', async () => {
+    const user = userEvent.setup();
+    const calculate = vi.fn();
+    const recalculateSummary = vi.fn();
+    render(<ConversationBlocks
+      state={initialConversationState}
+      dispatch={() => undefined}
+      onCalculate={calculate}
+      onCalculateAll={() => undefined}
+      onRecalculateSummary={recalculateSummary}
+    />);
+
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+
+    expect(recalculateSummary).toHaveBeenCalledOnce();
+    expect(calculate).not.toHaveBeenCalled();
+  });
+
+  it('recalcule le bilan dans l’application depuis un impact individuel existant', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Un échange déjà calculé');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    const impact = await screen.findByText(/Énergie:/);
+    const individualEnergy = impact.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1];
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    expect(summary.parentElement).toHaveTextContent(`Énergie: ${individualEnergy}`);
   });
 });

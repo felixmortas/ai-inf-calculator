@@ -1,5 +1,8 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { conversationReducer, impactFingerprint, initialConversationState, isIgnoredConversationBlock, type ConversationState } from '../application/conversationReducer';
+import {
+  conversationReducer, currentImpact, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
+  summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
+} from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
 import { prepareConversationHistory } from '../domain/conversationHistory';
@@ -33,7 +36,7 @@ export function App() {
     return () => { client.current?.dispose(); client.current = undefined; };
   }, []);
 
-  function calculate(blockId: string, snapshot: ConversationState = state, fingerprint = impactFingerprint(snapshot), preserveSummary = false): Promise<ImpactResult | undefined> {
+  function calculate(blockId: string, snapshot: ConversationState = state, fingerprint = impactFingerprint(snapshot, blockId), preserveSummary = false): Promise<ImpactResult | undefined> {
     const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
     const history = parameters && prepareConversationHistory(snapshot.blocks, blockId, parameters.systemPromptCacheTokens);
     const block = snapshot.blocks.find((entry) => entry.blockId === blockId);
@@ -72,7 +75,7 @@ export function App() {
 
   async function calculateAll() {
     const snapshot = state;
-    const fingerprint = impactFingerprint(snapshot);
+    const fingerprint = summaryFingerprint(snapshot);
     const blocks = snapshot.blocks.filter((block) => !isIgnoredConversationBlock(block));
     dispatch({ type: 'summaryRequested', fingerprint });
     if (blocks.length === 0) {
@@ -81,13 +84,35 @@ export function App() {
     }
     const impacts: ImpactResult[] = [];
     for (const block of blocks) {
-      const impact = await calculate(block.blockId, snapshot, fingerprint, true);
+      const impact = await calculate(block.blockId, snapshot, impactFingerprint(snapshot, block.blockId), true);
       if (!impact) {
         dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
         return;
       }
       impacts.push(impact);
     }
+    const aggregation = aggregateImpacts(impacts);
+    if (!aggregation.ok) {
+      dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
+      return;
+    }
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    dispatch({
+      type: 'summaryResolved', fingerprint, total: aggregation.total,
+      droughtRisk: parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' },
+    });
+  }
+
+  function recalculateSummary() {
+    const snapshot = state;
+    const fingerprint = summaryFingerprint(snapshot);
+    const blockingBlockIds = summaryBlockingBlockIds(snapshot);
+    dispatch({ type: 'summaryRecalculationRequested', fingerprint });
+    if (blockingBlockIds.length > 0) return;
+    const impacts = snapshot.blocks
+      .filter((block) => !isIgnoredConversationBlock(block))
+      .map((block) => currentImpact(snapshot, block.blockId))
+      .filter((impact): impact is ImpactResult => impact !== undefined);
     const aggregation = aggregateImpacts(impacts);
     if (!aggregation.ok) {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
@@ -107,7 +132,7 @@ export function App() {
         <p>{fr.introduction}</p>
       </header>
       <ConversationConfiguration state={state} dispatch={dispatch} />
-      <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} />
+      <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} />
     </main>
   );
 }

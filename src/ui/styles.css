@@ -69,11 +69,12 @@ button {
 .conversation-block legend { padding: 0 .25rem; font-weight: 700; }
 .ignored-status { margin: 1rem 0 0; color: #405349; }
 .impact-panel { display: grid; gap: .65rem; margin-top: 1rem; }
-.impact-result, .impact-error { padding: .8rem; border-radius: .35rem; }
+.impact-result, .impact-error, .impact-stale { padding: .8rem; border-radius: .35rem; }
 .impact-result { background: #edf5ee; }
 .impact-result p { margin: .3rem 0; }
 .impact-note { color: #405349; font-size: .9rem; }
 .impact-error { border: 1px solid #9d3030; background: #fff1f1; }
+.impact-stale { border: 2px solid #8a5a00; background: #fff7df; color: #513600; font-weight: 700; }
 .summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
 .summary-panel h3 { margin: 0 0 .5rem; }
 .summary-panel p { margin: .3rem 0; }

@@ -3,7 +3,12 @@ import {
   conversationReducer,
   impactFingerprint,
   initialConversationState,
+  isImpactCurrent,
   isIgnoredConversationBlock,
+  showerFingerprint,
+  isSummaryCurrent,
+  summaryFingerprint,
+  summaryBlockingBlockIds,
   type ConversationBlock,
 } from './conversationReducer';
 import { tokenizationEncoding, tokenizationFingerprint } from '../domain/tokenization';
@@ -206,7 +211,7 @@ describe('conversationReducer', () => {
       initialConversationState,
     );
     const populated = conversationReducer(withBlocks, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonjour' });
-    const fingerprint = impactFingerprint(populated);
+    const fingerprint = impactFingerprint(populated, 'two');
     const requested = conversationReducer(populated, { type: 'impactRequested', blockId: 'two', fingerprint });
     expect(requested.impacts).toEqual({ two: { status: 'pending', fingerprint } });
     const resolved = conversationReducer(requested, {
@@ -214,7 +219,9 @@ describe('conversationReducer', () => {
       impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
     });
     expect(resolved.impacts.two?.status).toBe('result');
-    expect(conversationReducer(resolved, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonsoir' }).impacts).toEqual({});
+    const edited = conversationReducer(resolved, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonsoir' });
+    expect(edited.impacts.two?.status).toBe('result');
+    expect(isImpactCurrent(edited, 'two')).toBe(false);
   });
 
   it('ignore une résolution d’impact périmée après modification, suppression ou changement de modèle', () => {
@@ -222,7 +229,7 @@ describe('conversationReducer', () => {
       conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' }),
       { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' },
     );
-    const fingerprint = impactFingerprint(populated);
+    const fingerprint = impactFingerprint(populated, 'one');
     const pending = conversationReducer(populated, { type: 'impactRequested', blockId: 'one', fingerprint });
     const completion = { type: 'impactResolved' as const, blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } };
     const edited = conversationReducer(pending, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
@@ -236,7 +243,7 @@ describe('conversationReducer', () => {
   it('publie le bilan seulement pour son empreinte courante et l’efface à la modification', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
-    const fingerprint = impactFingerprint(state);
+    const fingerprint = summaryFingerprint(state);
     state = conversationReducer(state, { type: 'summaryRequested', fingerprint });
     state = conversationReducer(state, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 1.25, carbonGco2e: 2.5, waterL: 3.75 },
@@ -244,10 +251,104 @@ describe('conversationReducer', () => {
     });
     expect(state.summary?.status).toBe('result');
     const changed = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
-    expect(changed.summary).toBeUndefined();
+    expect(changed.summary?.status).toBe('result');
+    expect(isSummaryCurrent(changed)).toBe(false);
     expect(conversationReducer(changed, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 1, carbonGco2e: 1, waterL: 1 },
       droughtRisk: { status: 'unavailable' },
     })).toBe(changed);
+  });
+
+  it('préserve les résultats indépendants et périme la chaîne dépendante', () => {
+    let state = ['one', 'two', 'three'].reduce((current, blockId) => (
+      conversationReducer(current, { type: 'blockAdded', blockId })
+    ), initialConversationState);
+    for (const [blockId, value] of [['one', 'a'], ['two', 'b'], ['three', 'c']] as const) {
+      state = conversationReducer(state, { type: 'blockUpdated', blockId, field: 'message', value });
+      const fingerprint = impactFingerprint(state, blockId);
+      state = conversationReducer(state, { type: 'impactRequested', blockId, fingerprint });
+      state = conversationReducer(state, { type: 'impactResolved', blockId, fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    }
+    const edited = conversationReducer(state, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'modifié' });
+    expect(isImpactCurrent(edited, 'one')).toBe(true);
+    expect(isImpactCurrent(edited, 'two')).toBe(false);
+    expect(isImpactCurrent(edited, 'three')).toBe(false);
+    expect(summaryBlockingBlockIds(edited)).toEqual(['two', 'three']);
+  });
+
+  it('ne périme pas les résultats en ajoutant ou supprimant un bloc vide', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const added = conversationReducer(state, { type: 'blockAdded', blockId: 'empty' });
+    const removed = conversationReducer(added, { type: 'blockRemoved', blockId: 'empty' });
+    expect(isImpactCurrent(added, 'one')).toBe(true);
+    expect(isImpactCurrent(removed, 'one')).toBe(true);
+  });
+
+  it('refuse atomiquement le recalcul du bilan et identifie chaque échange bloquant', () => {
+    let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'un' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'deux' });
+    const fingerprint = summaryFingerprint(state);
+    const refused = conversationReducer(state, { type: 'summaryRecalculationRequested', fingerprint });
+    expect(refused.summary).toMatchObject({ status: 'unavailable', code: 'invalid-results', blockingBlockIds: ['one', 'two'] });
+  });
+
+  it('autorise un recalcul de bilan seulement lorsque chaque impact renseigné est courant', () => {
+    let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
+    for (const [blockId, value] of [['one', 'un'], ['two', 'deux']] as const) {
+      state = conversationReducer(state, { type: 'blockUpdated', blockId, field: 'message', value });
+      const fingerprint = impactFingerprint(state, blockId);
+      state = conversationReducer(state, { type: 'impactRequested', blockId, fingerprint });
+      state = conversationReducer(state, { type: 'impactResolved', blockId, fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    }
+    const fingerprint = summaryFingerprint(state);
+    const requested = conversationReducer(state, { type: 'summaryRecalculationRequested', fingerprint });
+    expect(requested.summary).toEqual({ status: 'pending', fingerprint });
+    const resolved = conversationReducer(requested, {
+      type: 'summaryResolved', fingerprint, total: { energyWh: 2, carbonGco2e: 4, waterL: 6 },
+      droughtRisk: { status: 'unavailable' },
+    });
+    expect(resolved.summary).toMatchObject({ status: 'result', total: { energyWh: 2, carbonGco2e: 4, waterL: 6 } });
+  });
+
+  it('périme les échanges dépendants après la suppression d’un échange renseigné', () => {
+    let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
+    for (const [blockId, value] of [['one', 'un'], ['two', 'deux']] as const) {
+      state = conversationReducer(state, { type: 'blockUpdated', blockId, field: 'message', value });
+      const fingerprint = impactFingerprint(state, blockId);
+      state = conversationReducer(state, { type: 'impactRequested', blockId, fingerprint });
+      state = conversationReducer(state, { type: 'impactResolved', blockId, fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    }
+    const removed = conversationReducer(state, { type: 'blockRemoved', blockId: 'one' });
+    expect(isImpactCurrent(removed, 'two')).toBe(false);
+    expect(summaryBlockingBlockIds(removed)).toEqual(['two']);
+  });
+
+  it('périme un résultat résolu après le changement de modèle', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const changed = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
+    expect(isImpactCurrent(changed, 'one')).toBe(false);
+    expect(summaryBlockingBlockIds(changed)).toEqual(['one']);
+  });
+
+  it('signale l’absence d’échange lors du recalcul de bilan', () => {
+    const fingerprint = summaryFingerprint(initialConversationState);
+    const state = conversationReducer(initialConversationState, { type: 'summaryRecalculationRequested', fingerprint });
+    expect(state.summary).toEqual({ status: 'unavailable', fingerprint, code: 'no-exchanges' });
+  });
+
+  it('dérive une empreinte de douche canonique des résultats et paramètres qui la déterminent', () => {
+    const base = showerFingerprint(initialConversationState, 'France', 60);
+    expect(showerFingerprint(initialConversationState, 'France', 60)).toBe(base);
+    expect(showerFingerprint(initialConversationState, 'France', 61)).not.toBe(base);
+    expect(showerFingerprint(initialConversationState, 'Belgique', 60)).not.toBe(base);
   });
 });
