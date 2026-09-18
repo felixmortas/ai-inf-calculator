@@ -26,6 +26,21 @@ describe('conversationReducer', () => {
     expect(state).toMatchObject({ provider: 'Gemini', modelId: 'gemini-3.5-pro' });
   });
 
+  it('initialise le pays fournisseur, accepte seulement un pays catalogué et périme les impacts sans calculer', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const changed = conversationReducer(state, { type: 'hostingCountrySelected', country: 'FR' });
+    expect(initialConversationState.hostingCountry).toBe('US');
+    expect(changed.hostingCountry).toBe('FR');
+    expect(changed.impacts.one?.status).toBe('result');
+    expect(isImpactCurrent(changed, 'one')).toBe(false);
+    expect(conversationReducer(changed, { type: 'hostingCountrySelected', country: 'XX' })).toBe(changed);
+    expect(conversationReducer(changed, { type: 'providerSelected', provider: 'Gemini' }).hostingCountry).toBe('US');
+  });
+
   it('refuse un modèle externe au fournisseur sélectionné', () => {
     const gemini = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'Gemini' });
     expect(conversationReducer(gemini, { type: 'modelSelected', modelId: 'claude-sonnet-5' })).toBe(gemini);
@@ -247,7 +262,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'summaryRequested', fingerprint });
     state = conversationReducer(state, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 1.25, carbonGco2e: 2.5, waterL: 3.75 },
-      droughtRisk: { status: 'available', level: 'Medium (0.4-0.6)' },
+      droughtRisk: { status: 'available', level: 'Medium (0.4-0.6)', source: 'country' },
     });
     expect(state.summary?.status).toBe('result');
     const changed = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });

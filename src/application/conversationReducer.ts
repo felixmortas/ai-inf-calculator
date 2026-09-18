@@ -1,4 +1,4 @@
-import { modelCatalog, modelsForProvider } from '../data/modelCatalog';
+import { modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, type EnvironmentalFactorSource } from '../data/modelCatalog';
 import {
   canSelectModel,
   chatGptProvider,
@@ -24,6 +24,7 @@ export interface ConversationState {
   readonly provider: string;
   readonly subscription: ChatGptSubscription;
   readonly modelId: string;
+  readonly hostingCountry: string;
   readonly blocks: readonly ConversationBlock[];
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
@@ -51,29 +52,30 @@ export interface BlockTokenizationState {
 
 export type BlockImpactState =
   | { readonly status: 'pending'; readonly fingerprint: string }
-  | { readonly status: 'result'; readonly fingerprint: string; readonly impact: ImpactResult }
+  | { readonly status: 'result'; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly status: 'error'; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' };
 
 export type ConversationSummaryState =
   | { readonly status: 'pending'; readonly fingerprint: string }
-  | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk }
+  | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
 
 export type ConversationAction =
   | { readonly type: 'providerSelected'; readonly provider: string }
   | { readonly type: 'subscriptionSelected'; readonly subscription: ChatGptSubscription }
   | { readonly type: 'modelSelected'; readonly modelId: string }
+  | { readonly type: 'hostingCountrySelected'; readonly country: string }
   | { readonly type: 'blockAdded'; readonly blockId: string }
   | { readonly type: 'blockUpdated'; readonly blockId: string; readonly field: ConversationBlockField; readonly value: string }
   | { readonly type: 'blockRemoved'; readonly blockId: string }
   | { readonly type: 'tokenizationRequested'; readonly blockId: string; readonly requestId: string; readonly encoding: TokenizationEncoding; readonly fingerprint: string }
   | { readonly type: 'tokenizationResponded'; readonly response: TokenizationResponse }
   | { readonly type: 'impactRequested'; readonly blockId: string; readonly fingerprint: string; readonly preserveSummary?: boolean }
-  | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult }
+  | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' }
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryRecalculationRequested'; readonly fingerprint: string }
-  | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk }
+  | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
 
 const initialSubscription: ChatGptSubscription = 'without-paid-subscription';
@@ -82,6 +84,7 @@ export const initialConversationState: ConversationState = Object.freeze({
   provider: chatGptProvider,
   subscription: initialSubscription,
   modelId: resolveChatGptModel(initialSubscription),
+  hostingCountry: resolveHostingCountry(chatGptProvider)!,
   blocks: [],
   tokenizations: {},
   impacts: {},
@@ -134,11 +137,11 @@ function invalidateCalculationsAndTokenizations(state: ConversationState): Conve
 }
 
 /** A canonical snapshot of exactly the inputs consumed by one impact calculation. */
-export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks'>, blockId?: string): string {
+export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>, blockId?: string): string {
   if (!blockId) {
     return summaryFingerprint(state);
   }
-  const parameters = resolveImpactParameters(state.provider, state.modelId);
+  const parameters = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry);
   const block = state.blocks.find((entry) => entry.blockId === blockId);
   if (!parameters || !block) return JSON.stringify(['impact-v2', 'unavailable', blockId]);
   const history = prepareConversationHistory(state.blocks, blockId, parameters.systemPromptCacheTokens);
@@ -149,7 +152,7 @@ export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'm
 }
 
 /** Empty blocks deliberately do not participate, so adding/removing one preserves freshness. */
-export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks'>): string {
+export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>): string {
   return JSON.stringify(['summary-v2', state.blocks
     .filter((block) => !isIgnoredConversationBlock(block))
     .map((block) => [block.blockId, impactFingerprint(state, block.blockId)])]);
@@ -160,38 +163,38 @@ export function summaryFingerprint(state: Pick<ConversationState, 'provider' | '
  * dependency boundary is available now for the later session parameters.
  */
 export function showerFingerprint(
-  state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks'>,
+  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>,
   userCountry?: string,
   showerReference?: number,
 ): string {
   return JSON.stringify(['shower-v1', summaryFingerprint(state), userCountry ?? null, showerReference ?? null]);
 }
 
-export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'impacts'>, blockId: string): boolean {
+export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): boolean {
   const impact = state.impacts[blockId];
   return impact?.status === 'result' && impact.fingerprint === impactFingerprint(state, blockId);
 }
 
-export function isImpactFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'impacts'>, blockId: string): boolean {
+export function isImpactFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): boolean {
   const impact = state.impacts[blockId];
   return impact !== undefined && impact.fingerprint === impactFingerprint(state, blockId);
 }
 
-export function currentImpact(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'impacts'>, blockId: string): ImpactResult | undefined {
+export function currentImpact(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): ImpactResult | undefined {
   const impact = state.impacts[blockId];
   return isImpactCurrent(state, blockId) && impact?.status === 'result' ? impact.impact : undefined;
 }
 
-export function summaryBlockingBlockIds(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'impacts'>): readonly string[] {
+export function summaryBlockingBlockIds(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>): readonly string[] {
   return state.blocks.filter((block) => !isIgnoredConversationBlock(block) && !isImpactCurrent(state, block.blockId))
     .map((block) => block.blockId);
 }
 
-export function isSummaryCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'summary'>): boolean {
+export function isSummaryCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary'>): boolean {
   return state.summary?.status === 'result' && state.summary.fingerprint === summaryFingerprint(state);
 }
 
-export function isSummaryFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'blocks' | 'summary'>): boolean {
+export function isSummaryFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary'>): boolean {
   return state.summary !== undefined && state.summary.fingerprint === summaryFingerprint(state);
 }
 
@@ -206,6 +209,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
         modelId: action.provider === chatGptProvider
           ? resolveChatGptModel(state.subscription)
           : modelId,
+        hostingCountry: resolveHostingCountry(action.provider)!,
       });
     }
     case 'subscriptionSelected':
@@ -213,11 +217,15 @@ export function conversationReducer(state: ConversationState, action: Conversati
       if (!(action.subscription in chatGptSubscriptionModels)) return state;
       return invalidateCalculationsAndTokenizations({
         ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription),
+        hostingCountry: resolveHostingCountry(state.provider)!,
       });
     case 'modelSelected':
       if (state.provider === chatGptProvider) return state;
       if (!canSelectModel(modelCatalog.models, state.provider, action.modelId)) return state;
-      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId });
+      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, hostingCountry: resolveHostingCountry(state.provider)! });
+    case 'hostingCountrySelected':
+      if (!isHostingCountry(action.country) || action.country === state.hostingCountry) return state;
+      return discardTransientCalculations({ ...state, hostingCountry: action.country });
     case 'blockAdded':
       if (state.blocks.some((block) => block.blockId === action.blockId)) return state;
       return discardTransientCalculations({ ...state, blocks: [...state.blocks, createConversationBlock(action.blockId)] });
@@ -280,7 +288,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'impactResolved': {
       const current = state.impacts[action.blockId];
       if (current?.status !== 'pending' || current.fingerprint !== action.fingerprint || impactFingerprint(state, action.blockId) !== action.fingerprint) return state;
-      return { ...state, impacts: { ...state.impacts, [action.blockId]: { status: 'result', fingerprint: action.fingerprint, impact: action.impact } } };
+      return { ...state, impacts: { ...state.impacts, [action.blockId]: { status: 'result', fingerprint: action.fingerprint, impact: action.impact, factorSources: action.factorSources } } };
     }
     case 'impactBlocked': {
       const block = state.blocks.find(({ blockId }) => blockId === action.blockId);
@@ -305,7 +313,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
       return state.summary?.status === 'pending'
         && state.summary.fingerprint === action.fingerprint
         && summaryFingerprint(state) === action.fingerprint
-        ? { ...state, summary: { status: 'result', fingerprint: action.fingerprint, total: action.total, droughtRisk: action.droughtRisk } }
+        ? { ...state, summary: { status: 'result', fingerprint: action.fingerprint, total: action.total, droughtRisk: action.droughtRisk, factorSources: action.factorSources } }
         : state;
     case 'summaryUnavailable':
       return state.summary?.status === 'pending'

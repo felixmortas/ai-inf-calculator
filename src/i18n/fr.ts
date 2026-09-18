@@ -8,6 +8,9 @@ export const fr = {
   subscriptionFree: 'Sans abonnement payant',
   subscriptionPaid: 'Avec abonnement payant',
   modelLabel: 'Modèle applicable à la conversation',
+  advancedSettingsTitle: 'Paramètres avancés',
+  hostingCountryLabel: 'Pays d’hébergement',
+  hostingCountryHelp: 'Ce pays de référence s’applique à l’énergie, au carbone, à l’eau et au risque de sécheresse.',
   conversationLabel: 'Conversation',
   addBlockAction: 'Ajouter un échange',
   removeBlockAction: (number: number) => `Supprimer l’échange ${number}`,
@@ -36,5 +39,6 @@ export const fr = {
   waterLabel: 'Eau',
   impactLimits: 'Estimation incertaine : usage uniquement, hors fabrication, amortissement et Scope 3.',
   invalidDataError: 'Le calcul est bloqué : une donnée indispensable est indisponible ou invalide.',
+  worldFallbackNotice: 'Au moins un facteur environnemental utilise la donnée de repli « Monde ».',
   emptyBlockError: 'Saisissez un échange avant de lancer un calcul.',
 } as const;

@@ -61,6 +61,8 @@ describe('composition de la conversation', () => {
     await user.tab();
     await user.tab();
     await user.tab();
+    await user.tab();
+    await user.tab();
     expect(screen.getByRole('button', { name: 'Ajouter un échange' })).toHaveFocus();
     await user.keyboard('{Enter}');
     await user.type(screen.getByLabelText('Message'), 'éphémère');
@@ -83,6 +85,28 @@ describe('composition de la conversation', () => {
     expect(await screen.findByText(/Énergie:/)).toBeVisible();
     expect(screen.getByText(/Estimation incertaine/)).toBeVisible();
     expect(screen.getAllByRole('button', { name: 'Calculer' })).toHaveLength(1);
+  });
+
+  it('applique le pays d’hébergement choisi aux calculs et au risque du bilan', async () => {
+    const user = userEvent.setup();
+    const french = render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    await user.selectOptions(screen.getByLabelText('Pays d’hébergement'), 'FR');
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    const frenchCarbon = (await screen.findByText(/Carbone:/)).textContent;
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    expect(summary.parentElement).toHaveTextContent('Medium - High (0.6-0.8)');
+    expect(summary.parentElement).toHaveTextContent(frenchCarbon!);
+    french.unmount();
+
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    expect((await screen.findByText(/Carbone:/)).textContent).not.toBe(frenchCarbon);
   });
 
   it('calcule les seuls échanges renseignés puis affiche leur bilan et le risque pays', async () => {
@@ -143,6 +167,21 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state, 'one'), code: 'invalid-data' });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
     expect(screen.getByRole('alert')).toHaveTextContent('donnée indispensable');
+  });
+
+  it('annonce explicitement le repli Monde auprès du résultat concerné', () => {
+    const fingerprint = impactFingerprint(initialConversationState);
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const blockFingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint: blockFingerprint });
+    state = conversationReducer(state, {
+      type: 'impactResolved', blockId: 'one', fingerprint: blockFingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
+      factorSources: { pue: 'world', wue: 'country', carbonIntensity: 'country' },
+    });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+    expect(screen.getByText(/donnée de repli « Monde »/)).toBeVisible();
+    expect(fingerprint).toBeTypeOf('string');
   });
 
   it('masque un impact périmé, explique le recalcul et liste les échanges bloquants', () => {

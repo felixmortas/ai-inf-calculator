@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canSelectModel, resolveChatGptModel, selectableModels } from './modelSelection';
-import { hasModel, modelCatalog, resolveDroughtRisk, resolveHostingCountry, resolveImpactParameters } from '../data/modelCatalog';
+import { hasModel, modelCatalog, resolveDroughtRisk, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
   const models = [
@@ -31,10 +31,23 @@ describe('sélection de modèle', () => {
   });
 
   it('expose le pays d’hébergement et distingue un risque absent', () => {
-    expect(resolveHostingCountry('ChatGPT')).toBe('United States');
-    expect(resolveDroughtRisk('United States')).toEqual({ status: 'available', level: 'Medium (0.4-0.6)' });
-    expect(resolveHostingCountry('Mistral AI')).toBe('Switzerland');
-    expect(resolveDroughtRisk('Switzerland')).toEqual({ status: 'available', level: 'Medium - High (0.6-0.8)' });
+    expect(resolveHostingCountry('ChatGPT')).toBe('US');
+    expect(resolveDroughtRisk('US')).toEqual({ status: 'available', level: 'Medium (0.4-0.6)', source: 'country' });
+    expect(resolveHostingCountry('Mistral AI')).toBe('CH');
+    expect(resolveDroughtRisk('CH')).toEqual({ status: 'available', level: 'Medium - High (0.6-0.8)', source: 'country' });
     expect(resolveDroughtRisk('pays absent')).toEqual({ status: 'unavailable' });
+  });
+
+  it('utilise Monde pour le risque de sécheresse lorsque le pays est absent', () => {
+    const risks = 'Area,drought_risk_level\nWorld,Low';
+    expect(resolveDroughtRisk('FR', risks)).toEqual({ status: 'available', level: 'Low', source: 'world' });
+  });
+
+  it('résout sans mutation la valeur pays, le repli Monde, zéro et l’absence complète', () => {
+    const rows = Object.freeze([{ country: 'France', value: 0 }, { country: 'World', value: 12 }]);
+    expect(resolveEnvironmentalFactor('FR', rows)).toEqual({ status: 'country', value: 0 });
+    expect(resolveEnvironmentalFactor('US', rows)).toEqual({ status: 'world', value: 12 });
+    expect(resolveEnvironmentalFactor('US', [])).toEqual({ status: 'unavailable' });
+    expect(rows).toEqual([{ country: 'France', value: 0 }, { country: 'World', value: 12 }]);
   });
 });

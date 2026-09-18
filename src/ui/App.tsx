@@ -7,7 +7,7 @@ import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { fallbackTokenCount } from '../domain/tokenization';
-import { resolveDroughtRisk, resolveImpactParameters } from '../data/modelCatalog';
+import { resolveDroughtRisk, resolveImpactParameters, type DroughtRisk } from '../data/modelCatalog';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
@@ -37,7 +37,7 @@ export function App() {
   }, []);
 
   function calculate(blockId: string, snapshot: ConversationState = state, fingerprint = impactFingerprint(snapshot, blockId), preserveSummary = false): Promise<ImpactResult | undefined> {
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
     const history = parameters && prepareConversationHistory(snapshot.blocks, blockId, parameters.systemPromptCacheTokens);
     const block = snapshot.blocks.find((entry) => entry.blockId === blockId);
     if (!parameters || !history || !block) {
@@ -56,7 +56,7 @@ export function App() {
         carbonIntensity: parameters.carbonIntensity, wue: parameters.wue,
       });
         if (result.ok) {
-          dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact });
+          dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact, factorSources: parameters.factorSources });
           resolve(result.impact);
         } else {
           dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
@@ -96,10 +96,15 @@ export function App() {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
       return;
     }
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
+    const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,
-      droughtRisk: parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' },
+      droughtRisk,
+      factorSources: parameters ? {
+        ...parameters.factorSources,
+        ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
+      } : undefined,
     });
   }
 
@@ -118,10 +123,15 @@ export function App() {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
       return;
     }
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
+    const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,
-      droughtRisk: parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' },
+      droughtRisk,
+      factorSources: parameters ? {
+        ...parameters.factorSources,
+        ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
+      } : undefined,
     });
   }
 

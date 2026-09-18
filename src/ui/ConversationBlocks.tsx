@@ -90,6 +90,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         <p>{fr.waterLabel}: {formatImpact(currentSummary.total.waterL)} L</p>
         <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available'
           ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable}</p>
+        {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
         <p className="impact-note">{fr.summaryLimits}</p>
       </section> : null}
       {state.blocks.map((block, index) => {
@@ -131,6 +132,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                 <p>{fr.energyLabel}: {formatImpact(impactState.impact.energyWh)} Wh</p>
                 <p>{fr.carbonLabel}: {formatImpact(impactState.impact.carbonGco2e)} gCO2e</p>
                 <p>{fr.waterLabel}: {formatImpact(impactState.impact.waterL)} L</p>
+                {Object.values(impactState.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.worldFallbackNotice}</p> : null}
                 <p className="impact-note">{fr.impactLimits}</p>
               </div> : null}
               {impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}

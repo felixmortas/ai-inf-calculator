@@ -79,46 +79,127 @@ function parseRows(source: string): readonly Readonly<Record<string, string>>[] 
   return Object.freeze(rows.map((row) => Object.freeze(Object.fromEntries(row.split(',').map((value, index) => [columns[index], value.trim()])))));
 }
 
-function finiteLookup(source: string, key: string, value: string, expected: number, requiresMetadata = true): number | undefined {
-  const row = parseRows(source).find((entry) => entry.Area === key);
-  if (!row || (requiresMetadata && (!row.source || !row.version || !row.date))) return undefined;
-  const parsed = Number(row[value]);
-  return Number.isFinite(parsed) && parsed >= expected ? parsed : undefined;
-}
-
 export interface ResolvedImpactParameters extends CatalogModel {
   readonly hostingCountry: string;
   readonly pue: number;
   readonly wue: number;
   readonly carbonIntensity: number;
+  readonly factorSources: Readonly<Record<EnvironmentalFactor, EnvironmentalFactorSource>>;
+}
+
+export type EnvironmentalFactor = 'pue' | 'wue' | 'carbonIntensity';
+export type EnvironmentalFactorSource = 'country' | 'world';
+
+export type ResolvedEnvironmentalFactor =
+  | { readonly status: 'country' | 'world'; readonly value: number }
+  | { readonly status: 'unavailable' };
+
+export interface EnvironmentalFactorRow {
+  readonly country: string;
+  readonly value: number;
+}
+
+export interface HostingCountryOption {
+  readonly code: string;
+  readonly label: string;
+}
+
+const countryOptions = Object.freeze([
+  Object.freeze({ code: 'BR', label: 'Brésil' }),
+  Object.freeze({ code: 'CH', label: 'Suisse' }),
+  Object.freeze({ code: 'FR', label: 'France' }),
+  Object.freeze({ code: 'IN', label: 'Inde' }),
+  Object.freeze({ code: 'US', label: 'États-Unis' }),
+]);
+
+const countryNames: Readonly<Record<string, string>> = Object.freeze({
+  BR: 'Brazil', CH: 'Switzerland', FR: 'France', IN: 'India', US: 'United States', WORLD: 'World',
+});
+
+const countryCodesByName: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries([
+  ...Object.entries(countryNames).map(([code, name]) => [name.toLowerCase(), code]),
+  ['monde', 'WORLD'], ['world', 'WORLD'], ['brésil', 'BR'], ['suisse', 'CH'], ['états-unis', 'US'], ['inde', 'IN'], ['france', 'FR'],
+]));
+
+export const hostingCountryOptions: readonly HostingCountryOption[] = countryOptions;
+
+/** Normalise les libellés historiques des catalogues vers les codes ISO de session. */
+export function normalizeCountry(country: string): string | undefined {
+  const value = country.trim();
+  const uppercase = value.toUpperCase();
+  return countryNames[uppercase] ? uppercase : countryCodesByName[value.toLowerCase()];
+}
+
+export function isHostingCountry(country: string): boolean {
+  return countryOptions.some((option) => option.code === country);
+}
+
+/** Résolution pure et injectable : une valeur nulle est une donnée valide. */
+export function resolveEnvironmentalFactor(
+  country: string,
+  rows: readonly EnvironmentalFactorRow[],
+): ResolvedEnvironmentalFactor {
+  const requested = normalizeCountry(country);
+  if (!requested) return Object.freeze({ status: 'unavailable' });
+  const valueFor = (code: string) => rows.find((row) => normalizeCountry(row.country) === code && Number.isFinite(row.value))?.value;
+  const localValue = valueFor(requested);
+  if (localValue !== undefined) return Object.freeze({ status: 'country', value: localValue });
+  const worldValue = valueFor('WORLD');
+  return worldValue === undefined
+    ? Object.freeze({ status: 'unavailable' })
+    : Object.freeze({ status: 'world', value: worldValue });
 }
 
 export type DroughtRisk =
-  | { readonly status: 'available'; readonly level: string }
+  | { readonly status: 'available'; readonly level: string; readonly source: EnvironmentalFactorSource }
   | { readonly status: 'unavailable' };
 
 /** Pays d'hébergement localement catalogué pour le fournisseur sélectionné. */
 export function resolveHostingCountry(provider: string): string | undefined {
-  return parseRows(providerCountryCsv).find((entry) => entry.provider === provider)?.country;
+  const country = parseRows(providerCountryCsv).find((entry) => entry.provider === provider)?.country;
+  return country ? normalizeCountry(country) : undefined;
 }
 
 /** Le niveau reste catégoriel : « No Data » ne devient jamais un niveau inventé. */
-export function resolveDroughtRisk(country: string): DroughtRisk {
-  const level = parseRows(droughtRiskCsv).find((entry) => entry.Area === country)?.drought_risk_level;
-  return level && level !== 'No Data'
-    ? Object.freeze({ status: 'available', level })
+export function resolveDroughtRisk(country: string, source = droughtRiskCsv): DroughtRisk {
+  const normalized = normalizeCountry(country);
+  if (!normalized) return Object.freeze({ status: 'unavailable' });
+  const levelFor = (code: string) => parseRows(source).find((entry) => normalizeCountry(entry.Area) === code)?.drought_risk_level;
+  const countryLevel = levelFor(normalized);
+  if (countryLevel && countryLevel !== 'No Data') {
+    return Object.freeze({ status: 'available', level: countryLevel, source: 'country' });
+  }
+  const worldLevel = levelFor('WORLD');
+  return worldLevel && worldLevel !== 'No Data'
+    ? Object.freeze({ status: 'available', level: worldLevel, source: 'world' })
     : Object.freeze({ status: 'unavailable' });
 }
 
 /** Résout exclusivement des données locales ; undefined signifie un blocage explicite. */
-export function resolveImpactParameters(provider: string, modelId: string): ResolvedImpactParameters | undefined {
+function factorRows(source: string, key: string, expected: number, requiresMetadata = true): readonly EnvironmentalFactorRow[] {
+  return Object.freeze(parseRows(source).flatMap((row) => {
+    if (requiresMetadata && (!row.source || !row.version || !row.date)) return [];
+    const value = Number(row[key]);
+    return Number.isFinite(value) && value >= expected ? [Object.freeze({ country: row.Area, value })] : [];
+  }));
+}
+
+const environmentalFactorRows: Readonly<Record<EnvironmentalFactor, readonly EnvironmentalFactorRow[]>> = Object.freeze({
+  pue: factorRows(pueCsv, 'pue', 1),
+  wue: factorRows(wueCsv, 'wue', 0),
+  carbonIntensity: factorRows(carbonCsv, 'Emissions intensity (gCO2e/kWh)', 0, false),
+});
+
+/** Résout les paramètres sans jamais modifier les catalogues importés. */
+export function resolveImpactParameters(provider: string, modelId: string, hostingCountry = resolveHostingCountry(provider)): ResolvedImpactParameters | undefined {
   const model = modelCatalog.models.find((entry) => entry.provider === provider && entry.id === modelId);
-  const country = resolveHostingCountry(provider);
-  if (!model || !country) return undefined;
-  const pue = finiteLookup(pueCsv, country, 'pue', 1);
-  const wue = finiteLookup(wueCsv, country, 'wue', 0);
-  // Ce catalogue existant documente sa provenance et sa date dans son fichier compagnon `.md`.
-  const carbonIntensity = finiteLookup(carbonCsv, country, 'Emissions intensity (gCO2e/kWh)', 0, false);
-  return pue === undefined || wue === undefined || carbonIntensity === undefined
-    ? undefined : Object.freeze({ ...model, hostingCountry: country, pue, wue, carbonIntensity });
+  if (!model || !hostingCountry || !isHostingCountry(hostingCountry)) return undefined;
+  const pue = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.pue);
+  const wue = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.wue);
+  const carbonIntensity = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.carbonIntensity);
+  if (pue.status === 'unavailable' || wue.status === 'unavailable' || carbonIntensity.status === 'unavailable') return undefined;
+  return Object.freeze({
+    ...model, hostingCountry, pue: pue.value, wue: wue.value, carbonIntensity: carbonIntensity.value,
+    factorSources: Object.freeze({ pue: pue.status, wue: wue.status, carbonIntensity: carbonIntensity.status }),
+  });
 }

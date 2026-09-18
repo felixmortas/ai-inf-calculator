@@ -33,6 +33,16 @@ describe('configuration de conversation', () => {
     expect(screen.getByLabelText('Chatbot')).toHaveFocus();
   });
 
+  it('permet de choisir au clavier le pays d’hébergement dans les paramètres avancés', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    const country = screen.getByLabelText('Pays d’hébergement');
+    expect(country).toHaveValue('US');
+    await user.selectOptions(country, 'FR');
+    expect(country).toHaveValue('FR');
+  });
+
   it('repart des valeurs initiales après un nouveau montage', async () => {
     const user = userEvent.setup();
     const first = render(<App />);

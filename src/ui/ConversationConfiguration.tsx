@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { modelCatalog, modelsForProvider } from '../data/modelCatalog';
+import { hostingCountryOptions, modelCatalog, modelsForProvider } from '../data/modelCatalog';
 import { chatGptProvider, type ChatGptSubscription } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
@@ -22,6 +22,10 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
 
   function selectModel(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'modelSelected', modelId: event.currentTarget.value });
+  }
+
+  function selectHostingCountry(event: ChangeEvent<HTMLSelectElement>) {
+    dispatch({ type: 'hostingCountrySelected', country: event.currentTarget.value });
   }
 
   return (
@@ -55,6 +59,16 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
           </select>
         )}
       </div>
+      <details className="advanced-settings">
+        <summary>{fr.advancedSettingsTitle}</summary>
+        <div className="field">
+          <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
+          <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
+          <select id="hosting-country" aria-describedby="hosting-country-help" value={state.hostingCountry} onChange={selectHostingCountry}>
+            {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+          </select>
+        </div>
+      </details>
     </section>
   );
 }
