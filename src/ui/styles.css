@@ -29,7 +29,7 @@ header > p { color: #405349; }
 .field { display: grid; gap: .45rem; margin-top: 1rem; }
 label { font-weight: 700; }
 .help { margin: 0; color: #405349; font-size: .9rem; }
-select, textarea, .resolved-model {
+select, textarea, input, .resolved-model {
   width: 100%;
   min-height: 2.75rem;
   padding: .55rem .7rem;
@@ -40,6 +40,8 @@ select, textarea, .resolved-model {
   font: inherit;
 }
 .resolved-model { display: flex; align-items: center; background: #edf5ee; }
+.parameter-form { display: grid; gap: .45rem; margin-top: 1rem; }
+.parameter-form .field { margin-top: .25rem; }
 textarea { min-height: 6rem; resize: vertical; }
 button {
   min-height: 2.75rem;

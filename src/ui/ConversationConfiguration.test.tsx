@@ -65,4 +65,45 @@ describe('configuration de conversation', () => {
     expect(pushState).not.toHaveBeenCalled();
     expect(replaceState).not.toHaveBeenCalled();
   });
+
+  it('expose les surcharges avec unités, refuse une valeur invalide et restaure les références', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    expect(screen.getByLabelText('Paramètres totaux (milliards)')).toHaveValue(100);
+    expect(screen.getByLabelText('Débit de douche (L/min)')).toHaveValue(15);
+    await user.clear(screen.getByLabelText('PUE (ratio)'));
+    await user.type(screen.getByLabelText('PUE (ratio)'), '0.9');
+    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-describedby', 'parameter-error');
+    await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.15);
+  });
+
+  it('refuse une valeur vide, même pour un paramètre dont zéro est autorisé', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    await user.clear(screen.getByLabelText('WUE (L/kWh)'));
+    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(screen.getByLabelText('WUE (L/kWh)')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('bloque les calculs tant qu’une saisie avancée invalide n’est pas corrigée', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Bonjour');
+    await user.click(screen.getByText('Paramètres avancés'));
+    await user.clear(screen.getByLabelText('PUE (ratio)'));
+    await user.type(screen.getByLabelText('PUE (ratio)'), '0.9');
+    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
+    expect(screen.getByRole('button', { name: 'Calculer' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Tout calculer' })).toBeDisabled();
+  });
 });

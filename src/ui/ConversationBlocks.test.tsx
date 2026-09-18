@@ -87,6 +87,23 @@ describe('composition de la conversation', () => {
     expect(screen.getAllByRole('button', { name: 'Calculer' })).toHaveLength(1);
   });
 
+  it('applique une constante avancée validée au calcul suivant', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    const initialEnergy = (await screen.findByText(/Énergie:/)).textContent;
+
+    await user.click(screen.getByText('Paramètres avancés'));
+    const alpha = screen.getByLabelText('Constante énergie alpha (Wh/token)');
+    await user.clear(alpha);
+    await user.type(alpha, '0.00001');
+    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    expect((await screen.findByText(/Énergie:/)).textContent).not.toBe(initialEnergy);
+  });
+
   it('applique le pays d’hébergement choisi aux calculs et au risque du bilan', async () => {
     const user = userEvent.setup();
     const french = render(<App />);

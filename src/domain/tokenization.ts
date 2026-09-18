@@ -47,17 +47,18 @@ export function respectsEmptyTokenizationTexts(counts: TokenizationCounts, texts
   return tokenizationTextFields.every((field) => !isEmptyTokenizationText(texts[field]) || counts[field] === 0);
 }
 
-export function fallbackTokenCount(text: string): number {
+export function fallbackTokenCount(text: string, wordsPerToken = 0.75): number {
+  if (!Number.isFinite(wordsPerToken) || wordsPerToken <= 0) return Number.NaN;
   if (isEmptyTokenizationText(text)) return 0;
   const words = text.match(/[\p{L}\p{N}]+/gu) ?? [];
-  return words.length / 0.75;
+  return words.length / wordsPerToken;
 }
 
-export function fallbackTokenization(texts: TokenizationTexts): BlockTokenizationResult {
+export function fallbackTokenization(texts: TokenizationTexts, wordsPerToken = 0.75): BlockTokenizationResult {
   return {
     source: 'fallback',
     counts: Object.fromEntries(
-      tokenizationTextFields.map((field) => [field, fallbackTokenCount(texts[field])]),
+      tokenizationTextFields.map((field) => [field, fallbackTokenCount(texts[field], wordsPerToken)]),
     ) as TokenizationCounts,
   };
 }

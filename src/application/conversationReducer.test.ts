@@ -366,4 +366,31 @@ describe('conversationReducer', () => {
     expect(showerFingerprint(initialConversationState, 'France', 61)).not.toBe(base);
     expect(showerFingerprint(initialConversationState, 'Belgique', 60)).not.toBe(base);
   });
+
+  it('valide les surcharges, préserve les résultats et périme sélectivement sans calcul', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const showerOnly = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { flowLitresPerMinute: 10 } } });
+    expect(isImpactCurrent(showerOnly, 'one')).toBe(true);
+    const impactChanged = conversationReducer(showerOnly, { type: 'parametersApplied', overrides: { pue: 1.4 } });
+    expect(impactChanged.impacts.one?.status).toBe('result');
+    expect(isImpactCurrent(impactChanged, 'one')).toBe(false);
+    expect(conversationReducer(impactChanged, { type: 'parametersApplied', overrides: { pue: .9 } })).toBe(impactChanged);
+    const restored = conversationReducer(impactChanged, { type: 'parametersRestored' });
+    expect(restored.blocks).toEqual(impactChanged.blocks);
+    expect(restored.parameterOverrides).toEqual({});
+  });
+
+  it('fait dépendre la frontière douche des impacts et de la référence douche', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const base = showerFingerprint(state, 'FR', 60);
+    const withImpactOverride = { ...state, parameterOverrides: { pue: 1.4 } };
+    const withShowerOverride = { ...state, parameterOverrides: { shower: { flowLitresPerMinute: 10 } } };
+    expect(showerFingerprint(withImpactOverride, 'FR', 60)).not.toBe(base);
+    expect(showerFingerprint(withShowerOverride, 'FR', 60)).not.toBe(base);
+  });
 });

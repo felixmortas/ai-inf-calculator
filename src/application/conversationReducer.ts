@@ -1,4 +1,4 @@
-import { modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, type EnvironmentalFactorSource } from '../data/modelCatalog';
+import { modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, type EnvironmentalFactorSource, type ImpactParameterOverrides } from '../data/modelCatalog';
 import {
   canSelectModel,
   chatGptProvider,
@@ -25,6 +25,9 @@ export interface ConversationState {
   readonly subscription: ChatGptSubscription;
   readonly modelId: string;
   readonly hostingCountry: string;
+  readonly parameterOverrides: ImpactParameterOverrides;
+  /** Saisie avancée invalide, non appliquée : bloque les calculs sans perdre la dernière vue valide. */
+  readonly parameterValidationInvalid: boolean;
   readonly blocks: readonly ConversationBlock[];
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
@@ -65,6 +68,9 @@ export type ConversationAction =
   | { readonly type: 'subscriptionSelected'; readonly subscription: ChatGptSubscription }
   | { readonly type: 'modelSelected'; readonly modelId: string }
   | { readonly type: 'hostingCountrySelected'; readonly country: string }
+  | { readonly type: 'parametersApplied'; readonly overrides: ImpactParameterOverrides }
+  | { readonly type: 'parametersValidationFailed' }
+  | { readonly type: 'parametersRestored' }
   | { readonly type: 'blockAdded'; readonly blockId: string }
   | { readonly type: 'blockUpdated'; readonly blockId: string; readonly field: ConversationBlockField; readonly value: string }
   | { readonly type: 'blockRemoved'; readonly blockId: string }
@@ -88,6 +94,8 @@ export const initialConversationState: ConversationState = Object.freeze({
   blocks: [],
   tokenizations: {},
   impacts: {},
+  parameterOverrides: {},
+  parameterValidationInvalid: false,
 });
 
 const conversationBlockFields: readonly ConversationBlockField[] = [
@@ -137,22 +145,23 @@ function invalidateCalculationsAndTokenizations(state: ConversationState): Conve
 }
 
 /** A canonical snapshot of exactly the inputs consumed by one impact calculation. */
-export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>, blockId?: string): string {
+export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>, blockId?: string): string {
   if (!blockId) {
     return summaryFingerprint(state);
   }
-  const parameters = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry);
+  const parameters = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
   const block = state.blocks.find((entry) => entry.blockId === blockId);
   if (!parameters || !block) return JSON.stringify(['impact-v2', 'unavailable', blockId]);
   const history = prepareConversationHistory(state.blocks, blockId, parameters.systemPromptCacheTokens);
+  const { shower: _shower, ...impactParameters } = parameters;
   return JSON.stringify([
     'impact-v2', 'impact-algorithm-v1', modelCatalog, blockId,
-    block.message, block.finalResponse, block.visibleReasoning, block.artifact, history, parameters,
+    block.message, block.finalResponse, block.visibleReasoning, block.artifact, history, impactParameters,
   ]);
 }
 
 /** Empty blocks deliberately do not participate, so adding/removing one preserves freshness. */
-export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>): string {
+export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>): string {
   return JSON.stringify(['summary-v2', state.blocks
     .filter((block) => !isIgnoredConversationBlock(block))
     .map((block) => [block.blockId, impactFingerprint(state, block.blockId)])]);
@@ -163,42 +172,44 @@ export function summaryFingerprint(state: Pick<ConversationState, 'provider' | '
  * dependency boundary is available now for the later session parameters.
  */
 export function showerFingerprint(
-  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks'>,
+  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>,
   userCountry?: string,
   showerReference?: number,
 ): string {
-  return JSON.stringify(['shower-v1', summaryFingerprint(state), userCountry ?? null, showerReference ?? null]);
+  const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
+  return JSON.stringify(['shower-v1', summaryFingerprint(state), userCountry ?? null, resolved?.shower ?? null, showerReference ?? null]);
 }
 
-export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): boolean {
+export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>, blockId: string): boolean {
   const impact = state.impacts[blockId];
-  return impact?.status === 'result' && impact.fingerprint === impactFingerprint(state, blockId);
+  return !state.parameterValidationInvalid && impact?.status === 'result' && impact.fingerprint === impactFingerprint(state, blockId);
 }
 
-export function isImpactFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): boolean {
+export function isImpactFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>, blockId: string): boolean {
   const impact = state.impacts[blockId];
-  return impact !== undefined && impact.fingerprint === impactFingerprint(state, blockId);
+  return !state.parameterValidationInvalid && impact !== undefined && impact.fingerprint === impactFingerprint(state, blockId);
 }
 
-export function currentImpact(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>, blockId: string): ImpactResult | undefined {
+export function currentImpact(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>, blockId: string): ImpactResult | undefined {
   const impact = state.impacts[blockId];
   return isImpactCurrent(state, blockId) && impact?.status === 'result' ? impact.impact : undefined;
 }
 
-export function summaryBlockingBlockIds(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts'>): readonly string[] {
+export function summaryBlockingBlockIds(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>): readonly string[] {
   return state.blocks.filter((block) => !isIgnoredConversationBlock(block) && !isImpactCurrent(state, block.blockId))
     .map((block) => block.blockId);
 }
 
-export function isSummaryCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary'>): boolean {
-  return state.summary?.status === 'result' && state.summary.fingerprint === summaryFingerprint(state);
+export function isSummaryCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary' | 'parameterOverrides' | 'parameterValidationInvalid'>): boolean {
+  return !state.parameterValidationInvalid && state.summary?.status === 'result' && state.summary.fingerprint === summaryFingerprint(state);
 }
 
-export function isSummaryFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary'>): boolean {
-  return state.summary !== undefined && state.summary.fingerprint === summaryFingerprint(state);
+export function isSummaryFresh(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary' | 'parameterOverrides' | 'parameterValidationInvalid'>): boolean {
+  return !state.parameterValidationInvalid && state.summary !== undefined && state.summary.fingerprint === summaryFingerprint(state);
 }
 
 export function conversationReducer(state: ConversationState, action: ConversationAction): ConversationState {
+  if (state.parameterValidationInvalid && ['tokenizationRequested', 'tokenizationResponded', 'impactRequested', 'impactResolved', 'impactBlocked', 'summaryRequested', 'summaryRecalculationRequested', 'summaryResolved', 'summaryUnavailable'].includes(action.type)) return state;
   switch (action.type) {
     case 'providerSelected': {
       const modelId = firstModelId(action.provider);
@@ -210,22 +221,34 @@ export function conversationReducer(state: ConversationState, action: Conversati
           ? resolveChatGptModel(state.subscription)
           : modelId,
         hostingCountry: resolveHostingCountry(action.provider)!,
+        parameterValidationInvalid: false,
       });
     }
     case 'subscriptionSelected':
       if (state.provider !== chatGptProvider) return state;
       if (!(action.subscription in chatGptSubscriptionModels)) return state;
       return invalidateCalculationsAndTokenizations({
-        ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription),
+        ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription), parameterValidationInvalid: false,
         hostingCountry: resolveHostingCountry(state.provider)!,
       });
     case 'modelSelected':
       if (state.provider === chatGptProvider) return state;
       if (!canSelectModel(modelCatalog.models, state.provider, action.modelId)) return state;
-      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, hostingCountry: resolveHostingCountry(state.provider)! });
+      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, hostingCountry: resolveHostingCountry(state.provider)!, parameterValidationInvalid: false });
     case 'hostingCountrySelected':
       if (!isHostingCountry(action.country) || action.country === state.hostingCountry) return state;
       return discardTransientCalculations({ ...state, hostingCountry: action.country });
+    case 'parametersApplied': {
+      if (!resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, action.overrides)) return state;
+      const overrides = Object.freeze({ ...action.overrides, ...(action.overrides.constants ? { constants: Object.freeze({ ...action.overrides.constants }) } : {}), ...(action.overrides.shower ? { shower: Object.freeze({ ...action.overrides.shower }) } : {}) });
+      return discardTransientCalculations({ ...state, parameterOverrides: overrides, parameterValidationInvalid: false });
+    }
+    case 'parametersValidationFailed':
+      return state.parameterValidationInvalid ? state : { ...state, parameterValidationInvalid: true };
+    case 'parametersRestored':
+      return Object.keys(state.parameterOverrides).length === 0 && !state.parameterValidationInvalid
+        ? state
+        : discardTransientCalculations({ ...state, parameterOverrides: {}, parameterValidationInvalid: false });
     case 'blockAdded':
       if (state.blocks.some((block) => block.blockId === action.blockId)) return state;
       return discardTransientCalculations({ ...state, blocks: [...state.blocks, createConversationBlock(action.blockId)] });
@@ -272,8 +295,8 @@ export function conversationReducer(state: ConversationState, action: Conversati
       const result: BlockTokenizationResult = action.response.type === 'tokenized'
         ? respectsEmptyTokenizationTexts(action.response.counts, tokenizationTexts(block))
           ? { source: 'tiktoken', counts: action.response.counts }
-          : fallbackTokenization(tokenizationTexts(block))
-        : fallbackTokenization(tokenizationTexts(block));
+          : fallbackTokenization(tokenizationTexts(block), resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides)?.wordsPerToken)
+        : fallbackTokenization(tokenizationTexts(block), resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides)?.wordsPerToken);
       return { ...state, tokenizations: { ...state.tokenizations, [blockId]: { result } } };
     }
     case 'impactRequested': {

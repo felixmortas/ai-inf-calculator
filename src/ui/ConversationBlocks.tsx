@@ -67,10 +67,10 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         <h2 id="conversation-title">{fr.conversationLabel}</h2>
         <div className="conversation-actions">
           <button ref={addButtonRef} type="button" onClick={addBlock}>{fr.addBlockAction}</button>
-          <button type="button" onClick={onCalculateAll} disabled={state.summary?.status === 'pending'}>
+          <button type="button" onClick={onCalculateAll} disabled={state.summary?.status === 'pending' || state.parameterValidationInvalid}>
             {state.summary?.status === 'pending' ? fr.calculatingAllAction : fr.calculateAllAction}
           </button>
-          <button type="button" onClick={onRecalculateSummary} disabled={state.summary?.status === 'pending'}>
+          <button type="button" onClick={onRecalculateSummary} disabled={state.summary?.status === 'pending' || state.parameterValidationInvalid}>
             {fr.recalculateSummaryAction}
           </button>
         </div>
@@ -124,7 +124,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
               );
             })}
             {!ignored ? <div className="impact-panel">
-              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={(impactState?.status === 'pending' && isImpactFresh(state, block.blockId)) || state.summary?.status === 'pending'}>
+              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={state.parameterValidationInvalid || (impactState?.status === 'pending' && isImpactFresh(state, block.blockId)) || state.summary?.status === 'pending'}>
                 {impactState?.status === 'pending' ? fr.calculatingAction : fr.calculateAction}
               </button>
               {impactIsStale ? <p role="status" className="impact-stale">{fr.staleImpactStatus}</p> : null}

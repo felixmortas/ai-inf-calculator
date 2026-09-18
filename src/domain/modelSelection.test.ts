@@ -30,6 +30,15 @@ describe('sélection de modèle', () => {
     });
   });
 
+  it('fusionne les surcharges sans muter le catalogue, dérive la douche et refuse les constantes hors domaine', () => {
+    const before = structuredClone(modelCatalog.models);
+    const resolved = resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { inputRatio: .4, constants: { batchSize: 32 }, shower: { inletTemperatureC: 15, outletTemperatureC: 35 } });
+    expect(resolved).toMatchObject({ inputRatio: .4, systemPromptCacheTokens: 1500, constants: { batchSize: 32 }, shower: { energyKwhPerLitre: .0232 } });
+    expect(modelCatalog.models).toEqual(before);
+    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
+  });
+
   it('expose le pays d’hébergement et distingue un risque absent', () => {
     expect(resolveHostingCountry('ChatGPT')).toBe('US');
     expect(resolveDroughtRisk('US')).toEqual({ status: 'available', level: 'Medium (0.4-0.6)', source: 'country' });

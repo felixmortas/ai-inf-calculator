@@ -4,6 +4,11 @@ import wueCsv from '../../data/clean/wue.csv?raw';
 import providerCountryCsv from '../../data/clean/provider_country.csv?raw';
 import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw';
 import droughtRiskCsv from '../../data/clean/country_drought_risk.csv?raw';
+import { defaultImpactConstants, type ImpactConstants } from '../domain/impact';
+
+export interface ShowerParameters { readonly flowLitresPerMinute: number; readonly inletTemperatureC: number; readonly outletTemperatureC: number; readonly energyKwhPerLitre: number; }
+export const defaultShowerParameters: Readonly<ShowerParameters> = Object.freeze({ flowLitresPerMinute: 15, inletTemperatureC: 18, outletTemperatureC: 38, energyKwhPerLitre: 0.00116 * 20 });
+export interface ImpactParameterOverrides extends Partial<Omit<ResolvedImpactParameters, 'systemPromptCacheTokens' | 'factorSources' | 'hostingCountry' | 'provider' | 'id' | 'consolidationDate' | 'constants' | 'wordsPerToken' | 'shower'>> { readonly constants?: Partial<ImpactConstants>; readonly wordsPerToken?: number; readonly shower?: Partial<Omit<ShowerParameters, 'energyKwhPerLitre'>>; }
 
 export interface CatalogModel {
   readonly provider: string;
@@ -85,6 +90,9 @@ export interface ResolvedImpactParameters extends CatalogModel {
   readonly wue: number;
   readonly carbonIntensity: number;
   readonly factorSources: Readonly<Record<EnvironmentalFactor, EnvironmentalFactorSource>>;
+  readonly constants: Readonly<ImpactConstants>;
+  readonly wordsPerToken: number;
+  readonly shower: Readonly<ShowerParameters>;
 }
 
 export type EnvironmentalFactor = 'pue' | 'wue' | 'carbonIntensity';
@@ -191,15 +199,24 @@ const environmentalFactorRows: Readonly<Record<EnvironmentalFactor, readonly Env
 });
 
 /** Résout les paramètres sans jamais modifier les catalogues importés. */
-export function resolveImpactParameters(provider: string, modelId: string, hostingCountry = resolveHostingCountry(provider)): ResolvedImpactParameters | undefined {
+export function resolveImpactParameters(provider: string, modelId: string, hostingCountry = resolveHostingCountry(provider), overrides: ImpactParameterOverrides = {}): ResolvedImpactParameters | undefined {
   const model = modelCatalog.models.find((entry) => entry.provider === provider && entry.id === modelId);
   if (!model || !hostingCountry || !isHostingCountry(hostingCountry)) return undefined;
   const pue = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.pue);
   const wue = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.wue);
   const carbonIntensity = resolveEnvironmentalFactor(hostingCountry, environmentalFactorRows.carbonIntensity);
   if (pue.status === 'unavailable' || wue.status === 'unavailable' || carbonIntensity.status === 'unavailable') return undefined;
-  return Object.freeze({
-    ...model, hostingCountry, pue: pue.value, wue: wue.value, carbonIntensity: carbonIntensity.value,
+  const constants = Object.freeze({ ...defaultImpactConstants, ...overrides.constants });
+  const showerBase = { ...defaultShowerParameters, ...overrides.shower };
+  const shower = Object.freeze({ ...showerBase, energyKwhPerLitre: 0.00116 * (showerBase.outletTemperatureC - showerBase.inletTemperatureC) });
+  const resolved = { ...model, hostingCountry, pue: overrides.pue ?? pue.value, wue: overrides.wue ?? wue.value, carbonIntensity: overrides.carbonIntensity ?? carbonIntensity.value,
+    totalParameters: overrides.totalParameters ?? model.totalParameters, activatedParameters: overrides.activatedParameters ?? model.activatedParameters,
+    inputRatio: overrides.inputRatio ?? model.inputRatio, cacheRatio: overrides.cacheRatio ?? model.cacheRatio,
+    constants, wordsPerToken: overrides.wordsPerToken ?? .75, shower,
     factorSources: Object.freeze({ pue: pue.status, wue: wue.status, carbonIntensity: carbonIntensity.status }),
-  });
+  };
+  const values = [resolved.totalParameters, resolved.activatedParameters, resolved.inputRatio, resolved.cacheRatio, resolved.pue, resolved.wue, resolved.carbonIntensity, resolved.wordsPerToken, shower.flowLitresPerMinute, shower.inletTemperatureC, shower.outletTemperatureC];
+  const positiveConstants = [constants.batchSize, constants.gpuInstalledPerServer, constants.serverPowerWithoutGpuW, constants.gpuMemoryGb, constants.quantizationBits, constants.memoryOverhead, constants.energyAlpha, constants.energyGamma, constants.latencyAlpha, constants.latencyBeta, constants.latencyGamma];
+  if (!values.every((value) => Number.isFinite(value) && value >= 0) || !Object.values(constants).every(Number.isFinite) || !positiveConstants.every((value) => value > 0) || constants.energyBeta > 0 || resolved.totalParameters <= 0 || resolved.activatedParameters <= 0 || resolved.activatedParameters > resolved.totalParameters || resolved.pue < 1 || resolved.wordsPerToken <= 0 || shower.flowLitresPerMinute <= 0 || shower.outletTemperatureC <= shower.inletTemperatureC) return undefined;
+  return Object.freeze(resolved);
 }

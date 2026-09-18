@@ -37,7 +37,7 @@ export function App() {
   }, []);
 
   function calculate(blockId: string, snapshot: ConversationState = state, fingerprint = impactFingerprint(snapshot, blockId), preserveSummary = false): Promise<ImpactResult | undefined> {
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
     const history = parameters && prepareConversationHistory(snapshot.blocks, blockId, parameters.systemPromptCacheTokens);
     const block = snapshot.blocks.find((entry) => entry.blockId === blockId);
     if (!parameters || !history || !block) {
@@ -53,7 +53,7 @@ export function App() {
         outputTokens: counts.output,
         totalParameters: parameters.totalParameters, activatedParameters: parameters.activatedParameters,
         inputRatio: parameters.inputRatio, cacheRatio: parameters.cacheRatio, pue: parameters.pue,
-        carbonIntensity: parameters.carbonIntensity, wue: parameters.wue,
+        carbonIntensity: parameters.carbonIntensity, wue: parameters.wue, constants: parameters.constants,
       });
         if (result.ok) {
           dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact, factorSources: parameters.factorSources });
@@ -64,11 +64,11 @@ export function App() {
         }
       };
       const texts = impactTexts(block, history);
-      if (client.current) client.current.requestImpact(texts, complete);
+      if (client.current) client.current.requestImpact(texts, complete, parameters.wordsPerToken);
       else complete({
-          newInput: fallbackTokenCount(texts.newInput),
-          cachedInput: texts.cachedInput.reduce((total, text) => total + fallbackTokenCount(text), 0),
-          output: texts.output.reduce((total, text) => total + fallbackTokenCount(text), 0),
+          newInput: fallbackTokenCount(texts.newInput, parameters.wordsPerToken),
+          cachedInput: texts.cachedInput.reduce((total, text) => total + fallbackTokenCount(text, parameters.wordsPerToken), 0),
+          output: texts.output.reduce((total, text) => total + fallbackTokenCount(text, parameters.wordsPerToken), 0),
         });
     });
   }
@@ -96,7 +96,7 @@ export function App() {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
       return;
     }
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
     const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,
@@ -123,7 +123,7 @@ export function App() {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
       return;
     }
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry);
+    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
     const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,

@@ -14,7 +14,7 @@ export interface ImpactTexts {
 export class TokenizationClient {
   private readonly worker: Worker;
   private readonly outgoing = new Map<string, TokenizationRequest>();
-  private readonly impactOutgoing = new Map<string, { readonly callback: (count: number) => void; readonly text: string }>();
+  private readonly impactOutgoing = new Map<string, { readonly callback: (count: number) => void; readonly text: string; readonly wordsPerToken: number }>();
 
   constructor(private readonly dispatch: TokenizationDispatch) {
     this.worker = new Worker(new URL('../workers/tokenization.worker.ts', import.meta.url), { type: 'module' });
@@ -23,7 +23,7 @@ export class TokenizationClient {
         const impact = this.impactOutgoing.get(event.data.requestId);
         if (impact) {
           this.impactOutgoing.delete(event.data.requestId);
-          impact.callback(event.data.type === 'tokenized' ? event.data.counts.message : fallbackTokenCount(impact.text));
+          impact.callback(event.data.type === 'tokenized' ? event.data.counts.message : fallbackTokenCount(impact.text, impact.wordsPerToken));
           return;
         }
         this.outgoing.delete(event.data.requestId);
@@ -50,7 +50,7 @@ export class TokenizationClient {
   }
 
   /** Compte séparément chaque catégorie dérivée avec le même Worker et le même fallback. */
-  requestImpact(texts: ImpactTexts, onComplete: (counts: { newInput: number; cachedInput: number; output: number }) => void): void {
+  requestImpact(texts: ImpactTexts, onComplete: (counts: { newInput: number; cachedInput: number; output: number }) => void, wordsPerToken = .75): void {
     const entries = [
       ['newInput', texts.newInput],
       ...texts.cachedInput.map((text) => ['cachedInput', text] as const),
@@ -63,7 +63,7 @@ export class TokenizationClient {
       const requestId = crypto.randomUUID();
       const requestTexts: TokenizationTexts = { message: text, finalResponse: '', visibleReasoning: '', artifact: '' };
       const request: TokenizationRequest = { type: 'tokenize', requestId, encoding: tokenizationEncoding, fingerprint: tokenizationFingerprint(tokenizationEncoding, requestTexts), texts: requestTexts };
-      this.impactOutgoing.set(requestId, { text, callback: (count) => {
+      this.impactOutgoing.set(requestId, { text, wordsPerToken, callback: (count) => {
         counts[category] += count;
         remaining -= 1;
         if (remaining === 0) onComplete(counts);
@@ -88,7 +88,7 @@ export class TokenizationClient {
       this.dispatch({ type: 'tokenizationResponded', response });
     }
     this.outgoing.clear();
-    for (const impact of this.impactOutgoing.values()) impact.callback(fallbackTokenCount(impact.text));
+    for (const impact of this.impactOutgoing.values()) impact.callback(fallbackTokenCount(impact.text, impact.wordsPerToken));
     this.impactOutgoing.clear();
   }
 }
