@@ -1,1 +1,6 @@
-provider,model_name,nb_params,nb_params_activated,system_prompt_token_count,output_tokens_price,input_tokens_price,input_cache_tokens_price,consolidation_date
+provider,model_name,nb_params,nb_params_activated,system_prompt_token_count,input_ratio,cache_ratio,consolidation_date
+Gemini,gemini-3.5-pro,1000,100,1000,0.2,0.1
+Gemini,gemini-3.6-flash,500,200,1500,0.25,0.15
+Claude,claude-sonnet-5,1000,150,1000,0.2,0.1
+ChatGPT,gpt-5.6-luna,100,10,1500,0.2,0.1
+ChatGPT,gpt-5.6-terra,300,35,1800,0.3,0.2

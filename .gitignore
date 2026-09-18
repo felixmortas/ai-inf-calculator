@@ -2,3 +2,5 @@
 /data/raw
 .agents
 _bmad
+node_modules
+dist
