@@ -1,18 +1,31 @@
-import { tokenizationEncoding, tokenizationFingerprint, type TokenizationEncoding, type TokenizationTexts } from '../domain/tokenization';
+import { fallbackTokenCount, tokenizationEncoding, tokenizationFingerprint, type TokenizationEncoding, type TokenizationTexts } from '../domain/tokenization';
 import type { ConversationAction } from './conversationReducer';
 import { isTokenizationResponse, type TokenizationRequest, type TokenizationResponse } from '../workers/tokenizationProtocol';
 
 export type TokenizationDispatch = (action: ConversationAction) => void;
 
+export interface ImpactTexts {
+  readonly newInput: string;
+  readonly cachedInput: readonly string[];
+  readonly output: readonly string[];
+}
+
 /** Browser-only adapter: it only relays the typed Worker protocol to the reducer. */
 export class TokenizationClient {
   private readonly worker: Worker;
   private readonly outgoing = new Map<string, TokenizationRequest>();
+  private readonly impactOutgoing = new Map<string, { readonly callback: (count: number) => void; readonly text: string }>();
 
   constructor(private readonly dispatch: TokenizationDispatch) {
     this.worker = new Worker(new URL('../workers/tokenization.worker.ts', import.meta.url), { type: 'module' });
     this.worker.onmessage = (event: MessageEvent<unknown>) => {
       if (isTokenizationResponse(event.data)) {
+        const impact = this.impactOutgoing.get(event.data.requestId);
+        if (impact) {
+          this.impactOutgoing.delete(event.data.requestId);
+          impact.callback(event.data.type === 'tokenized' ? event.data.counts.message : fallbackTokenCount(impact.text));
+          return;
+        }
         this.outgoing.delete(event.data.requestId);
         this.dispatch({ type: 'tokenizationResponded', response: event.data });
       }
@@ -33,6 +46,30 @@ export class TokenizationClient {
   dispose(): void {
     this.worker.terminate();
     this.outgoing.clear();
+    this.impactOutgoing.clear();
+  }
+
+  /** Compte séparément chaque catégorie dérivée avec le même Worker et le même fallback. */
+  requestImpact(texts: ImpactTexts, onComplete: (counts: { newInput: number; cachedInput: number; output: number }) => void): void {
+    const entries = [
+      ['newInput', texts.newInput],
+      ...texts.cachedInput.map((text) => ['cachedInput', text] as const),
+      ...texts.output.map((text) => ['output', text] as const),
+    ] as const;
+    if (entries.length === 0) { onComplete({ newInput: 0, cachedInput: 0, output: 0 }); return; }
+    const counts = { newInput: 0, cachedInput: 0, output: 0 };
+    let remaining = entries.length;
+    for (const [category, text] of entries) {
+      const requestId = crypto.randomUUID();
+      const requestTexts: TokenizationTexts = { message: text, finalResponse: '', visibleReasoning: '', artifact: '' };
+      const request: TokenizationRequest = { type: 'tokenize', requestId, encoding: tokenizationEncoding, fingerprint: tokenizationFingerprint(tokenizationEncoding, requestTexts), texts: requestTexts };
+      this.impactOutgoing.set(requestId, { text, callback: (count) => {
+        counts[category] += count;
+        remaining -= 1;
+        if (remaining === 0) onComplete(counts);
+      } });
+      this.worker.postMessage(request);
+    }
   }
 
   private dispatchRequested(blockId: string, request: TokenizationRequest): void {
@@ -51,5 +88,7 @@ export class TokenizationClient {
       this.dispatch({ type: 'tokenizationResponded', response });
     }
     this.outgoing.clear();
+    for (const impact of this.impactOutgoing.values()) impact.callback(fallbackTokenCount(impact.text));
+    this.impactOutgoing.clear();
   }
 }

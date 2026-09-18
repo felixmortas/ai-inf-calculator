@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canSelectModel, resolveChatGptModel, selectableModels } from './modelSelection';
-import { hasModel, modelCatalog } from '../data/modelCatalog';
+import { hasModel, modelCatalog, resolveImpactParameters } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
   const models = [
@@ -21,5 +21,12 @@ describe('sélection de modèle', () => {
   it('charge les modèles de référence ChatGPT depuis le catalogue local', () => {
     expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-luna')).toBe(true);
     expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-terra')).toBe(true);
+  });
+
+  it('résout les paramètres d’impact locaux du modèle et de son pays d’hébergement', () => {
+    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna')).toMatchObject({
+      totalParameters: 100, activatedParameters: 10, systemPromptCacheTokens: 1500,
+      pue: 1.15, wue: .15, carbonIntensity: 384.403,
+    });
   });
 });

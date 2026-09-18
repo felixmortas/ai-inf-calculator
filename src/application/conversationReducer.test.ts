@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   conversationReducer,
+  impactFingerprint,
   initialConversationState,
   isIgnoredConversationBlock,
   type ConversationBlock,
@@ -197,5 +198,38 @@ describe('conversationReducer', () => {
     });
     expect(changedModel.tokenizations).toEqual({});
     expect(conversationReducer(changedModel, response)).toBe(changedModel);
+  });
+
+  it('ne résout que le calcul explicitement demandé et l’invalide après une édition', () => {
+    const withBlocks = ['one', 'two'].reduce(
+      (state, blockId) => conversationReducer(state, { type: 'blockAdded', blockId }),
+      initialConversationState,
+    );
+    const populated = conversationReducer(withBlocks, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(populated);
+    const requested = conversationReducer(populated, { type: 'impactRequested', blockId: 'two', fingerprint });
+    expect(requested.impacts).toEqual({ two: { status: 'pending', fingerprint } });
+    const resolved = conversationReducer(requested, {
+      type: 'impactResolved', blockId: 'two', fingerprint,
+      impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
+    });
+    expect(resolved.impacts.two?.status).toBe('result');
+    expect(conversationReducer(resolved, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonsoir' }).impacts).toEqual({});
+  });
+
+  it('ignore une résolution d’impact périmée après modification, suppression ou changement de modèle', () => {
+    const populated = conversationReducer(
+      conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' }),
+      { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' },
+    );
+    const fingerprint = impactFingerprint(populated);
+    const pending = conversationReducer(populated, { type: 'impactRequested', blockId: 'one', fingerprint });
+    const completion = { type: 'impactResolved' as const, blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } };
+    const edited = conversationReducer(pending, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
+    expect(conversationReducer(edited, completion)).toBe(edited);
+    const removed = conversationReducer(pending, { type: 'blockRemoved', blockId: 'one' });
+    expect(conversationReducer(removed, completion)).toBe(removed);
+    const changedModel = conversationReducer(pending, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
+    expect(conversationReducer(changedModel, completion)).toBe(changedModel);
   });
 });

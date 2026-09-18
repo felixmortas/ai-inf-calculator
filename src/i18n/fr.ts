@@ -17,4 +17,12 @@ export const fr = {
   visibleReasoningLabel: 'Raisonnement visible',
   artifactLabel: 'Artifact optionnel',
   ignoredBlockStatus: 'Ce bloc sera ignoré pour les calculs futurs.',
+  calculateAction: 'Calculer',
+  calculatingAction: 'Calcul en cours…',
+  energyLabel: 'Énergie',
+  carbonLabel: 'Carbone',
+  waterLabel: 'Eau',
+  impactLimits: 'Estimation incertaine : usage uniquement, hors fabrication, amortissement et Scope 3.',
+  invalidDataError: 'Le calcul est bloqué : une donnée indispensable est indisponible ou invalide.',
+  emptyBlockError: 'Saisissez un échange avant de lancer un calcul.',
 } as const;

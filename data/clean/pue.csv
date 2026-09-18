@@ -1,1 +1,6 @@
-Area,pue
+Area,pue,source,version,date
+France,1.2,AWS,0,18/09/2026
+Brazil,1.5,AWS,0,18/09/2026
+India,2,AWS,0,18/09/2026
+United States,1.15,AWS,0,18/09/2026
+Switzerland,1.08,AWS,0,18/09/2026

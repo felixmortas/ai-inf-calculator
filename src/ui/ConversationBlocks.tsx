@@ -10,6 +10,7 @@ import { fr } from '../i18n/fr';
 interface ConversationBlocksProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
+  readonly onCalculate: (blockId: string) => void;
 }
 
 const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
@@ -19,7 +20,11 @@ const fields: readonly { readonly name: ConversationBlockField; readonly label: 
   { name: 'artifact', label: fr.artifactLabel },
 ];
 
-export function ConversationBlocks({ state, dispatch }: ConversationBlocksProps) {
+export function formatImpact(value: number): string {
+  return new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(value);
+}
+
+export function ConversationBlocks({ state, dispatch, onCalculate }: ConversationBlocksProps) {
   const nextBlockNumber = useRef(1);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -57,6 +62,7 @@ export function ConversationBlocks({ state, dispatch }: ConversationBlocksProps)
       </div>
       {state.blocks.map((block, index) => {
         const ignored = isIgnoredConversationBlock(block);
+        const impactState = state.impacts[block.blockId];
         return (
           <fieldset key={block.blockId} className="conversation-block">
             <legend>{fr.blockTitle(index + 1)}</legend>
@@ -82,6 +88,18 @@ export function ConversationBlocks({ state, dispatch }: ConversationBlocksProps)
                 </div>
               );
             })}
+            {!ignored ? <div className="impact-panel">
+              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={impactState?.status === 'pending'}>
+                {impactState?.status === 'pending' ? fr.calculatingAction : fr.calculateAction}
+              </button>
+              {impactState?.status === 'result' ? <div role="status" className="impact-result">
+                <p>{fr.energyLabel}: {formatImpact(impactState.impact.energyWh)} Wh</p>
+                <p>{fr.carbonLabel}: {formatImpact(impactState.impact.carbonGco2e)} gCO2e</p>
+                <p>{fr.waterLabel}: {formatImpact(impactState.impact.waterL)} L</p>
+                <p className="impact-note">{fr.impactLimits}</p>
+              </div> : null}
+              {impactState?.status === 'error' ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}
+            </div> : null}
           </fieldset>
         );
       })}
