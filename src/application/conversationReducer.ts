@@ -78,13 +78,14 @@ export type ConversationAction =
   | { readonly type: 'parametersValidationFailed' }
   | { readonly type: 'parametersRestored' }
   | { readonly type: 'blockAdded'; readonly blockId: string }
+  | { readonly type: 'blocksReplaced'; readonly blocks: readonly ConversationBlock[] }
   | { readonly type: 'blockUpdated'; readonly blockId: string; readonly field: ConversationBlockField; readonly value: string }
   | { readonly type: 'blockRemoved'; readonly blockId: string }
   | { readonly type: 'tokenizationRequested'; readonly blockId: string; readonly requestId: string; readonly encoding: TokenizationEncoding; readonly fingerprint: string }
   | { readonly type: 'tokenizationResponded'; readonly response: TokenizationResponse }
   | { readonly type: 'impactRequested'; readonly blockId: string; readonly fingerprint: string; readonly preserveSummary?: boolean }
   | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' }
+  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block'; readonly async?: true }
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryRecalculationRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
@@ -273,6 +274,15 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'blockAdded':
       if (state.blocks.some((block) => block.blockId === action.blockId)) return state;
       return discardTransientCalculations({ ...state, blocks: [...state.blocks, createConversationBlock(action.blockId)] });
+    case 'blocksReplaced': {
+      const ids = action.blocks.map((block) => block.blockId);
+      if (ids.some((id) => id.trim() === '') || new Set(ids).size !== ids.length) return state;
+      const blocks = action.blocks.map((block) => ({
+        blockId: block.blockId, message: block.message, finalResponse: block.finalResponse,
+        visibleReasoning: block.visibleReasoning, artifact: block.artifact,
+      }));
+      return { ...state, blocks, tokenizations: {}, impacts: {}, showerEquivalences: {}, summaryShowerEquivalence: undefined, summary: undefined };
+    }
     case 'blockUpdated': {
       if (!conversationBlockFields.includes(action.field)) return state;
       const index = state.blocks.findIndex((block) => block.blockId === action.blockId);
@@ -336,7 +346,9 @@ export function conversationReducer(state: ConversationState, action: Conversati
     }
     case 'impactBlocked': {
       const block = state.blocks.find(({ blockId }) => blockId === action.blockId);
-      if (!block || impactFingerprint(state, action.blockId) !== action.fingerprint) return state;
+      const current = state.impacts[action.blockId];
+      if (!block || impactFingerprint(state, action.blockId) !== action.fingerprint
+        || (action.async === true && (current?.status !== 'pending' || current.fingerprint !== action.fingerprint))) return state;
       return { ...state, impacts: { ...state.impacts, [action.blockId]: { status: 'error', fingerprint: action.fingerprint, code: action.code } } };
     }
     case 'summaryRequested':

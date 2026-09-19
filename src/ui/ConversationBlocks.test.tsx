@@ -24,6 +24,25 @@ describe('composition de la conversation', () => {
     expect(screen.getByLabelText('Artifact optionnel')).toBeVisible();
   });
 
+  it('importe via le registre, conserve les avis de contenus inaccessibles, puis ajoute un échange manuel', async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn().mockResolvedValue(new Response('<script type="application/json">{"messages":[{"author":{"role":"user"},"content":{"parts":["Question"]}},{"author":{"role":"assistant"},"content":{"parts":["[artifact](sandbox:/mnt/data/a.csv) fileciteturn0file0L1"]}}]}</script>'));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      render(<App />);
+      await user.type(screen.getByLabelText('Lien de partage'), 'https://chatgpt.com/share/abc');
+      await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
+      await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      expect(screen.getByLabelText('Message')).toHaveValue('Question');
+      expect(screen.getAllByText('Artifact détecté : collez son contenu dans le champ Artifact optionnel pour le compter.').some((element) => element.getAttribute('role') === 'status')).toBe(true);
+      expect(screen.getAllByText('Fichier source détecté : uploadez-le pour inclure son contenu dans les tokens d’entrée.').some((element) => element.getAttribute('role') === 'status')).toBe(true);
+      await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+      expect(screen.getAllByLabelText('Message')).toHaveLength(2);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it('signale un bloc vide comme ignoré et conserve le texte renseigné durant la session', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -59,6 +78,9 @@ describe('composition de la conversation', () => {
     const historyPush = vi.spyOn(History.prototype, 'pushState');
     const historyReplace = vi.spyOn(History.prototype, 'replaceState');
     const first = render(<App />);
+    await user.tab();
+    await user.tab();
+    await user.tab();
     await user.tab();
     await user.tab();
     await user.tab();

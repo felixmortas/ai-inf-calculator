@@ -14,6 +14,7 @@ import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
 import { ConversationConfiguration } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
+import { ConversationImport } from './ConversationImport';
 import './styles.css';
 
 export function impactTexts(
@@ -63,7 +64,7 @@ export function App() {
           dispatch({ type: 'showerEquivalenceResolved', blockId, fingerprint: showerFingerprintValue, equivalence: calculateShowerEquivalence(result.impact.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters.shower, showerFactor.status === 'world' ? 'world' : 'country') });
           resolve(result.impact);
         } else {
-          dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
+          dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data', async: true });
           resolve(undefined);
         }
       };
@@ -150,6 +151,7 @@ export function App() {
         <p>{fr.introduction}</p>
       </header>
       <ConversationConfiguration state={state} dispatch={dispatch} />
+      <ConversationImport state={state} dispatch={dispatch} />
       <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} />
     </main>
   );

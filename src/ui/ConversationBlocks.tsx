@@ -57,6 +57,14 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
     pendingFocusBlockId.current = undefined;
   }, [state.blocks]);
 
+  useEffect(() => {
+    const importedHighest = state.blocks.reduce((highest, block) => {
+      const match = /^block-(\d+)$/.exec(block.blockId);
+      return match ? Math.max(highest, Number(match[1])) : highest;
+    }, 0);
+    nextBlockNumber.current = Math.max(nextBlockNumber.current, importedHighest + 1);
+  }, [state.blocks]);
+
   function addBlock() {
     dispatch({ type: 'blockAdded', blockId: `block-${nextBlockNumber.current++}` });
   }
@@ -128,6 +136,8 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
               </button>
             </div>
             {ignored ? <p className="ignored-status" role="status">{fr.ignoredBlockStatus}</p> : null}
+            {/sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
+            {/filecite[^]+/u.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
             {fields.map(({ name, label }) => {
               const id = `conversation-${block.blockId}-${name}`;
               return (

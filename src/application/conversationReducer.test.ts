@@ -74,6 +74,28 @@ describe('conversationReducer', () => {
     expect(conversationReducer(second, { type: 'blockAdded', blockId: 'block-1' })).toBe(second);
   });
 
+  it('remplace les blocs atomiquement et invalide tous les états dérivés sans lancer de calcul', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'old' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'old', field: 'message', value: 'ancien' });
+    const fingerprint = impactFingerprint(state, 'old');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'old', fingerprint });
+    const replaced = conversationReducer(state, { type: 'blocksReplaced', blocks: [{ blockId: 'block-1', message: 'importé', visibleReasoning: 'trace', finalResponse: 'réponse', artifact: '' }] });
+    expect(replaced.blocks).toEqual([{ blockId: 'block-1', message: 'importé', visibleReasoning: 'trace', finalResponse: 'réponse', artifact: '' }]);
+    expect(replaced.tokenizations).toEqual({});
+    expect(replaced.impacts).toEqual({});
+    expect(replaced.summary).toBeUndefined();
+    expect(conversationReducer(replaced, { type: 'blocksReplaced', blocks: [{ blockId: 'same', message: '', visibleReasoning: '', finalResponse: '', artifact: '' }, { blockId: 'same', message: '', visibleReasoning: '', finalResponse: '', artifact: '' }] })).toBe(replaced);
+  });
+
+  it('ignore un blocage asynchrone arrivé après un import avec un identifiant et une empreinte identiques', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'block-1' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'block-1', field: 'message', value: 'même texte' });
+    const fingerprint = impactFingerprint(state, 'block-1');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'block-1', fingerprint });
+    const imported = conversationReducer(state, { type: 'blocksReplaced', blocks: [{ blockId: 'block-1', message: 'même texte', visibleReasoning: '', finalResponse: '', artifact: '' }] });
+    expect(conversationReducer(imported, { type: 'impactBlocked', blockId: 'block-1', fingerprint, code: 'invalid-data', async: true })).toBe(imported);
+  });
+
   it('met à jour seulement le champ et le bloc ciblés', () => {
     const withBlocks = conversationReducer(
       conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' }),
