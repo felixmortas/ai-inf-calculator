@@ -1,0 +1,65 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 09-19-2026 22:54
+last_updated: 09-19-2026 22:54
+project: ao-env-impact-calculator
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+development_status:
+  epic-1: backlog
+  1-1-accéder-au-calculateur-et-choisir-le-modèle-de-conversation: backlog
+  1-2-composer-une-conversation-en-blocs: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-compter-localement-les-textes-d-un-bloc: backlog
+  2-2-reconstituer-l-historique-et-les-versions-d-artifact: backlog
+  2-3-calculer-et-afficher-l-impact-d-un-bloc: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-calculer-tous-les-échanges-et-leur-bilan: backlog
+  3-2-identifier-les-résultats-périmés-et-recalculer-le-total: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-choisir-le-pays-d-hébergement-et-gérer-les-données-manquante: backlog
+  4-2-personnaliser-et-restaurer-les-paramètres-de-calcul: backlog
+  4-3-interpréter-le-carbone-par-une-durée-de-douche-locale: backlog
+  4-4-découvrir-des-bonnes-pratiques-de-sobriété: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-consentir-à-l-import-distant-avant-toute-requête: backlog
+  5-2-récupérer-un-partage-par-une-passerelle-tiers-bornée: backlog
+  5-3-documenter-et-vérifier-la-frontière-d-import-distant: backlog
+  epic-5-retrospective: optional

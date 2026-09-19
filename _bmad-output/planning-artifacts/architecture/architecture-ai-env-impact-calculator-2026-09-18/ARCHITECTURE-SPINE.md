@@ -7,11 +7,12 @@ paradigm: application monopage client-side, en couches et noyau fonctionnel pur
 scope: Sous-projet portable `calculator/`, intégré au chemin `/calculator/` de felixmortas.com
 status: final
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-19
 binds: [FR-1, FR-2, FR-3, FR-4, FR-7, FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-20, FR-21, FR-23, FR-24, NFR-1, NFR-2, NFR-3, NFR-4, NFR-5, NFR-6, NFR-7]
 sources:
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/addendum.md
+  - ../../sprint-change-proposal-2026-09-19.md
 companions: []
 ---
 
@@ -27,6 +28,7 @@ flowchart LR
   APP --> DOMAIN[Domaine pur : tokens, historique, impacts, fraîcheur]
   APP --> CATALOG[Catalogues locaux typés]
   APP <--> WORKER[Worker : adaptateur de tokenisation]
+  APP --> REMOTE[remoteGateway : frontière d'import distant]
   DOMAIN --> APP
   CATALOG --> APP
 ```
@@ -75,6 +77,15 @@ flowchart LR
 - **Prevents:** des textes français dans les calculs ou une seconde locale qui change des nombres de référence.
 - **Rule:** tout texte utilisateur est adressé par clé dans des catalogues de messages typés ; `fr-FR` est la seule locale distribuée au lancement. Les formats d’affichage passent par `Intl`. Les identifiants, unités internes, formules, valeurs de catalogues et empreintes ne dépendent pas de la langue.
 
+### AD-8 — Import distant exceptionnel, consenti et allowlisté [ADOPTED]
+
+- **Binds:** FR-3, FR-8, FR-19, NFR-3, D-4
+- **Prevents:** l'exfiltration de données de session, une URL proxy arbitraire, le contournement d'un contrôle d'accès, ou la propagation d'une dépendance tierce dans le domaine de calcul.
+- **Rule:** `application/import/remoteGateway` est le seul adaptateur autorisé à faire une requête d'import distant. Il ne peut être appelé qu'après un consentement explicite, ponctuel et non pré-coché pour la requête courante ; un refus, une annulation ou une modification de l'URL annule l'autorisation et ne lance aucune requête. Il accepte uniquement une URL de partage ChatGPT publique déjà validée par le validateur existant et construit la requête à partir de cette seule valeur.
+- **Allowlist transitoire:** l'origine de production est exactement `https://corsproxy.io/`; aucune origine, chemin de proxy ou redirection ne provient d'une entrée utilisateur. La configuration associe cette origine à son mécanisme de clé API et d'autorisation de domaine. Une clé embarquée dans l'application statique n'est jamais considérée comme un secret : les protections effectives sont l'autorisation de domaine et les plafonds configurés chez le fournisseur, complétés par la validation, les délais et les limites applicatives.
+- **Minimisation et traitement:** la passerelle n'envoie ni bloc local, fichier, résultat, catalogue, paramètre de calcul, état du reducer, cookie applicatif, jeton de session ni secret. Le tiers reçoit nécessairement l'URL de partage et, selon sa politique, peut recevoir l'adresse IP, l'agent utilisateur et des métadonnées de requête ; l'application ne promet pas que la page ou son contenu ne seront jamais traités par lui. La réponse HTML est bornée en taille et en délai, lue comme texte non exécutable et parsée localement par l'extracteur existant ; aucun lien, artifact ou ressource citée n'est suivi ou téléchargé.
+- **Défaillance et remplacement:** une erreur de consentement, de politique, réseau, délai, taille ou format est typée, atomique et conserve la session ; le parcours manuel/local reste disponible. `corsproxy.io` est une dépendance transitoire : son origine et son contrat restent confinés à la configuration de `remoteGateway` afin qu'un proxy géré par le projet puisse le remplacer ultérieurement sans changement du domaine, du parseur ou de l'interface de consentement. Toute évolution de la politique ou des conditions du fournisseur déclenche une revue de D-4 et peut désactiver cette voie au profit de l'import manuel.
+
 ## Consistency Conventions
 
 | Concern | Convention |
@@ -83,7 +94,7 @@ flowchart LR
 | Nombres et unités | Calculs non arrondis en Wh, gCO2e et L ; seul l’affichage formate et arrondit. Aucun `NaN` ou infini ne franchit la frontière du domaine. |
 | Données | Les fichiers portent `schemaVersion`, `dataVersion`, provenance et date de calibration ; une valeur environnementale absente cherche seulement sa valeur Monde du même facteur. |
 | Mutation | Les actions du reducer sont les seules mutations de session. Une mutation ne lance jamais de calcul sans intention utilisateur explicite. |
-| Confidentialité | Les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. |
+| Confidentialité | Par défaut, les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. La seule exception est l'URL canonique d'un partage ChatGPT, transmise à l'origine allowlistée après consentement conforme à AD-8 ; aucun contenu local n'est inclus par le calculateur. |
 
 ## Stack
 
@@ -103,6 +114,7 @@ calculator/
   src/
     ui/                 # composants React, accessibilité, présentation
     application/        # reducer, cas d’usage, orchestration du Worker
+      import/           # validation, extracteur local et remoteGateway isolé
     domain/             # règles pures : historique, diff, impacts, validation, fraîcheur
     data/               # catalogues locaux, schémas et métadonnées de sources
     i18n/               # messages fr-FR et formatage
@@ -121,6 +133,22 @@ flowchart TB
   PAGES --> URL[felixmortas.com/calculator/]
 ```
 
+```mermaid
+sequenceDiagram
+  participant U as Personne
+  participant UI as UI d'import
+  participant G as remoteGateway
+  participant P as corsproxy.io allowlisté
+  participant X as Extracteur local
+  U->>UI: Consentir pour cette URL valide
+  UI->>G: URL canonique ChatGPT uniquement
+  G->>P: Requête bornée vers l'origine allowlistée
+  P-->>G: HTML public borné
+  G->>X: Texte HTML non exécutable
+  X-->>UI: Blocs extraits ou erreur typée
+  Note over UI,X: Aucun bloc local, fichier, résultat ou paramètre n'est transmis
+```
+
 ## Capability → Architecture Map
 
 | Capability / Area | Lives in | Governed by |
@@ -131,11 +159,12 @@ flowchart TB
 | Modèles, paramètres avancés et calcul environnemental | `data/`, `application/`, `domain/` | AD-3, AD-5 |
 | Pays, eau, carbone, sécheresse et douche | `data/`, `domain/`, `ui/` | AD-5, AD-6 |
 | Français et extensions de langues | `i18n/`, `ui/` | AD-7 |
+| Consentement et import de partage distant | `ui/`, `application/import/` | AD-8 |
 | Publication GitHub Pages | `calculator/` et workflow du repo hôte | AD-1 |
 
 ## Deferred
 
 - Granularité exacte du diff d’artifact, segmentation des mots de fallback, règles d’arrondi et bornes numériques : D-2 du PRD les fixe avant les tests de référence ; ils ne modifient pas les frontières ci-dessus.
 - Schéma concret et contenu du catalogue `models_params`, calibration tarifaire et processus de mise à jour : D-1/D-6 ; ils doivent satisfaire AD-5 avant publication.
-- Import d’un lien de partage : D-4. Aucun adaptateur d’import ni droit réseau n’est créé avant une étude de faisabilité compatible GitHub Pages et confidentialité.
+- Choix définitif du proxy géré par le projet, y compris son origine, son contrat de traitement et ses protections opérationnelles : il remplacera `corsproxy.io` par changement de configuration de `remoteGateway`, après revue D-4 et du consentement ; il ne change pas le domaine, le parseur local ou les calculs.
 - Workflow GitHub Actions précis du dépôt hôte : décidé lors de l’intégration ; il doit respecter AD-1 et publier aussi le site racine.

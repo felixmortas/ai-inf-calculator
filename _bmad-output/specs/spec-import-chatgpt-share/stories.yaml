@@ -59,3 +59,55 @@
     artifacts ni catalogues. Mettre à jour la documentation utilisateur de l’import
     avec formats admis, données seulement en mémoire et méthode de remplacement par
     collage pour les formats exclus.
+- id: "4"
+  title: Consentement informé avant import distant
+  description: >-
+    Ajouter à CAP-6 le dialogue de consentement accessible qui précède toute
+    récupération via corsproxy.io, expose les données réellement transmises et
+    conserve une alternative manuelle sans requête en cas de refus ou d’annulation.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    La confirmation de remplacement existante ne vaut pas consentement distant :
+    demander l’autorisation ponctuelle, explicite et non pré-cochée après validation
+    de l’URL et avant importFromUrl ou remoteGateway. Afficher le texte de
+    consentement validé, les liens vers documentation/politique/conditions du tiers,
+    « Continuer avec corsproxy.io », « Annuler » et « Importer manuellement ».
+    Placer le focus dans le dialogue et garantir qu’Escape, Annuler, refus, URL
+    invalide ou changement d’URL n’émettent aucune requête. Couvrir ces invariants
+    par tests UI et d’intégration accessibles.
+- id: "5"
+  title: Passerelle proxy tiers bornée et allowlistée
+  description: >-
+    Isoler dans remoteGateway la récupération consentie via corsproxy.io afin de
+    transmettre uniquement l’URL ChatGPT validée, borner la réponse et remettre son
+    HTML non exécutable à l’extracteur local sans dépendance du domaine de calcul.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Remplacer la lecture directe dépendante de CORS par une passerelle application
+    distincte du parseur. L’origine de production est exactement
+    https://corsproxy.io/ ; aucun hôte, chemin de proxy ou destination ne vient de
+    l’entrée utilisateur. Configurer le mécanisme de clé API et l’autorisation de
+    domaine du fournisseur sans considérer une clé statique comme secret. Renvoyer
+    des erreurs discriminées consentement/politique-réseau/HTTP/délai/taille/format,
+    sans mutation ni résultat partiel. Tester que la requête ne contient ni bloc,
+    fichier, résultat, paramètre, cookie applicatif ni jeton de session, et que le
+    HTML borné est seulement parsé localement.
+- id: "6"
+  title: Documenter et vérifier la frontière d’import distant
+  description: >-
+    Mettre à jour l’aide d’import et les vérifications d’intégration pour décrire
+    factuellement l’exception corsproxy.io, ses limites connues et le maintien du
+    parcours manuel lorsque le fournisseur est refusé ou indisponible.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Dans docs/importer-un-partage-chatgpt.md, citer la documentation, la politique
+    de confidentialité et les conditions de corsproxy.io ; déclarer l’URL de partage,
+    l’IP, l’agent utilisateur et les métadonnées de requête comme données exposées,
+    sans promettre absence de traitement ou de rétention de la page. Documenter le
+    consentement par requête, la voie manuelle, la revue avant publication et la
+    possibilité de désactiver le tiers. Ajouter ou compléter les tests d’intégration
+    qui couvrent consentement → passerelle → parsing local, indisponibilité du tiers,
+    absence de fuite de données locales et continuité de l’import manuel.

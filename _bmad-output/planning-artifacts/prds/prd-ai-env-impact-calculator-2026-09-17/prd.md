@@ -2,16 +2,16 @@
 title: Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-17
-updated: 2026-09-18
+updated: 2026-09-19
 ---
 
 # PRD — Calculateur d’empreinte environnementale des LLM
 
 ## 1. Objet et vision
 
-Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Une personne non technique colle ses textes, déclenche les calculs, consulte l’énergie, l’eau et le carbone estimés ainsi que le risque de sécheresse associé au pays d’hébergement retenu. Une équivalence carbone en durée de douche chaude l’aide à interpréter le résultat ; une liste commune de bonnes pratiques lui donne des gestes à retenir.
+Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Une personne non technique colle ses textes, déclenche les calculs, consulte l’énergie, l’eau et le carbone estimés ainsi que le risque de sécheresse associé au pays d’hébergement retenu. Elle peut également coller l'URL partagé de la conversation avec un Chatbot comme ChatGPT, Claude, Gemini ou Mistral ce qui automatise le remplissage des textes. Une équivalence carbone en durée de douche chaude l’aide à interpréter le résultat ; une liste commune de bonnes pratiques lui donne des gestes à retenir.
 
-Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le parcours courant garde le chatbot, le modèle et la conversation visibles ; les réglages mathématiques restent dans une section avancée discrète. Les conversations et les calculs restent dans le navigateur ; la session n’est pas sauvegardée après fermeture.
+Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le parcours courant garde le chatbot, le modèle et la conversation visibles ; les réglages mathématiques restent dans une section avancée discrète. Les conversations restent dans le navigateur, sauf quand les conversations sont importées depuis l'URL de partage d'un chatbot. Les calculs mathématiques, eux, restent dans le navigateur ; la session n’est pas sauvegardée après fermeture. Dans le cas 
 
 Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables.
 
@@ -40,23 +40,19 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 
 ### UJ-2 — Camille évalue une conversation passée à partir de son lien
 
-**Statut : conditionnel, soumis à une étude de faisabilité préalable.** L’accès programmatique au contenu d’une conversation partagée doit être vérifié avant d’engager cette fonctionnalité. Si cet accès n’est pas possible, l’import par lien ne sera pas proposé. Le parcours ci-dessous décrit le comportement souhaité en cas de faisabilité établie.
-
 **Contexte et entrée.** Plus tard, Camille souhaite évaluer une conversation récente avec ChatGPT.
 
 **Déroulement.** Elle copie l’URL de partage depuis ChatGPT et la colle dans le calculateur. Celui-ci remplit automatiquement les blocs et champs de la conversation.
 
 **Résultat.** Camille consulte l’impact de chaque échange et celui de la conversation complète.
 
-**Étude préalable :** accès programmatique, complétude des textes, abonnement utilisé et erreurs d’import seront examinés avant décision d’inclusion (D-4).
+**Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
 
 ## 3. Périmètre du lancement
 
-**Inclus :** saisie manuelle de blocs, ajout/modification/suppression, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable.
+**Inclus :** saisie manuelle de blocs, import automatique depuis l'URL, ajout/modification/suppression, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable.
 
 **Catalogue :** les chatbots et modèles disponibles, avec la tarification par type de tokens sont ceux du fichier fourni, nommé `models_params`.
-
-**Conditionnel :** l’import par URL de partage (UJ-2) fera l’objet d’une étude de faisabilité. Il n’est pas promis au lancement. Si le contenu n’est pas accessible programmatiquement dans les contraintes retenues, cette fonction ne sera pas proposée.
 
 **Exclusions :** compte, sauvegarde de conversation, tokenisation distante ou clé API, serveur complémentaire, estimation de raisonnement invisible, fourchettes d’incertitude, conseils personnalisés, comparaison de l’eau, calcul du Scope 3 ou de l’eau liée à l’électricité. Le traitement natif des images, fichiers audio et vidéos n’est pas défini : le parcours porte sur du texte collé. Le déplacement des blocs et le suivi de plusieurs artifacts distincts dans un même échange ne font pas partie des exigences de lancement.
 
@@ -369,9 +365,9 @@ L’étude de faisabilité de l’import par lien devra tenir compte de cet héb
 
 ### NFR-3 — Garder les conversations dans le navigateur
 
-Les messages, réponses, raisonnements et artifacts restent dans le navigateur. Aucun contenu de conversation n’est transmis à un serveur, y compris par des services d’analyse, de journalisation ou de comptage des tokens. Le comptage, le calcul des impacts et la comparaison des versions d’artifacts sont réalisés localement. Aucune clé API ni service serveur complémentaire n’est requis pour ces opérations.
+Par défaut, les messages, réponses, raisonnements, artifacts, fichiers locaux, calculs, tokenisation et comparaisons restent dans le navigateur, en mémoire de session, sans analytics ni journal distant. Le comptage, le calcul des impacts et la comparaison des versions d’artifacts sont réalisés localement.
 
-Le mécanisme de détection du pays et l’import conditionnel par lien devront respecter cette confidentialité. L’étude d’import doit examiner la faisabilité depuis la page hébergée sur GitHub Pages, sans serveur complémentaire.
+L’import d’un lien de partage public constitue une exception strictement limitée : avant chaque requête, la personne doit consentir explicitement à l’envoi de l’URL canonique de partage à `corsproxy.io`, intermédiaire tiers retenu pour récupérer la page publique. Le calculateur ne transmet ni bloc local, fichier ajouté, résultat ni paramètre de calcul. Selon la politique du fournisseur, l’URL, l’adresse IP, l’agent utilisateur et des métadonnées de requête sont transmis ; le produit ne doit pas promettre que la page ou son contenu ne seront jamais traités par ce tiers. Le refus, l’annulation ou l’indisponibilité du tiers ne génère aucune requête distante, maintient les données dans le navigateur et laisse l’import manuel disponible.
 
 ### NFR-4 — Ne pas conserver la session après fermeture
 
@@ -425,7 +421,7 @@ Le cadrage produit est établi. Les points ci-dessous relèvent de la conception
 | D-1 | Fournir le catalogue, paramètres totaux/activés, tokens système, tarifs tokens, pays fournisseurs, facteurs, risques et valeurs « Monde » ; contrôler leur cohérence avec les modèles ChatGPT imposés. | Felix pour la fourniture ; responsable technique pour la validation | Intégration des données et publication |
 | D-2 | Définir segmentation des mots en fallback, précision d’affichage, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche pour éviter des paramètres contradictoires ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
 | D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; saisie manuelle en cas d’échec, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
-| D-4 | Étudier l’import par lien depuis le navigateur : accès, restrictions réseau, données présentes et compatibilité avec l’absence de serveur. | Responsable technique ; Felix pour la décision d’inclusion | Tout engagement de livraison de l’import |
+| D-4 | Documenter avant publication l’exception d’import distant : fournisseur retenu (`corsproxy.io`), origine, données transmises, juridiction et politique applicables, rétention et traitement déclarés, mécanisme de consentement explicite par requête et revue des risques. Vérifier à chaque publication les documents du fournisseur ; toute évolution déclenche une revue de l’exception et, si nécessaire, un retour au parcours manuel. | Responsable technique ; Felix pour la validation de la décision et du fournisseur | Activation ou publication de l’import distant |
 | D-5 | Rédiger les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; arrêter disposition responsive et précision des unités. | Responsable UX ; Felix pour la validation éditoriale | Publication |
 | D-6 | Préparer la calibration des ratios tarifaires et la provenance datée des données ; choisir le processus de maintenance du catalogue. | Responsable technique ; Felix pour la maintenance | Publication, puis toute mise à jour de données |
 

@@ -2,7 +2,7 @@
 title: Epics et stories — Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-19
 stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
@@ -10,6 +10,12 @@ inputDocuments:
   - ../specs/spec-ai-env-impact-calculator/SPEC.md
   - ../specs/spec-ai-env-impact-calculator/functional-contract.md
   - ../specs/spec-ai-env-impact-calculator/calculation-contract.md
+  - sprint-change-proposal-2026-09-19.md
+  - ../specs/spec-import-chatgpt-share/SPEC.md
+  - ../specs/spec-import-chatgpt-share/import-contract.md
+  - ../specs/spec-import-chatgpt-share/stories/4-consentement-informe-avant-import-distant.md
+  - ../specs/spec-import-chatgpt-share/stories/5-passerelle-proxy-tiers-bornee-et-allowlistee.md
+  - ../specs/spec-import-chatgpt-share/stories/6-documenter-et-verifier-la-frontiere-d-import-distant.md
 ---
 
 # Calculateur d’empreinte environnementale des LLM — Epic Breakdown
@@ -74,7 +80,7 @@ NFR-1: Permettre la saisie, les résultats, les conseils et la correction du pay
 
 NFR-2: Produire une application publiable sur GitHub Pages et intégrable à `felixmortas.com`.
 
-NFR-3: Garder intégralement messages, calculs, tokenisation et diff dans le navigateur, sans API, serveur, analytics ou journal distant.
+NFR-3: Conserver par défaut messages, calculs, tokenisation et diff dans le navigateur, sans analytics ni journal distant ; l’import d’un partage public est une exception consentie par requête qui transmet uniquement son URL canonique à `corsproxy.io`, sans données locales.
 
 NFR-4: Ne conserver durablement ni textes, ni résultats, ni choix après la fermeture de la page.
 
@@ -97,7 +103,10 @@ NFR-7: Fournir libellés, clavier, focus visible, erreurs associées et états a
 - Conserver les calculs non arrondis en Wh, gCO2e et L; ne laisser franchir aucune valeur `NaN` ou infinie à la frontière du domaine.
 - Prévoir tests de domaine et Worker, incluant les scénarios de référence: premier échange, artifact modifié, suppression, bloc vide, péremption, total, modèle/pays, restauration, repli Monde et fermeture de session.
 - Appliquer les décisions SPEC: séparation des mots par caractères non alphanumériques pour le fallback, quatre chiffres significatifs à l’affichage, granularité du diff à définir lors de l’implémentation, absence de bornes numériques additionnelles pour le moment.
-- Ne pas inclure l’import par lien de partage en V1; il est reporté à une V2 après étude de faisabilité compatible confidentialité et GitHub Pages.
+- Isoler l’import distant exceptionnel dans `application/import/remoteGateway` : seule une URL ChatGPT validée et consentie peut être transmise à l’origine allowlistée `https://corsproxy.io/`; délai et taille sont bornés, les erreurs sont typées, atomiques et le HTML reste traité localement comme texte non exécutable.
+- Ne jamais transmettre au tiers les blocs, fichiers locaux, résultats, catalogues, paramètres de calcul, cookies applicatifs, jetons de session ou secrets ; ne suivre ni liens, artifacts ou ressources citées.
+- Afficher avant chaque requête un dialogue accessible, non pré-coché et distinct de la confirmation de remplacement : fournisseur, finalité, URL envoyée, métadonnées possibles, exclusions de données locales, annulation, `Escape` et parcours manuel sans requête.
+- Documenter les faits et incertitudes de traitement de `corsproxy.io`, revoir ses documents à chaque publication selon D-4, et conserver l’import manuel si le fournisseur est indisponible ou ne convient plus.
 
 ### UX Design Requirements
 
@@ -151,6 +160,8 @@ FR-23: Epic 4 — Repli environnemental « Monde » signalé.
 
 FR-24: Epic 3 — Impacts complets, total et risque de sécheresse.
 
+NFR-2, NFR-3, NFR-4, NFR-7: Epic 5 — Import distant consentant, limité et accessible, conservant la confidentialité locale par défaut.
+
 ## Epic List
 
 ### Epic 1: Configurer et saisir une conversation
@@ -176,6 +187,12 @@ La personne calcule tous ses échanges, consulte le total énergie/eau/carbone e
 La personne adapte les références de sa session, restaure les valeurs par défaut et interprète les impacts grâce à l’équivalence douche et aux conseils de sobriété.
 
 **FRs covered:** FR-5, FR-6, FR-15, FR-17, FR-18, FR-23
+
+### Epic 5: Importer un partage via un intermédiaire tiers consenti
+
+La personne peut décider, en connaissance de cause, de transmettre uniquement une URL ChatGPT canonique à `corsproxy.io` pour prévisualiser une page publique, ou poursuivre l’import manuel sans transmission.
+
+**Requirements covered:** CAP-1, CAP-6; NFR-2, NFR-3, NFR-4, NFR-7
 
 ## Epic 1: Configurer et saisir une conversation
 
@@ -620,3 +637,83 @@ So that je retiens des gestes pour réduire l’impact de mes prochains usages.
 **Given** un résultat périmé
 **When** il est rendu
 **Then** son état est signalé sans reposer uniquement sur la couleur et sa valeur n’est jamais présentée comme actuelle.
+
+## Epic 5: Importer un partage via un intermédiaire tiers consenti
+
+La personne peut décider, en connaissance de cause, de transmettre uniquement une URL ChatGPT canonique à `corsproxy.io` pour prévisualiser une page publique, ou poursuivre l’import manuel sans transmission.
+
+### Story 5.1: Consentir à l’import distant avant toute requête
+
+As a visiteuse,
+I want recevoir une information claire et choisir explicitement avant que mon lien de partage soit transmis à un tiers,
+So that je garde la maîtrise de cette exception à la confidentialité locale.
+
+**Acceptance Criteria:**
+
+**Given** une URL ChatGPT canonique valide,
+**When** je demande son analyse,
+**Then** un dialogue de consentement accessible est affiché avant tout appel d’import ou effet réseau.
+
+**Given** ce dialogue,
+**When** je consulte son contenu,
+**Then** il identifie `corsproxy.io`, la finalité, l’URL transmise, les métadonnées possibles — dont IP et agent utilisateur —, les données locales exclues et les liens fournisseur.
+
+**Given** le dialogue ouvert,
+**When** je refuse, annule, presse `Escape` ou modifie l’URL,
+**Then** aucune requête ni mutation de session ne survient et une nouvelle URL exige un nouveau consentement.
+
+**Given** le dialogue ouvert,
+**When** je choisis l’import manuel,
+**Then** je peux poursuivre ce parcours sans requête à `corsproxy.io`.
+
+### Story 5.2: Récupérer un partage par une passerelle tiers bornée
+
+As a visiteuse ayant consenti pour l’URL courante,
+I want que le calculateur récupère la page publique via une passerelle strictement limitée,
+So that l’import reste possible malgré CORS sans transmettre mon état local.
+
+**Acceptance Criteria:**
+
+**Given** un consentement courant et une URL ChatGPT validée,
+**When** l’import distant démarre,
+**Then** `remoteGateway` appelle uniquement `https://corsproxy.io/` et construit la destination depuis cette URL seule.
+
+**Given** une absence de consentement, une annulation ou une URL modifiée,
+**When** une récupération est tentée,
+**Then** aucune requête n’est lancée, une erreur typée est renvoyée et la session est préservée.
+
+**Given** une requête de passerelle,
+**When** elle est inspectée,
+**Then** elle ne contient aucun bloc, fichier, résultat, catalogue, paramètre, cookie applicatif, jeton de session ou secret.
+
+**Given** un échec réseau, HTTP, délai, taille, politique ou configuration,
+**When** la passerelle échoue,
+**Then** aucun HTML partiel ni import n’est appliqué et le parcours manuel reste disponible.
+
+**Given** un HTML borné admis,
+**When** il est analysé,
+**Then** seul l’extracteur local le traite comme texte non exécutable, sans suivi de lien ni téléchargement d’artifact.
+
+### Story 5.3: Documenter et vérifier la frontière d’import distant
+
+As a visiteuse,
+I want comprendre les données exposées au tiers et disposer d’un parcours sûr lorsque le service est indisponible,
+So that je puisse choisir l’import distant sans promesse de confidentialité non vérifiée.
+
+**Acceptance Criteria:**
+
+**Given** l’aide d’import,
+**When** je lis sa section d’import distant,
+**Then** elle présente `corsproxy.io`, ses documents, les données exposées, les incertitudes de traitement, le consentement par requête et l’alternative manuelle.
+
+**Given** les tests d’intégration,
+**When** ils exercent consentement, annulation, changement d’URL, indisponibilité et succès,
+**Then** le réseau ne démarre qu’après consentement et tout échec préserve la session.
+
+**Given** une requête distante consentie,
+**When** son contenu est vérifié,
+**Then** seule l’URL ChatGPT validée quitte le calculateur ; blocs, fichiers, résultats et paramètres locaux n’y figurent pas.
+
+**Given** que le fournisseur est indisponible ou que ses politiques doivent être revues,
+**When** l’exception ne peut pas être activée,
+**Then** l’aide et le produit maintiennent l’import manuel sans promesse non vérifiée.
