@@ -1,3 +1,5 @@
+import { hasConversationBlockContent } from './conversationContent';
+
 export interface ConversationHistoryBlock {
   readonly blockId: string;
   readonly message: string;
@@ -23,7 +25,7 @@ const emptyPreparation: PreparedConversationHistory = Object.freeze({
 });
 
 function isIgnoredBlock(block: ConversationHistoryBlock): boolean {
-  return [block.message, block.finalResponse, block.visibleReasoning, block.artifact, ...(block.sources ?? []).map((source) => source.text)].every((text) => text.trim() === '');
+  return !hasConversationBlockContent(block);
 }
 
 function words(text: string): readonly string[] {

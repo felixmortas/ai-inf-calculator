@@ -3,6 +3,7 @@ import { previewConversationImport, type ConversationPreview } from '../applicat
 import { importProviders } from '../application/import/registry';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import type { ImportProvider } from '../application/import/types';
+import { hasConversationBlockContent } from '../domain/conversationContent';
 import { fr } from '../i18n/fr';
 
 interface ConversationImportProps {
@@ -20,7 +21,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
   const [confirming, setConfirming] = useState(false);
   const analysisVersion = useRef(0);
   const provider = providers.find((item) => item.id === providerId);
-  const hasExistingContent = state.blocks.some((block) => [block.message, block.finalResponse, block.visibleReasoning, block.artifact].some((value) => value.trim() !== ''));
+  const hasExistingContent = state.blocks.some(hasConversationBlockContent);
 
   async function analyse() {
     if (!provider) return;

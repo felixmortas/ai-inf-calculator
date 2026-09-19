@@ -20,6 +20,7 @@ import type { ImpactResult } from '../domain/impact';
 import type { ImpactTotal } from '../domain/impactAggregation';
 import { resolveImpactParameters, type DroughtRisk } from '../data/modelCatalog';
 import { prepareConversationHistory } from '../domain/conversationHistory';
+import { hasConversationBlockContent } from '../domain/conversationContent';
 
 export interface ConversationState {
   readonly provider: string;
@@ -141,8 +142,7 @@ const conversationBlockFields: readonly ConversationBlockField[] = [
 ];
 
 export function isIgnoredConversationBlock(block: ConversationBlock): boolean {
-  return conversationBlockFields.every((field) => block[field].trim() === '')
-    && (block.sources ?? []).every((source) => source.text.trim() === '');
+  return !hasConversationBlockContent(block);
 }
 
 function createConversationBlock(blockId: string): ConversationBlock {

@@ -34,6 +34,28 @@ describe('ConversationImport', () => {
     rerender(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
   });
 
+  it('demande confirmation et préserve les sources seules après annulation', async () => {
+    const user = userEvent.setup();
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'old' });
+    state = conversationReducer(state, { type: 'sourceAdded', blockId: 'old', source: { id: 'source-1', name: 'note.txt', type: 'text/plain', size: 5, text: 'notes' } });
+    const dispatch = vi.fn((action) => { state = conversationReducer(state, action); });
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
+    await user.type(screen.getByLabelText('Lien de partage'), 'https://chatgpt.com/share/abc');
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
+
+    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    expect(screen.getByRole('alertdialog')).toBeVisible();
+    expect(dispatch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' })).toBeVisible();
+    expect(state.blocks[0].sources).toEqual([{ id: 'source-1', name: 'note.txt', type: 'text/plain', size: 5, text: 'notes' }]);
+    expect(dispatch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    expect(screen.getByRole('alertdialog')).toBeVisible();
+  });
+
   it('conserve l’état en cas d’échec et montre une erreur actionnable', async () => {
     const user = userEvent.setup();
     const rejected: ImportProvider = { ...provider, importFromUrl: vi.fn().mockResolvedValue({ ok: false, providerId: 'test', events: [], error: { code: 'network', message: 'Accès refusé par le réseau ou CORS.' } }) };
