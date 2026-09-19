@@ -4,3 +4,5 @@
 _bmad
 node_modules
 dist
+chatgpt-share-output
+__pycache__
