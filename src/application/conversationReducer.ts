@@ -1,4 +1,5 @@
-import { modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, type EnvironmentalFactorSource, type ImpactParameterOverrides } from '../data/modelCatalog';
+import { detectUserCountry, modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, isUserCountry, resolveUserCarbonIntensity, type EnvironmentalFactorSource, type ImpactParameterOverrides } from '../data/modelCatalog';
+import type { ShowerEquivalence } from '../domain/showerEquivalence';
 import {
   canSelectModel,
   chatGptProvider,
@@ -25,12 +26,15 @@ export interface ConversationState {
   readonly subscription: ChatGptSubscription;
   readonly modelId: string;
   readonly hostingCountry: string;
+  readonly userCountry: string;
   readonly parameterOverrides: ImpactParameterOverrides;
   /** Saisie avancée invalide, non appliquée : bloque les calculs sans perdre la dernière vue valide. */
   readonly parameterValidationInvalid: boolean;
   readonly blocks: readonly ConversationBlock[];
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
+  readonly showerEquivalences: Readonly<Record<string, ShowerEquivalenceState>>;
+  readonly summaryShowerEquivalence?: ShowerEquivalenceState;
   readonly summary?: ConversationSummaryState;
 }
 
@@ -62,12 +66,14 @@ export type ConversationSummaryState =
   | { readonly status: 'pending'; readonly fingerprint: string }
   | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
+export interface ShowerEquivalenceState { readonly fingerprint: string; readonly equivalence: ShowerEquivalence; }
 
 export type ConversationAction =
   | { readonly type: 'providerSelected'; readonly provider: string }
   | { readonly type: 'subscriptionSelected'; readonly subscription: ChatGptSubscription }
   | { readonly type: 'modelSelected'; readonly modelId: string }
   | { readonly type: 'hostingCountrySelected'; readonly country: string }
+  | { readonly type: 'userCountrySelected'; readonly country: string }
   | { readonly type: 'parametersApplied'; readonly overrides: ImpactParameterOverrides }
   | { readonly type: 'parametersValidationFailed' }
   | { readonly type: 'parametersRestored' }
@@ -82,7 +88,8 @@ export type ConversationAction =
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryRecalculationRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
+  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] }
+  | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
 const initialSubscription: ChatGptSubscription = 'without-paid-subscription';
 
@@ -91,9 +98,11 @@ export const initialConversationState: ConversationState = Object.freeze({
   subscription: initialSubscription,
   modelId: resolveChatGptModel(initialSubscription),
   hostingCountry: resolveHostingCountry(chatGptProvider)!,
+  userCountry: detectUserCountry(),
   blocks: [],
   tokenizations: {},
   impacts: {},
+  showerEquivalences: {},
   parameterOverrides: {},
   parameterValidationInvalid: false,
 });
@@ -172,12 +181,22 @@ export function summaryFingerprint(state: Pick<ConversationState, 'provider' | '
  * dependency boundary is available now for the later session parameters.
  */
 export function showerFingerprint(
-  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>,
-  userCountry?: string,
-  showerReference?: number,
+  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry'>,
+  carbonGco2e?: number,
 ): string {
   const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
-  return JSON.stringify(['shower-v1', summaryFingerprint(state), userCountry ?? null, resolved?.shower ?? null, showerReference ?? null]);
+  const factor = resolveUserCarbonIntensity(state.userCountry);
+  return JSON.stringify(['shower-v2', carbonGco2e ?? null, state.userCountry, factor, resolved?.shower ?? null]);
+}
+
+export function isShowerEquivalenceCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry' | 'showerEquivalences' | 'impacts' | 'blocks' | 'parameterValidationInvalid'>, blockId: string): boolean {
+  const impact = currentImpact(state as ConversationState, blockId);
+  const value = state.showerEquivalences[blockId];
+  return !!impact && value?.fingerprint === showerFingerprint(state, impact.carbonGco2e);
+}
+
+export function isSummaryShowerEquivalenceCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry' | 'summaryShowerEquivalence' | 'summary'>): boolean {
+  return state.summary?.status === 'result' && state.summaryShowerEquivalence?.fingerprint === showerFingerprint(state, state.summary.total.carbonGco2e);
 }
 
 export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>, blockId: string): boolean {
@@ -238,6 +257,8 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'hostingCountrySelected':
       if (!isHostingCountry(action.country) || action.country === state.hostingCountry) return state;
       return discardTransientCalculations({ ...state, hostingCountry: action.country });
+    case 'userCountrySelected':
+      return !isUserCountry(action.country) || action.country === state.userCountry ? state : { ...state, userCountry: action.country };
     case 'parametersApplied': {
       if (!resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, action.overrides)) return state;
       const overrides = Object.freeze({ ...action.overrides, ...(action.overrides.constants ? { constants: Object.freeze({ ...action.overrides.constants }) } : {}), ...(action.overrides.shower ? { shower: Object.freeze({ ...action.overrides.shower }) } : {}) });
@@ -344,5 +365,16 @@ export function conversationReducer(state: ConversationState, action: Conversati
         && summaryFingerprint(state) === action.fingerprint
         ? { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: action.code, blockingBlockIds: action.blockingBlockIds } }
         : state;
+    case 'showerEquivalenceResolved': {
+      if (action.blockId) {
+        const impact = currentImpact(state, action.blockId);
+        return impact && showerFingerprint(state, impact.carbonGco2e) === action.fingerprint
+          ? { ...state, showerEquivalences: { ...state.showerEquivalences, [action.blockId]: { fingerprint: action.fingerprint, equivalence: action.equivalence } } }
+          : state;
+      }
+      return state.summary?.status === 'result' && showerFingerprint(state, state.summary.total.carbonGco2e) === action.fingerprint
+        ? { ...state, summaryShowerEquivalence: { fingerprint: action.fingerprint, equivalence: action.equivalence } }
+        : state;
+    }
   }
 }

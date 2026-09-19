@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canSelectModel, resolveChatGptModel, selectableModels } from './modelSelection';
-import { hasModel, modelCatalog, resolveDroughtRisk, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters } from '../data/modelCatalog';
+import { detectUserCountry, hasModel, modelCatalog, resolveDroughtRisk, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
   const models = [
@@ -21,6 +21,16 @@ describe('sélection de modèle', () => {
   it('charge les modèles de référence ChatGPT depuis le catalogue local', () => {
     expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-luna')).toBe(true);
     expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-terra')).toBe(true);
+  });
+
+  it('détecte le pays utilisateur localement puis replie sur Monde', () => {
+    expect(detectUserCountry('Europe/Paris', 'en-US')).toBe('FR');
+    expect(detectUserCountry('Europe/Berlin', 'fr-FR')).toBe('DE');
+    expect(detectUserCountry(undefined, 'fr-FR')).toBe('FR');
+    expect(detectUserCountry('Unknown/Zone', 'fr')).toBe('WORLD');
+    expect(resolveUserCarbonIntensity('FR')).toEqual({ status: 'country', value: 41.44 });
+    expect(resolveUserCarbonIntensity('ID')).toMatchObject({ status: 'world', value: 473 });
+    expect(resolveUserCarbonIntensity('ZZ')).toMatchObject({ status: 'world', value: 473 });
   });
 
   it('résout les paramètres d’impact locaux du modèle et de son pays d’hébergement', () => {

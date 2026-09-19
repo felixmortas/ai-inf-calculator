@@ -22,3 +22,7 @@ last-update-date: 15-09-2026
 **Contrôle de cohérence.** Le script vérifie qu'une seule observation est obtenue par `Area` après application des filtres. La présence de doublons déclenche une erreur plutôt qu'une déduplication automatique, afin de rendre visible une éventuelle modification de la structure du jeu de données Ember ou une ambiguïté dans les données.
 
 Enfin, j'ai conservé le nom exact **`Emissions intensity (gCO2e/kWh)`** dans le fichier de sortie afin de préserver l'unité et la traçabilité avec la variable Ember d'origine.
+
+### Référence Monde
+
+La ligne `World` (473 `gCO2e/kWh`) reprend l’intensité mondiale 2024 publiée dans le rapport Ember *Global Electricity Review 2025* : https://ember-energy.org/app/uploads/2025/04/Report-Global-Electricity-Review-2025.pdf. Cette référence de repli est datée séparément du jeu pays 2025 et ne remplace jamais le pays sélectionné.

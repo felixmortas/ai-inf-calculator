@@ -1,13 +1,14 @@
 import { useEffect, useReducer, useRef } from 'react';
 import {
   conversationReducer, currentImpact, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
-  summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
+  showerFingerprint, summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
 } from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { fallbackTokenCount } from '../domain/tokenization';
-import { resolveDroughtRisk, resolveImpactParameters, type DroughtRisk } from '../data/modelCatalog';
+import { resolveDroughtRisk, resolveImpactParameters, resolveUserCarbonIntensity, type DroughtRisk } from '../data/modelCatalog';
+import { calculateShowerEquivalence } from '../domain/showerEquivalence';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
@@ -57,6 +58,9 @@ export function App() {
       });
         if (result.ok) {
           dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact, factorSources: parameters.factorSources });
+          const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
+          const showerFingerprintValue = showerFingerprint(snapshot, result.impact.carbonGco2e);
+          dispatch({ type: 'showerEquivalenceResolved', blockId, fingerprint: showerFingerprintValue, equivalence: calculateShowerEquivalence(result.impact.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters.shower, showerFactor.status === 'world' ? 'world' : 'country') });
           resolve(result.impact);
         } else {
           dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data' });
@@ -106,6 +110,8 @@ export function App() {
         ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
       } : undefined,
     });
+    const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
+    dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
   }
 
   function recalculateSummary() {
@@ -133,6 +139,8 @@ export function App() {
         ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
       } : undefined,
     });
+    const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
+    dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
   }
 
   return (

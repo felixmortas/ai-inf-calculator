@@ -43,6 +43,17 @@ describe('configuration de conversation', () => {
     expect(country).toHaveValue('FR');
   });
 
+  it('propose un pays utilisateur indicatif et corrigeable, distinct de l’hébergement', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    const country = screen.getByLabelText('Pays de la personne');
+    expect(screen.getByText(/Proposition indicative/)).toBeVisible();
+    await user.selectOptions(country, 'ID');
+    expect(country).toHaveValue('ID');
+    expect(screen.getByLabelText('Pays d’hébergement')).toHaveValue('US');
+  });
+
   it('repart des valeurs initiales après un nouveau montage', async () => {
     const user = userEvent.setup();
     const first = render(<App />);

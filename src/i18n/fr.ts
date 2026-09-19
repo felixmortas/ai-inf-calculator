@@ -11,6 +11,8 @@ export const fr = {
   advancedSettingsTitle: 'Paramètres avancés',
   hostingCountryLabel: 'Pays d’hébergement',
   hostingCountryHelp: 'Ce pays de référence s’applique à l’énergie, au carbone, à l’eau et au risque de sécheresse.',
+  userCountryLabel: 'Pays de la personne',
+  userCountryHelp: 'Proposition indicative, détectée localement et corrigeable. Il sert uniquement à l’estimation de durée de douche, pas au pays d’hébergement.',
   applyParametersAction: 'Appliquer les paramètres',
   restoreParametersAction: 'Rétablir les valeurs par défaut',
   invalidParameters: 'Une valeur est invalide. Vérifiez les limites et les diviseurs.',
@@ -44,4 +46,8 @@ export const fr = {
   invalidDataError: 'Le calcul est bloqué : une donnée indispensable est indisponible ou invalide.',
   worldFallbackNotice: 'Au moins un facteur environnemental utilise la donnée de repli « Monde ».',
   emptyBlockError: 'Saisissez un échange avant de lancer un calcul.',
+  showerEquivalence: (seconds: string) => `Estimation : environ ${seconds} secondes de douche électrique pour ce carbone.`,
+  showerUnavailable: 'Estimation de durée de douche non calculable : les émissions par minute sont nulles ou indisponibles.',
+  showerWorldFallback: 'L’estimation utilise le facteur carbone de repli « Monde » ; votre pays reste sélectionné.',
+  staleShower: 'Cette estimation de durée de douche est périmée : actualisez le résultat.',
 } as const;

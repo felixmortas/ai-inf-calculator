@@ -3,7 +3,9 @@ import {
   isIgnoredConversationBlock,
   isImpactCurrent,
   isImpactFresh,
+  isShowerEquivalenceCurrent,
   isSummaryCurrent,
+  isSummaryShowerEquivalenceCurrent,
   isSummaryFresh,
   type ConversationAction,
   type ConversationBlockField,
@@ -36,6 +38,14 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const pendingFocusBlockId = useRef<string | null | undefined>(undefined);
   const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
+  const currentSummaryShower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence : undefined;
+
+  const Shower = ({ value, stale }: { value: typeof state.summaryShowerEquivalence; stale: boolean }) => value ? (
+    <div className="shower-equivalence" role="status">
+      {value.equivalence.status === 'available' ? <p>{fr.showerEquivalence(formatImpact(value.equivalence.seconds))}</p> : <p>{fr.showerUnavailable}</p>}
+      {value.equivalence.status === 'available' && value.equivalence.factorSource === 'world' ? <p className="impact-note">{fr.showerWorldFallback}</p> : null}
+    </div>
+  ) : stale ? <p role="status" className="impact-stale">{fr.staleShower}</p> : null;
 
   useEffect(() => {
     if (pendingFocusBlockId.current === undefined) return;
@@ -88,6 +98,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         <p>{fr.energyLabel}: {formatImpact(currentSummary.total.energyWh)} Wh</p>
         <p>{fr.carbonLabel}: {formatImpact(currentSummary.total.carbonGco2e)} gCO2e</p>
         <p>{fr.waterLabel}: {formatImpact(currentSummary.total.waterL)} L</p>
+        <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
         <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available'
           ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable}</p>
         {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
@@ -98,6 +109,8 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         const impactState = state.impacts[block.blockId];
         const impactIsCurrent = isImpactCurrent(state, block.blockId);
         const impactIsStale = !ignored && impactState?.status === 'result' && !impactIsCurrent;
+        const shower = state.showerEquivalences[block.blockId];
+        const showerCurrent = isShowerEquivalenceCurrent(state, block.blockId);
         return (
           <fieldset key={block.blockId} className="conversation-block">
             <legend>{fr.blockTitle(index + 1)}</legend>
@@ -132,6 +145,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                 <p>{fr.energyLabel}: {formatImpact(impactState.impact.energyWh)} Wh</p>
                 <p>{fr.carbonLabel}: {formatImpact(impactState.impact.carbonGco2e)} gCO2e</p>
                 <p>{fr.waterLabel}: {formatImpact(impactState.impact.waterL)} L</p>
+                <Shower value={showerCurrent ? shower : undefined} stale={!!shower && !showerCurrent} />
                 {Object.values(impactState.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.worldFallbackNotice}</p> : null}
                 <p className="impact-note">{fr.impactLimits}</p>
               </div> : null}

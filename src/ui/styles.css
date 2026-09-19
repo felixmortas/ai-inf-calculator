@@ -74,6 +74,8 @@ button {
 .impact-result, .impact-error, .impact-stale { padding: .8rem; border-radius: .35rem; }
 .impact-result { background: #edf5ee; }
 .impact-result p { margin: .3rem 0; }
+.shower-equivalence { padding: .65rem .8rem; border-left: 4px solid #245535; background: #f3f8f3; }
+.shower-equivalence p { margin: .3rem 0; }
 .impact-note { color: #405349; font-size: .9rem; }
 .impact-error { border: 1px solid #9d3030; background: #fff1f1; }
 .impact-stale { border: 2px solid #8a5a00; background: #fff7df; color: #513600; font-weight: 700; }

@@ -111,6 +111,7 @@ export interface HostingCountryOption {
   readonly code: string;
   readonly label: string;
 }
+export interface UserCountryOption extends HostingCountryOption {}
 
 const countryOptions = Object.freeze([
   Object.freeze({ code: 'BR', label: 'Brésil' }),
@@ -120,8 +121,27 @@ const countryOptions = Object.freeze([
   Object.freeze({ code: 'US', label: 'États-Unis' }),
 ]);
 
+/** Codes ISO des pays effectivement présents dans le catalogue carbone local. */
 const countryNames: Readonly<Record<string, string>> = Object.freeze({
-  BR: 'Brazil', CH: 'Switzerland', FR: 'France', IN: 'India', US: 'United States', WORLD: 'World',
+  AL: 'Albania', AR: 'Argentina', AM: 'Armenia', AU: 'Australia', AT: 'Austria', AZ: 'Azerbaijan',
+  BD: 'Bangladesh', BY: 'Belarus', BE: 'Belgium', BO: 'Bolivia', BA: 'Bosnia Herzegovina', BR: 'Brazil',
+  BG: 'Bulgaria', KH: 'Cambodia', CA: 'Canada', CL: 'Chile', CN: 'China', CO: 'Colombia', CR: 'Costa Rica',
+  HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', DO: 'Dominican Republic', EC: 'Ecuador',
+  EG: 'Egypt', SV: 'El Salvador', EE: 'Estonia', ET: 'Ethiopia', FI: 'Finland', FR: 'France', GE: 'Georgia',
+  DE: 'Germany', GR: 'Greece', HU: 'Hungary', IS: 'Iceland', IN: 'India', ID: 'Indonesia', IR: 'Iran', IE: 'Ireland',
+  IL: 'Israel', IT: 'Italy', JP: 'Japan', KZ: 'Kazakhstan', KE: 'Kenya', XK: 'Kosovo', KW: 'Kuwait',
+  KG: 'Kyrgyzstan', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg', MY: 'Malaysia', MT: 'Malta', MX: 'Mexico',
+  MD: 'Moldova', MN: 'Mongolia', ME: 'Montenegro', MA: 'Morocco', NL: 'Netherlands', NZ: 'New Zealand',
+  NG: 'Nigeria', MK: 'North Macedonia', NO: 'Norway', OM: 'Oman', PK: 'Pakistan', PY: 'Paraguay', PE: 'Peru',
+  PL: 'Poland', PT: 'Portugal', PR: 'Puerto Rico', QA: 'Qatar', RO: 'Romania', RU: 'Russia', RS: 'Serbia',
+  SG: 'Singapore', SK: 'Slovakia', SI: 'Slovenia', ZA: 'South Africa', KR: 'South Korea', ES: 'Spain',
+  LK: 'Sri Lanka', SE: 'Sweden', CH: 'Switzerland', TW: 'Taiwan (China)', TJ: 'Tajikistan', TH: 'Thailand',
+  PH: 'The Philippines', TN: 'Tunisia', TR: 'Türkiye', GB: 'United Kingdom', US: 'United States', UY: 'Uruguay',
+  UZ: 'Uzbekistan', VN: 'Viet Nam', WORLD: 'World',
+});
+
+const countryLabels: Readonly<Record<string, string>> = Object.freeze({
+  BR: 'Brésil', CH: 'Suisse', FR: 'France', IN: 'Inde', US: 'États-Unis', WORLD: 'Monde',
 });
 
 const countryCodesByName: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries([
@@ -130,6 +150,13 @@ const countryCodesByName: Readonly<Record<string, string>> = Object.freeze(Objec
 ]));
 
 export const hostingCountryOptions: readonly HostingCountryOption[] = countryOptions;
+/** Pays proposés uniquement pour l’équivalence douche, indépendamment de l’hébergement. */
+export const userCountryOptions: readonly UserCountryOption[] = Object.freeze([
+  ...Object.entries(countryNames)
+    .filter(([code]) => code !== 'WORLD')
+    .map(([code, name]) => Object.freeze({ code, label: countryLabels[code] ?? name })),
+  Object.freeze({ code: 'WORLD', label: countryLabels.WORLD }),
+]);
 
 /** Normalise les libellés historiques des catalogues vers les codes ISO de session. */
 export function normalizeCountry(country: string): string | undefined {
@@ -140,6 +167,35 @@ export function normalizeCountry(country: string): string | undefined {
 
 export function isHostingCountry(country: string): boolean {
   return countryOptions.some((option) => option.code === country);
+}
+export function isUserCountry(country: string): boolean {
+  return userCountryOptions.some((option) => option.code === country);
+}
+
+const timeZoneCountries: Readonly<Record<string, string>> = Object.freeze({
+  'Europe/Paris': 'FR', 'Europe/Zurich': 'CH', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES',
+  'Europe/Rome': 'IT', 'Europe/London': 'GB', 'Europe/Amsterdam': 'NL', 'Europe/Brussels': 'BE',
+  'Europe/Stockholm': 'SE', 'Europe/Oslo': 'NO', 'Europe/Warsaw': 'PL', 'Europe/Lisbon': 'PT',
+  'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US', 'America/Toronto': 'CA',
+  'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR', 'America/Argentina/Buenos_Aires': 'AR',
+  'Asia/Kolkata': 'IN', 'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
+  'Asia/Bangkok': 'TH', 'Asia/Jakarta': 'ID', 'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
+});
+
+/** Heuristique locale, sans réseau ni géolocalisation : le contrôle utilisateur prévaut. */
+export function detectUserCountry(timeZone?: string, language?: string): string {
+  const zone = timeZone ?? (typeof Intl === 'undefined' ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
+  if (zone && timeZoneCountries[zone]) return timeZoneCountries[zone];
+  const locale = language ?? (typeof navigator === 'undefined' ? undefined : navigator.language);
+  const region = locale?.match(/[-_]([A-Za-z]{2})\b/)?.[1]?.toUpperCase();
+  return region && isUserCountry(region) ? region : 'WORLD';
+}
+
+export function resolveUserCarbonIntensity(country: string): ResolvedEnvironmentalFactor {
+  const resolved = resolveEnvironmentalFactor(country, environmentalFactorRows.carbonIntensity);
+  if (resolved.status !== 'unavailable') return resolved;
+  const world = environmentalFactorRows.carbonIntensity.find((row) => normalizeCountry(row.country) === 'WORLD')?.value;
+  return world === undefined ? resolved : Object.freeze({ status: 'world', value: world });
 }
 
 /** Résolution pure et injectable : une valeur nulle est une donnée valide. */

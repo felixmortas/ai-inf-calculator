@@ -9,6 +9,7 @@ import {
   conversationReducer,
   impactFingerprint,
   initialConversationState,
+  showerFingerprint,
   summaryFingerprint,
 } from '../application/conversationReducer';
 
@@ -58,6 +59,7 @@ describe('composition de la conversation', () => {
     const historyPush = vi.spyOn(History.prototype, 'pushState');
     const historyReplace = vi.spyOn(History.prototype, 'replaceState');
     const first = render(<App />);
+    await user.tab();
     await user.tab();
     await user.tab();
     await user.tab();
@@ -201,6 +203,26 @@ describe('composition de la conversation', () => {
     expect(fingerprint).toBeTypeOf('string');
   });
 
+  it('rend une estimation de douche, annonce le repli Monde et masque seulement cette estimation quand le pays change', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'userCountrySelected', country: 'ID' });
+    const shower = showerFingerprint(state, 2);
+    state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'world' } });
+    const rendered = render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+    expect(screen.getByText(/Estimation : environ/)).toBeVisible();
+    expect(screen.getByText(/facteur carbone de repli « Monde »/)).toBeVisible();
+    rendered.unmount();
+
+    state = conversationReducer(state, { type: 'userCountrySelected', country: 'FR' });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+    expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
+    expect(screen.getByText('Énergie: 1 Wh')).toBeVisible();
+  });
+
   it('masque un impact périmé, explique le recalcul et liste les échanges bloquants', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
@@ -248,5 +270,40 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     expect(summary.parentElement).toHaveTextContent(`Énergie: ${individualEnergy}`);
+  });
+
+  it('actualise l’équivalence du bilan après un changement de pays sans recalculer le bloc', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'US');
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Bilan conservé');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    const individualEnergy = (await screen.findByText(/Énergie:/)).parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1];
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+
+    await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'FR');
+    expect(screen.getAllByText(/estimation de durée de douche est périmée/)).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+
+    expect(await screen.findByText(/Estimation : environ/)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Bilan de la conversation' }).parentElement).toHaveTextContent(`Énergie: ${individualEnergy}`);
+  });
+
+  it('rend le repli Monde pour l’équivalence du bloc et du bilan calculés', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByText('Paramètres avancés'));
+    await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'ID');
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Message'), 'Repli mondial');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    await screen.findByText(/Estimation : environ/);
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+
+    expect(screen.getAllByText(/facteur carbone de repli « Monde »/)).toHaveLength(2);
   });
 });

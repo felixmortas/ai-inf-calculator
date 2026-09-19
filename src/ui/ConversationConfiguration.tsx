@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { hostingCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
+import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
 import { chatGptProvider, type ChatGptSubscription } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
@@ -33,6 +33,9 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
 
   function selectHostingCountry(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'hostingCountrySelected', country: event.currentTarget.value });
+  }
+  function selectUserCountry(event: ChangeEvent<HTMLSelectElement>) {
+    dispatch({ type: 'userCountrySelected', country: event.currentTarget.value });
   }
 
   function apply(event: FormEvent<HTMLFormElement>) {
@@ -91,6 +94,13 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
           <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
           <select id="hosting-country" aria-describedby="hosting-country-help" value={state.hostingCountry} onChange={selectHostingCountry}>
             {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="user-country">{fr.userCountryLabel}</label>
+          <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
+          <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
+            {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
           </select>
         </div>
         {advancedOpen && resolved ? <form key={`${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}`} className="parameter-form" onSubmit={apply} noValidate>
