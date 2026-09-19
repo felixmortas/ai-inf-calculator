@@ -10,3 +10,6 @@
 - source_spec: `_bmad-output/specs/spec-import-chatgpt-share/stories/1-socle-d-import-extensible-et-adaptateur-chatgpt-v1.md`
   summary: Retirer et prévenir le fichier Python bytecode du prototype de faisabilité.
   evidence: Artefact généré préexistant parmi les fichiers non suivis, hors surface applicative de la story.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-2-recuperer-un-partage-par-une-passerelle-tiers-bornee.md`
+  summary: Rétablir le dialogue 5.1 et le test UI de consentement qui remettra une capacité ponctuelle à la passerelle.
+  evidence: La story 5.2 expose volontairement `consent-required` sans modifier l’UI, explicitement exclue par son intent gelé.

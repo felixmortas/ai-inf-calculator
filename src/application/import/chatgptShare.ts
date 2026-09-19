@@ -1,3 +1,4 @@
+import { remoteGateway, type RemoteGateway, type RemoteGatewayConsent } from './remoteGateway';
 import type { ImportError, ImportEvent, ImportProvider, ImportResult } from './types';
 
 export const CHATGPT_SHARE_LIMITS = Object.freeze({
@@ -7,7 +8,6 @@ export const CHATGPT_SHARE_LIMITS = Object.freeze({
 });
 
 type UnknownRecord = Record<string, unknown>;
-type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 function frozenError(code: ImportError['code'], message: string, status?: number): ImportResult {
   const error = Object.freeze(status === undefined ? { code, message } : { code, message, status });
@@ -177,50 +177,17 @@ export function extractChatGptShareEvents(source: string, maxEvents: number = CH
   })));
 }
 
-async function readBounded(response: Response, maxBytes: number): Promise<string> {
-  const declared = Number(response.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > maxBytes) throw new RangeError('too-large');
-  if (!response.body) {
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > maxBytes) throw new RangeError('too-large');
-    return new TextDecoder().decode(bytes);
-  }
-  const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let total = 0;
-  try {
-    while (true) {
-      const next = await reader.read(); if (next.done) break;
-      total += next.value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel('response-too-large');
-        throw new RangeError('too-large');
-      }
-      chunks.push(next.value);
-    }
-  } finally { reader.releaseLock(); }
-  const bytes = new Uint8Array(total); let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return new TextDecoder().decode(bytes);
-}
-
-export async function importChatGptShare(value: string, fetcher: FetchLike = fetch): Promise<ImportResult> {
+export async function importChatGptShare(value: string, consent?: RemoteGatewayConsent, gateway: RemoteGateway = remoteGateway): Promise<ImportResult> {
   if (!validateChatGptShareUrl(value)) return frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CHATGPT_SHARE_LIMITS.timeoutMs);
-  try {
-    const response = await fetcher(value, { method: 'GET', credentials: 'omit', redirect: 'error', mode: 'cors', cache: 'no-store', referrerPolicy: 'no-referrer', signal: controller.signal });
-    if (!response.ok) return frozenError('http', `La page de partage répond HTTP ${response.status}.`, response.status);
-    try { return extractChatGptShareEvents(await readBounded(response, CHATGPT_SHARE_LIMITS.maxBytes)); }
-    catch (error) {
-      if (controller.signal.aborted) return frozenError('timeout', 'La lecture a dépassé le délai autorisé.');
-      return error instanceof RangeError ? frozenError('response-too-large', 'La réponse dépasse la taille autorisée.') : frozenError('network', 'La page ne peut pas être lue.');
-    }
-  } catch (error) {
-    return frozenError(controller.signal.aborted ? 'timeout' : 'network', controller.signal.aborted ? 'La lecture a dépassé le délai autorisé.' : 'Accès refusé par le réseau ou CORS.');
-  } finally { clearTimeout(timer); }
+  const fetched = await gateway.fetchHtml(value, consent);
+  if (!fetched.ok) return frozenError(fetched.error.code, fetched.error.message, fetched.error.status);
+  return extractChatGptShareEvents(fetched.html);
 }
 
 export const chatGptShareProvider: ImportProvider = Object.freeze({
   id: 'chatgpt', label: 'ChatGPT',
   validateUrl(value: string) { return validateChatGptShareUrl(value) ? undefined : frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.'); },
-  importFromUrl: importChatGptShare,
+  importFromUrl(value: string, consent?: unknown) {
+    return importChatGptShare(value, consent as RemoteGatewayConsent | undefined);
+  },
 });

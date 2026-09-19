@@ -10,6 +10,9 @@ export interface ImportEvent {
 
 export type ImportErrorCode =
   | 'invalid-url'
+  | 'consent-required'
+  | 'configuration'
+  | 'policy'
   | 'network'
   | 'timeout'
   | 'http'
@@ -31,5 +34,5 @@ export interface ImportProvider {
   readonly id: string;
   readonly label: string;
   validateUrl(value: string): ImportResult | undefined;
-  importFromUrl(value: string): Promise<ImportResult>;
+  importFromUrl(value: string, consent?: unknown): Promise<ImportResult>;
 }
