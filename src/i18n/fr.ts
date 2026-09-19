@@ -50,4 +50,12 @@ export const fr = {
   showerUnavailable: 'Estimation de durée de douche non calculable : les émissions par minute sont nulles ou indisponibles.',
   showerWorldFallback: 'L’estimation utilise le facteur carbone de repli « Monde » ; votre pays reste sélectionné.',
   staleShower: 'Cette estimation de durée de douche est périmée : actualisez le résultat.',
+  goodPracticesTitle: 'Bonnes pratiques de sobriété',
+  goodPractices: [
+    'Choisissez un petit modèle adapté à votre besoin lorsque cela suffit.',
+    'Ne demandez pas un raisonnement détaillé si vous n’en avez pas besoin. Cela ne désactive pas le raisonnement du chatbot.',
+    'Réduisez les textes envoyés et les textes générés au nécessaire.',
+    'Commencez une nouvelle conversation lorsque l’ancien contexte ne vous est plus utile.',
+    'Lorsque cela convient, modifiez un message existant plutôt que d’en envoyer un nouveau.',
+  ],
 } as const;

@@ -165,6 +165,7 @@ describe('composition de la conversation', () => {
     });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
     expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toHaveTextContent('Indisponible pour ce pays d’hébergement');
+    expect(screen.getByRole('heading', { name: 'Bonnes pratiques de sobriété' })).toBeVisible();
   });
 
   it('prépare les catégories dérivées complètes pour un bloc avec historique et artifact', () => {
@@ -186,6 +187,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state, 'one'), code: 'invalid-data' });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
     expect(screen.getByRole('alert')).toHaveTextContent('donnée indispensable');
+    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
   });
 
   it('annonce explicitement le repli Monde auprès du résultat concerné', () => {
@@ -239,6 +241,60 @@ describe('composition de la conversation', () => {
     expect(screen.getByText(/Ce résultat est périmé/)).toBeVisible();
     expect(screen.queryByText('Énergie: 1 Wh')).not.toBeInTheDocument();
     expect(screen.getByText('L’échange 1 doit être calculé ou recalculé.')).toBeVisible();
+  });
+
+  it('affiche après tous les résultats actuels une liste sémantique des cinq conseils, mais jamais sans résultat actuel', () => {
+    const renderBlocks = (state = initialConversationState) => render(
+      <ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />,
+    );
+    const empty = renderBlocks();
+    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
+    empty.unmount();
+
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockAdded', blockId: 'two' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'Bonsoir' });
+    const firstFingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint: firstFingerprint });
+    state = conversationReducer(state, {
+      type: 'impactResolved', blockId: 'one', fingerprint: firstFingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
+    });
+    const secondFingerprint = impactFingerprint(state, 'two');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'two', fingerprint: secondFingerprint });
+    state = conversationReducer(state, {
+      type: 'impactResolved', blockId: 'two', fingerprint: secondFingerprint, impact: { energyWh: 4, carbonGco2e: 5, waterL: 6 },
+    });
+    const summaryCurrentFingerprint = summaryFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint: summaryCurrentFingerprint });
+    state = conversationReducer(state, {
+      type: 'summaryResolved', fingerprint: summaryCurrentFingerprint,
+      total: { energyWh: 5, carbonGco2e: 7, waterL: 9 }, droughtRisk: { status: 'available', level: 'Low', source: 'country' },
+    });
+    const current = renderBlocks(state);
+    const heading = screen.getByRole('heading', { name: 'Bonnes pratiques de sobriété' });
+    const practices = screen.getByRole('region', { name: 'Bonnes pratiques de sobriété' });
+    expect(practices).toContainElement(heading);
+    expect(screen.getByRole('list')).toBeVisible();
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Choisissez un petit modèle adapté à votre besoin lorsque cela suffit.',
+      'Ne demandez pas un raisonnement détaillé si vous n’en avez pas besoin. Cela ne désactive pas le raisonnement du chatbot.',
+      'Réduisez les textes envoyés et les textes générés au nécessaire.',
+      'Commencez une nouvelle conversation lorsque l’ancien contexte ne vous est plus utile.',
+      'Lorsque cela convient, modifiez un message existant plutôt que d’en envoyer un nouveau.',
+    ]);
+    expect([...document.querySelectorAll('.summary-panel, .impact-result')]).toHaveLength(3);
+    for (const result of document.querySelectorAll('.summary-panel, .impact-result')) {
+      expect(practices.compareDocumentPosition(result)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    }
+    current.unmount();
+
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'À recalculer' });
+    renderBlocks(state);
+    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Ce résultat est périmé/)).toHaveLength(2);
+    expect(screen.getByText(/Le bilan précédent est périmé/)).toBeVisible();
   });
 
   it('déclenche seulement le recalcul du total sans appeler de calcul individuel', async () => {

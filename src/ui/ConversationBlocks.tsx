@@ -39,6 +39,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const pendingFocusBlockId = useRef<string | null | undefined>(undefined);
   const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
   const currentSummaryShower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence : undefined;
+  const hasCurrentImpact = state.blocks.some((block) => isImpactCurrent(state, block.blockId));
 
   const Shower = ({ value, stale }: { value: typeof state.summaryShowerEquivalence; stale: boolean }) => value ? (
     <div className="shower-equivalence" role="status">
@@ -154,6 +155,12 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
           </fieldset>
         );
       })}
+      {currentSummary || hasCurrentImpact ? <section className="good-practices" aria-labelledby="good-practices-title">
+        <h3 id="good-practices-title">{fr.goodPracticesTitle}</h3>
+        <ul>
+          {fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}
+        </ul>
+      </section> : null}
     </section>
   );
 }

@@ -82,6 +82,10 @@ button {
 .summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
 .summary-panel h3 { margin: 0 0 .5rem; }
 .summary-panel p { margin: .3rem 0; }
+.good-practices { margin-top: 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #f3f8f3; }
+.good-practices h3 { margin: 0 0 .5rem; }
+.good-practices ul { margin: 0; padding-left: 1.25rem; }
+.good-practices li + li { margin-top: .45rem; }
 
 :focus-visible { outline: 3px solid #0759b8; outline-offset: 3px; }
 
