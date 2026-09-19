@@ -1,0 +1,61 @@
+- id: "1"
+  title: Socle d’import extensible et adaptateur ChatGPT V1
+  description: >-
+    Implémenter le parcours commun d’import et son registre d’adaptateurs, en ne
+    distribuant que ChatGPT V1, conformément à CAP-1 et CAP-5 ainsi qu’à
+    import-contract.md. L’adaptateur valide l’URL canonique, lit la page publique
+    dans des limites bornées, expose les erreurs actionnables et normalise les
+    événements sans toucher aux blocs ni aux calculs.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Conserver GitHub Pages, la confidentialité de session et l’absence de
+    serveur/proxy : aucune authentification, API, cookie, persistance ni
+    contournement CORS. Ajouter des tests ciblés pour le registre V1 limité à
+    ChatGPT, la validation stricte de https://chatgpt.com/share/<id> (sans port,
+    identifiants, query ni fragment), les échecs réseau/CORS/HTTP, la taille et le
+    nombre de messages bornés, JSON et flux React Router de faisabilité,
+    déduplication, ordre public, rôles inconnus et refus atomique d’un format
+    inconnu. Réutiliser les cas de feasability_filling_from_url/tests sans importer
+    sa lecture de ressources : l’application ne suit ni lien ni artifact. Pas de
+    documentation utilisateur à ce stade, car aucun parcours n’est encore exposé.
+- id: "2"
+  title: Prévisualiser et confirmer l’import dans l’interface
+  description: >-
+    Présenter l’import ChatGPT avant les blocs, avec prévisualisation commune,
+    confirmation explicite de remplacement et conversion éditable selon CAP-2 et
+    CAP-3. Rendre les raisonnements visibles, réponses finales, artifacts et
+    fichiers source détectés sans inventer ni télécharger de contenu inaccessible.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    L’échec ou l’annulation conserve intégralement la session, et aucun calcul ne
+    part automatiquement après le remplacement. Ajouter des tests ciblés UI et
+    reducer pour prévisualisation, remplacement avec/sans blocs existants,
+    annulation, conservation sur échec, bloc user incomplet, traces tool redacted,
+    commande de skill, code, « Réfléchi pendant … », chemin /mnt/data, réponse
+    assistant terminale et événements non attribués. Tester aussi les statuts
+    accessibles des liens sandbox:/mnt/data et filecite, sans téléchargement ni
+    texte supposé. Ajouter une documentation utilisateur courte expliquant le lien
+    accepté, la confirmation de remplacement, les limites CORS et ce qui doit être
+    collé ou uploadé manuellement.
+- id: "3"
+  title: Compter les fichiers source locaux par bloc
+  description: >-
+    Ajouter les pièces jointes source en mémoire à chaque bloc et les intégrer à
+    CAP-4 : lecture locale UTF-8 bornée, tokenisation existante et contribution
+    canonique à l’historique, aux impacts et à leur fraîcheur. Exclure explicitement
+    les contenus non pris en charge et prévenir tout double comptage.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Accepter plusieurs .txt, .md, .markdown, .json, .csv, .log, .py, .js, .ts,
+    .html, .xml, .yaml, .yml, MIME text/* et application/json ; refuser de façon
+    visible binaire, illisible, vide ou trop volumineux, sans envoi tiers ni
+    persistance. Ajouter des tests ciblés de lecture et suppression d’upload,
+    format/MIME/limites, o200k_base et fallback mots/0,75, empreintes, historique,
+    impactTexts et non-double-comptage. Vérifier qu’ajouter, modifier ou retirer un
+    fichier périme le bloc et les suivants affectés par l’historique sans modifier
+    artifacts ni catalogues. Mettre à jour la documentation utilisateur de l’import
+    avec formats admis, données seulement en mémoire et méthode de remplacement par
+    collage pour les formats exclus.
