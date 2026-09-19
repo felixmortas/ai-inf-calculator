@@ -21,7 +21,7 @@ describe('tokenization domain', () => {
     expect(isEmptyTokenizationText('')).toBe(true);
     expect(fallbackTokenCount('')).toBe(0);
     expect(fallbackTokenization({ message: '', finalResponse: '', visibleReasoning: '', artifact: '' }).counts).toEqual({
-      message: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0,
+      message: 0, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0,
     });
   });
 

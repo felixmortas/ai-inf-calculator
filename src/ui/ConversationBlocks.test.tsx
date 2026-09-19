@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { impactTexts } from './App';
 import { prepareConversationHistory } from '../domain/conversationHistory';
-import { ConversationBlocks, formatImpact } from './ConversationBlocks';
+import { acceptsLocalSource, ConversationBlocks, formatImpact, localSourceMaxBytes, readLocalSource } from './ConversationBlocks';
 import {
   conversationReducer,
   impactFingerprint,
@@ -14,6 +14,31 @@ import {
 } from '../application/conversationReducer';
 
 describe('composition de la conversation', () => {
+  it('accepte uniquement les sources texte UTF-8 limitées et refuse les contenus vides ou illisibles', async () => {
+    expect(acceptsLocalSource(new File(['texte'], 'note.md', { type: 'text/markdown' }))).toBe(true);
+    expect(acceptsLocalSource(new File(['x'], 'image.png', { type: 'image/png' }))).toBe(false);
+    expect(acceptsLocalSource(new File(['x'], 'long.txt', { type: 'text/plain' }) as File)).toBe(true);
+    await expect(readLocalSource(new File([], 'vide.txt', { type: 'text/plain' }))).rejects.toThrow('empty');
+    await expect(readLocalSource(new File([new Uint8Array([0xff])], 'illisible.txt', { type: 'text/plain' }))).rejects.toThrow();
+    await expect(readLocalSource(new File([new Uint8Array([0, 1])], 'binaire.txt', { type: 'text/plain' }))).rejects.toThrow('binary');
+    expect(localSourceMaxBytes).toBe(5 * 1024 * 1024);
+    expect(acceptsLocalSource({ name: 'limite.txt', type: 'text/plain', size: localSourceMaxBytes })).toBe(true);
+    expect(acceptsLocalSource({ name: 'trop-grand.txt', type: 'text/plain', size: localSourceMaxBytes + 1 })).toBe(false);
+  });
+  it('importe via le champ fichier, annonce les refus et permet le retrait', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    const input = screen.getByLabelText('Fichiers source locaux');
+    await user.upload(input, [
+      new File(['contenu'], 'note.md', { type: 'text/markdown' }),
+      new File(['image'], 'image.png', { type: 'image/png' }),
+    ]);
+    expect(await screen.findByText(/note.md \(7 octets\) — compté/)).toBeVisible();
+    expect(await screen.findByText(/Fichier refusé \(image.png\)/)).toHaveAttribute('role', 'status');
+    await user.click(screen.getByRole('button', { name: 'Retirer le fichier note.md' }));
+    expect(screen.queryByText(/note.md \(7 octets\) — compté/)).not.toBeInTheDocument();
+  });
   it('ajoute un bloc avec quatre champs libellés accessibles', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -199,6 +224,16 @@ describe('composition de la conversation', () => {
       newInput: 'message courant',
       cachedInput: ['message avant', 'raisonnement avant', 'réponse avant', 'artifact v1'],
       output: ['réponse courante', 'raisonnement courant', 'v2'],
+    });
+  });
+
+  it('ajoute les sources du bloc courant une seule fois à la nouvelle entrée', () => {
+    const blocks = [
+      { blockId: 'one', message: 'avant', sources: [{ text: 'source avant' }], visibleReasoning: '', finalResponse: '', artifact: '' },
+      { blockId: 'two', message: 'courant', sources: [{ text: 'source courante' }], visibleReasoning: '', finalResponse: '', artifact: '' },
+    ];
+    expect(impactTexts(blocks[1], prepareConversationHistory(blocks, 'two', 0))).toMatchObject({
+      newInput: 'courant\nsource courante', cachedInput: ['avant', 'source avant', '', '', ''], output: ['', '', ''],
     });
   });
 

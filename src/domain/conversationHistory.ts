@@ -1,6 +1,7 @@
 export interface ConversationHistoryBlock {
   readonly blockId: string;
   readonly message: string;
+  readonly sources?: readonly { readonly text: string }[];
   readonly finalResponse: string;
   readonly visibleReasoning: string;
   readonly artifact: string;
@@ -8,6 +9,7 @@ export interface ConversationHistoryBlock {
 
 export interface PreparedConversationHistory {
   readonly priorMessages: readonly string[];
+  readonly priorSources: readonly string[];
   readonly priorVisibleReasoning: readonly string[];
   readonly priorFinalResponses: readonly string[];
   readonly artifactReference: string;
@@ -16,12 +18,12 @@ export interface PreparedConversationHistory {
 }
 
 const emptyPreparation: PreparedConversationHistory = Object.freeze({
-  priorMessages: Object.freeze([]), priorVisibleReasoning: Object.freeze([]), priorFinalResponses: Object.freeze([]),
+  priorMessages: Object.freeze([]), priorSources: Object.freeze([]), priorVisibleReasoning: Object.freeze([]), priorFinalResponses: Object.freeze([]),
   artifactReference: '', artifactContribution: '', systemPromptCacheTokens: 0,
 });
 
 function isIgnoredBlock(block: ConversationHistoryBlock): boolean {
-  return [block.message, block.finalResponse, block.visibleReasoning, block.artifact].every((text) => text.trim() === '');
+  return [block.message, block.finalResponse, block.visibleReasoning, block.artifact, ...(block.sources ?? []).map((source) => source.text)].every((text) => text.trim() === '');
 }
 
 function words(text: string): readonly string[] {
@@ -50,18 +52,20 @@ export function prepareConversationHistory(
   if (!Number.isInteger(index) || index < 0 || index >= blocks.length) throw new RangeError('Bloc ciblé introuvable.');
   if (isIgnoredBlock(blocks[index])) return emptyPreparation;
   const priorMessages: string[] = [];
+  const priorSources: string[] = [];
   const priorVisibleReasoning: string[] = [];
   const priorFinalResponses: string[] = [];
   let artifactReference = '';
   for (const block of blocks.slice(0, index)) {
     if (isIgnoredBlock(block)) continue;
     priorMessages.push(block.message);
+    priorSources.push(...(block.sources ?? []).map((source) => source.text));
     priorVisibleReasoning.push(block.visibleReasoning);
     priorFinalResponses.push(block.finalResponse);
     if (block.artifact.trim() !== '') artifactReference = block.artifact;
   }
   return Object.freeze({
-    priorMessages: Object.freeze(priorMessages), priorVisibleReasoning: Object.freeze(priorVisibleReasoning),
+    priorMessages: Object.freeze(priorMessages), priorSources: Object.freeze(priorSources), priorVisibleReasoning: Object.freeze(priorVisibleReasoning),
     priorFinalResponses: Object.freeze(priorFinalResponses), artifactReference,
     artifactContribution: artifactWordDiff(artifactReference, blocks[index].artifact), systemPromptCacheTokens,
   });

@@ -79,6 +79,10 @@ button {
   border-radius: .5rem;
 }
 .conversation-block legend { padding: 0 .25rem; font-weight: 700; }
+.field-help, .source-rejected { margin: .35rem 0; font-size: .9rem; }
+.source-rejected { color: #8a2f2f; }
+.source-list { margin: .5rem 0 0; padding-left: 1.25rem; }
+.source-list li { display: flex; gap: .5rem; align-items: center; margin: .25rem 0; }
 .ignored-status { margin: 1rem 0 0; color: #405349; }
 .impact-panel { display: grid; gap: .65rem; margin-top: 1rem; }
 .impact-result, .impact-error, .impact-stale { padding: .8rem; border-radius: .35rem; }

@@ -29,7 +29,9 @@ export function processTokenizationRequest(
     const counts = Object.fromEntries(
       tokenizationTextFields.map((field) => [
         field,
-        isEmptyTokenizationText(request.texts[field]) ? 0 : count(request.texts[field]),
+        field === 'sources'
+          ? (request.texts.sources ?? []).reduce((total, text) => total + count(text), 0)
+          : isEmptyTokenizationText(request.texts[field]) ? 0 : count(request.texts[field]),
       ]),
     ) as TokenizationCounts;
     return {

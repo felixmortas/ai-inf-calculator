@@ -61,7 +61,7 @@ export class TokenizationClient {
     let remaining = entries.length;
     for (const [category, text] of entries) {
       const requestId = crypto.randomUUID();
-      const requestTexts: TokenizationTexts = { message: text, finalResponse: '', visibleReasoning: '', artifact: '' };
+      const requestTexts: TokenizationTexts = { message: text, sources: [], finalResponse: '', visibleReasoning: '', artifact: '' };
       const request: TokenizationRequest = { type: 'tokenize', requestId, encoding: tokenizationEncoding, fingerprint: tokenizationFingerprint(tokenizationEncoding, requestTexts), texts: requestTexts };
       this.impactOutgoing.set(requestId, { text, wordsPerToken, callback: (count) => {
         counts[category] += count;

@@ -41,12 +41,38 @@ export interface ConversationState {
 export interface ConversationBlock {
   readonly blockId: string;
   readonly message: string;
+  readonly sources?: readonly LocalSource[];
   readonly finalResponse: string;
   readonly visibleReasoning: string;
   readonly artifact: string;
 }
 
-export type ConversationBlockField = Exclude<keyof ConversationBlock, 'blockId'>;
+/** Texte local éphémère : jamais le File/Blob ni une persistance de navigateur. */
+export interface LocalSource {
+  readonly id: string;
+  readonly name: string;
+  readonly type: string;
+  readonly size: number;
+  readonly text: string;
+}
+
+export const localSourceMaxBytes = 5 * 1024 * 1024;
+const localSourceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log', 'py', 'js', 'ts', 'html', 'xml', 'yaml', 'yml']);
+
+export function isAcceptedLocalSource(source: Pick<LocalSource, 'name' | 'type' | 'size' | 'text'>): boolean {
+  const extension = source.name.split('.').pop()?.toLowerCase();
+  const supported = source.type.startsWith('text/') || source.type === 'application/json'
+    || (!!extension && localSourceExtensions.has(extension));
+  return supported
+    && Number.isSafeInteger(source.size)
+    && source.size > 0
+    && source.size <= localSourceMaxBytes
+    && source.text.length > 0
+    && !source.text.includes('\0')
+    && !/[\uD800-\uDFFF]/u.test(source.text);
+}
+
+export type ConversationBlockField = Exclude<keyof ConversationBlock, 'blockId' | 'sources'>;
 
 export interface BlockTokenizationState {
   readonly pending?: {
@@ -80,6 +106,8 @@ export type ConversationAction =
   | { readonly type: 'blockAdded'; readonly blockId: string }
   | { readonly type: 'blocksReplaced'; readonly blocks: readonly ConversationBlock[] }
   | { readonly type: 'blockUpdated'; readonly blockId: string; readonly field: ConversationBlockField; readonly value: string }
+  | { readonly type: 'sourceAdded'; readonly blockId: string; readonly source: LocalSource }
+  | { readonly type: 'sourceRemoved'; readonly blockId: string; readonly sourceId: string }
   | { readonly type: 'blockRemoved'; readonly blockId: string }
   | { readonly type: 'tokenizationRequested'; readonly blockId: string; readonly requestId: string; readonly encoding: TokenizationEncoding; readonly fingerprint: string }
   | { readonly type: 'tokenizationResponded'; readonly response: TokenizationResponse }
@@ -113,11 +141,12 @@ const conversationBlockFields: readonly ConversationBlockField[] = [
 ];
 
 export function isIgnoredConversationBlock(block: ConversationBlock): boolean {
-  return conversationBlockFields.every((field) => block[field].trim() === '');
+  return conversationBlockFields.every((field) => block[field].trim() === '')
+    && (block.sources ?? []).every((source) => source.text.trim() === '');
 }
 
 function createConversationBlock(blockId: string): ConversationBlock {
-  return { blockId, message: '', finalResponse: '', visibleReasoning: '', artifact: '' };
+  return { blockId, message: '', sources: [], finalResponse: '', visibleReasoning: '', artifact: '' };
 }
 
 function firstModelId(provider: string): string | undefined {
@@ -126,7 +155,7 @@ function firstModelId(provider: string): string | undefined {
 
 function tokenizationTexts(block: ConversationBlock): TokenizationTexts {
   const { message, finalResponse, visibleReasoning, artifact } = block;
-  return { message, finalResponse, visibleReasoning, artifact };
+  return { message, sources: (block.sources ?? []).map((source) => source.text), finalResponse, visibleReasoning, artifact };
 }
 
 function withoutTokenization(
@@ -166,7 +195,7 @@ export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'm
   const { shower: _shower, ...impactParameters } = parameters;
   return JSON.stringify([
     'impact-v2', 'impact-algorithm-v1', modelCatalog, blockId,
-    block.message, block.finalResponse, block.visibleReasoning, block.artifact, history, impactParameters,
+    block.message, (block.sources ?? []).map((source) => source.text), block.finalResponse, block.visibleReasoning, block.artifact, history, impactParameters,
   ]);
 }
 
@@ -279,7 +308,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
       if (ids.some((id) => id.trim() === '') || new Set(ids).size !== ids.length) return state;
       const blocks = action.blocks.map((block) => ({
         blockId: block.blockId, message: block.message, finalResponse: block.finalResponse,
-        visibleReasoning: block.visibleReasoning, artifact: block.artifact,
+        sources: [], visibleReasoning: block.visibleReasoning, artifact: block.artifact,
       }));
       return { ...state, blocks, tokenizations: {}, impacts: {}, showerEquivalences: {}, summaryShowerEquivalence: undefined, summary: undefined };
     }
@@ -290,6 +319,20 @@ export function conversationReducer(state: ConversationState, action: Conversati
       const blocks = state.blocks.map((block) => (
         block.blockId === action.blockId ? { ...block, [action.field]: action.value } : block
       ));
+      return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
+    }
+    case 'sourceAdded': {
+      const index = state.blocks.findIndex((block) => block.blockId === action.blockId);
+      if (index === -1 || !action.source.id || !action.source.name || !isAcceptedLocalSource(action.source)
+        || (state.blocks[index].sources ?? []).some((source) => source.id === action.source.id)) return state;
+      const blocks = state.blocks.map((block) => block.blockId === action.blockId ? { ...block, sources: [...(block.sources ?? []), action.source] } : block);
+      return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
+    }
+    case 'sourceRemoved': {
+      const block = state.blocks.find((entry) => entry.blockId === action.blockId);
+      if (!block || !(block.sources ?? []).some((source) => source.id === action.sourceId)) return state;
+      const blocks = state.blocks.map((entry) => entry.blockId === action.blockId
+        ? { ...entry, sources: (entry.sources ?? []).filter((source) => source.id !== action.sourceId) } : entry);
       return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
     }
     case 'blockRemoved': {

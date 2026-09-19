@@ -13,6 +13,14 @@ describe('conversation history domain', () => {
     expect(result.priorVisibleReasoning).toEqual(['']);
     expect(result.priorFinalResponses).toEqual(['']);
   });
+  it('conserve les sources antérieures dans leur ordre sans les confondre avec les messages', () => {
+    const result = prepareConversationHistory([
+      block({ sources: [{ text: 'premier fichier' }, { text: 'second fichier' }] }),
+      block({ blockId: 'target', message: 'courant' }),
+    ], 'target', 0);
+    expect(result.priorMessages).toEqual(['']);
+    expect(result.priorSources).toEqual(['premier fichier', 'second fichier']);
+  });
   it('conserve seulement la dernière référence et traite les versions', () => {
     const blocks = [block({ artifact: 'alpha beta' }), block({ artifact: '' }), block({ blockId: 'changed', artifact: 'alpha nouveau beta' }), block({ blockId: 'same', artifact: 'alpha beta' })];
     expect(prepareConversationHistory(blocks, 'changed', 0)).toMatchObject({ artifactReference: 'alpha beta', artifactContribution: 'nouveau' });

@@ -18,12 +18,12 @@ import { ConversationImport } from './ConversationImport';
 import './styles.css';
 
 export function impactTexts(
-  block: { readonly message: string; readonly finalResponse: string; readonly visibleReasoning: string },
+  block: { readonly message: string; readonly sources?: readonly { readonly text: string }[]; readonly finalResponse: string; readonly visibleReasoning: string },
   history: ReturnType<typeof prepareConversationHistory>,
 ) {
   return {
-    newInput: block.message,
-    cachedInput: [...history.priorMessages, ...history.priorVisibleReasoning, ...history.priorFinalResponses, history.artifactReference],
+    newInput: [block.message, ...(block.sources ?? []).map((source) => source.text)].join('\n'),
+    cachedInput: [...history.priorMessages, ...history.priorSources, ...history.priorVisibleReasoning, ...history.priorFinalResponses, history.artifactReference],
     output: [block.finalResponse, block.visibleReasoning, history.artifactContribution],
   };
 }

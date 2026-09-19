@@ -74,13 +74,40 @@ describe('conversationReducer', () => {
     expect(conversationReducer(second, { type: 'blockAdded', blockId: 'block-1' })).toBe(second);
   });
 
+  it('inclut les sources locales une seule fois et périme les blocs dépendants sans calculer', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockAdded', blockId: 'two' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'question' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'suite' });
+    for (const id of ['one', 'two']) {
+      const fingerprint = impactFingerprint(state, id);
+      state = conversationReducer(state, { type: 'impactRequested', blockId: id, fingerprint });
+      state = conversationReducer(state, { type: 'impactResolved', blockId: id, fingerprint, impact: { energyWh: 1, carbonGco2e: 1, waterL: 1 } });
+    }
+    const changed = conversationReducer(state, { type: 'sourceAdded', blockId: 'one', source: { id: 'source-1', name: 'note.md', type: 'text/markdown', size: 4, text: 'texte' } });
+    expect(changed.blocks[0].sources).toEqual([{ id: 'source-1', name: 'note.md', type: 'text/markdown', size: 4, text: 'texte' }]);
+    expect(isImpactCurrent(changed, 'one')).toBe(false);
+    expect(isImpactCurrent(changed, 'two')).toBe(false);
+    expect(conversationReducer(changed, { type: 'sourceRemoved', blockId: 'one', sourceId: 'source-1' }).blocks[0].sources).toEqual([]);
+  });
+
+  it('accepte un bloc composé seulement de source et rejette toute charge source non conforme', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    const source = { id: 'ok', name: 'source.txt', type: 'text/plain', size: 5, text: 'texte' };
+    state = conversationReducer(state, { type: 'sourceAdded', blockId: 'one', source });
+    expect(isIgnoredConversationBlock(state.blocks[0])).toBe(false);
+    expect(conversationReducer(state, { type: 'sourceAdded', blockId: 'one', source: { ...source, id: 'large', size: 5 * 1024 * 1024 + 1 } })).toBe(state);
+    expect(conversationReducer(state, { type: 'sourceAdded', blockId: 'one', source: { ...source, id: 'image', name: 'image.png', type: 'image/png' } })).toBe(state);
+    expect(conversationReducer(state, { type: 'sourceAdded', blockId: 'one', source: { ...source, id: 'binary', text: 'a\0b' } })).toBe(state);
+  });
+
   it('remplace les blocs atomiquement et invalide tous les états dérivés sans lancer de calcul', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'old' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'old', field: 'message', value: 'ancien' });
     const fingerprint = impactFingerprint(state, 'old');
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'old', fingerprint });
     const replaced = conversationReducer(state, { type: 'blocksReplaced', blocks: [{ blockId: 'block-1', message: 'importé', visibleReasoning: 'trace', finalResponse: 'réponse', artifact: '' }] });
-    expect(replaced.blocks).toEqual([{ blockId: 'block-1', message: 'importé', visibleReasoning: 'trace', finalResponse: 'réponse', artifact: '' }]);
+    expect(replaced.blocks).toEqual([{ blockId: 'block-1', message: 'importé', sources: [], visibleReasoning: 'trace', finalResponse: 'réponse', artifact: '' }]);
     expect(replaced.tokenizations).toEqual({});
     expect(replaced.impacts).toEqual({});
     expect(replaced.summary).toBeUndefined();
@@ -153,11 +180,11 @@ describe('conversationReducer', () => {
       type: 'tokenizationResponded',
       response: {
         type: 'tokenized', requestId: 'current', encoding: tokenizationEncoding, fingerprint: fingerprint!,
-        counts: { message: 1, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
+        counts: { message: 1, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
       },
     });
     expect(received.tokenizations.one).toEqual({
-      result: { source: 'tiktoken', counts: { message: 1, finalResponse: 0, visibleReasoning: 0, artifact: 0 } },
+      result: { source: 'tiktoken', counts: { message: 1, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 } },
     });
   });
 
@@ -174,7 +201,7 @@ describe('conversationReducer', () => {
       type: 'tokenizationResponded' as const,
       response: {
         type: 'tokenized' as const, requestId: 'old', encoding: tokenizationEncoding, fingerprint: oldFingerprint,
-        counts: { message: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
+        counts: { message: 0, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
       },
     };
     const modified = conversationReducer(requested, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'nouveau' });
@@ -209,7 +236,7 @@ describe('conversationReducer', () => {
       },
     });
     expect(received.tokenizations.one.result).toEqual({
-      source: 'fallback', counts: { message: 0, finalResponse: 0, visibleReasoning: 0, artifact: 2 / 0.75 },
+      source: 'fallback', counts: { message: 0, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 2 / 0.75 },
     });
   });
 
@@ -228,7 +255,7 @@ describe('conversationReducer', () => {
       response: {
         type: 'tokenized', requestId: 'empty', encoding: tokenizationEncoding,
         fingerprint: requested.tokenizations.one.pending!.fingerprint,
-        counts: { message: 1, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
+        counts: { message: 1, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
       },
     });
     expect(received.tokenizations.one.result?.source).toBe('fallback');
@@ -247,7 +274,7 @@ describe('conversationReducer', () => {
       response: {
         type: 'tokenized' as const, requestId: 'model-bound', encoding: tokenizationEncoding,
         fingerprint: requested.tokenizations.one.pending!.fingerprint,
-        counts: { message: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
+        counts: { message: 0, sources: 0, finalResponse: 0, visibleReasoning: 0, artifact: 0 },
       },
     };
     const changedModel = conversationReducer(requested, {

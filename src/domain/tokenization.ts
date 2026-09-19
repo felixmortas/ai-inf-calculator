@@ -4,6 +4,7 @@ export type TokenizationEncoding = typeof tokenizationEncoding;
 
 export interface TokenizationTexts {
   readonly message: string;
+  readonly sources?: readonly string[];
   readonly finalResponse: string;
   readonly visibleReasoning: string;
   readonly artifact: string;
@@ -19,11 +20,15 @@ export interface BlockTokenizationResult {
 }
 
 export const tokenizationTextFields: readonly (keyof TokenizationTexts)[] = [
-  'message', 'finalResponse', 'visibleReasoning', 'artifact',
+  'message', 'sources', 'finalResponse', 'visibleReasoning', 'artifact',
 ];
 
 export function isEmptyTokenizationText(text: string): boolean {
   return text.length === 0;
+}
+
+function tokenizationText(field: keyof TokenizationTexts, texts: TokenizationTexts): string {
+  return field === 'sources' ? (texts.sources ?? []).join('\n') : texts[field];
 }
 
 /** Empreinte canonique, transitoire et exacte, conservée uniquement en mémoire. */
@@ -31,7 +36,7 @@ export function tokenizationFingerprint(encoding: TokenizationEncoding, texts: T
   return JSON.stringify([
     'tokenization-v1',
     encoding,
-    ...tokenizationTextFields.map((field) => [field, texts[field]]),
+    ...tokenizationTextFields.map((field) => [field, field === 'sources' ? (texts.sources ?? []) : texts[field]]),
   ]);
 }
 
@@ -44,7 +49,7 @@ export function hasValidTokenizationCounts(counts: unknown): counts is Tokenizat
 }
 
 export function respectsEmptyTokenizationTexts(counts: TokenizationCounts, texts: TokenizationTexts): boolean {
-  return tokenizationTextFields.every((field) => !isEmptyTokenizationText(texts[field]) || counts[field] === 0);
+  return tokenizationTextFields.every((field) => !isEmptyTokenizationText(tokenizationText(field, texts)) || counts[field] === 0);
 }
 
 export function fallbackTokenCount(text: string, wordsPerToken = 0.75): number {
@@ -58,7 +63,7 @@ export function fallbackTokenization(texts: TokenizationTexts, wordsPerToken = 0
   return {
     source: 'fallback',
     counts: Object.fromEntries(
-      tokenizationTextFields.map((field) => [field, fallbackTokenCount(texts[field], wordsPerToken)]),
+      tokenizationTextFields.map((field) => [field, fallbackTokenCount(tokenizationText(field, texts), wordsPerToken)]),
     ) as TokenizationCounts,
   };
 }

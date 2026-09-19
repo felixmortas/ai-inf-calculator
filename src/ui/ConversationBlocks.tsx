@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   isIgnoredConversationBlock,
   isImpactCurrent,
@@ -7,11 +7,29 @@ import {
   isSummaryCurrent,
   isSummaryShowerEquivalenceCurrent,
   isSummaryFresh,
+  isAcceptedLocalSource,
+  localSourceMaxBytes,
   type ConversationAction,
   type ConversationBlockField,
   type ConversationState,
 } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
+
+export { localSourceMaxBytes } from '../application/conversationReducer';
+
+export function acceptsLocalSource(file: Pick<File, 'name' | 'type' | 'size'>): boolean {
+  return isAcceptedLocalSource({ name: file.name, type: file.type, size: file.size, text: 'validation' });
+}
+
+export async function readLocalSource(file: File): Promise<{ readonly name: string; readonly type: string; readonly size: number; readonly text: string }> {
+  if (file.size > localSourceMaxBytes) throw new Error('too-large');
+  if (file.size === 0) throw new Error('empty');
+  if (!acceptsLocalSource(file)) throw new Error('unsupported');
+  const text = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
+  if (text.length === 0) throw new Error('empty');
+  if (text.includes('\0')) throw new Error('binary');
+  return { name: file.name, type: file.type, size: file.size, text };
+}
 
 interface ConversationBlocksProps {
   readonly state: ConversationState;
@@ -37,6 +55,8 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const pendingFocusBlockId = useRef<string | null | undefined>(undefined);
+  const sourceImports = useRef(new Map<string, Promise<void>>());
+  const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
   const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
   const currentSummaryShower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence : undefined;
   const hasCurrentImpact = state.blocks.some((block) => isImpactCurrent(state, block.blockId));
@@ -78,6 +98,28 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
     const nextFocusBlock = state.blocks[index + 1] ?? state.blocks[index - 1];
     pendingFocusBlockId.current = nextFocusBlock?.blockId ?? null;
     dispatch({ type: 'blockRemoved', blockId });
+  }
+
+  function addSources(blockId: string, event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.currentTarget.files ?? [])];
+    event.currentTarget.value = '';
+    const previous = sourceImports.current.get(blockId) ?? Promise.resolve();
+    const batch = previous.then(async () => {
+      const rejected: string[] = [];
+      for (const file of files) {
+        try {
+          const source = await readLocalSource(file);
+          dispatch({ type: 'sourceAdded', blockId, source: { id: crypto.randomUUID(), ...source } });
+        } catch {
+          rejected.push(file.name);
+        }
+      }
+      setSourceStatus((current) => ({ ...current, [blockId]: rejected.length ? fr.sourceRejected(rejected.join(', ')) : '' }));
+    });
+    sourceImports.current.set(blockId, batch);
+    void batch.finally(() => {
+      if (sourceImports.current.get(blockId) === batch) sourceImports.current.delete(blockId);
+    });
   }
 
   return (
@@ -138,6 +180,16 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
             {ignored ? <p className="ignored-status" role="status">{fr.ignoredBlockStatus}</p> : null}
             {/sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
             {/filecite[^]+/u.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
+            <div className="field local-sources">
+              <label htmlFor={`conversation-${block.blockId}-sources`}>{fr.sourcesLabel}</label>
+              <input id={`conversation-${block.blockId}-sources`} type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.py,.js,.ts,.html,.xml,.yaml,.yml,text/*,application/json" onChange={(event) => addSources(block.blockId, event)} />
+              <p className="field-help">{fr.sourcesHelp}</p>
+              {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
+              {(block.sources ?? []).length ? <ul className="source-list">{(block.sources ?? []).map((source) => <li key={source.id}>
+                <span>{fr.sourceCounted(source.name, source.size)}</span>
+                <button type="button" onClick={() => dispatch({ type: 'sourceRemoved', blockId: block.blockId, sourceId: source.id })}>{fr.removeSourceAction(source.name)}</button>
+              </li>)}</ul> : null}
+            </div>
             {fields.map(({ name, label }) => {
               const id = `conversation-${block.blockId}-${name}`;
               return (
