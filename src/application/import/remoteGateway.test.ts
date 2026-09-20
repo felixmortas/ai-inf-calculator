@@ -6,8 +6,11 @@ import {
   createRemoteGateway,
   createRemoteGatewayConsent,
 } from './remoteGateway';
+import { resolveShare } from './registry';
 
 const shareUrl = 'https://chatgpt.com/share/abc-123';
+const resolvedShare = resolveShare(shareUrl)!;
+const consent = () => createRemoteGatewayConsent(resolvedShare);
 const response = (body: string, status = 200, headers: HeadersInit = {}) => new Response(body, { status, headers });
 
 const testApiKey = 'test value / encoded';
@@ -22,7 +25,7 @@ const refusedErrors = [
 describe('passerelle distante bornée', () => {
   it('envoie un unique GET vers l’origine CorsProxy immuable avec URL et clé encodées', async () => {
     const fetcher = vi.fn().mockResolvedValue(response('<html>public</html>'));
-    const result = await createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    const result = await createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, consent());
     expect(result).toEqual({ ok: true, html: '<html>public</html>' });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][0]).toBe(`${CORSPROXY_ORIGIN}?url=${encodeURIComponent(shareUrl)}&key=${encodeURIComponent(testApiKey)}`);
@@ -35,7 +38,7 @@ describe('passerelle distante bornée', () => {
 
   it.each([
     ['sans consentement', undefined],
-    ['consentement lié à une autre URL', createRemoteGatewayConsent('https://chatgpt.com/share/other')],
+    ['consentement lié à une autre URL', createRemoteGatewayConsent(resolveShare('https://chatgpt.com/share/other')!)],
   ])('ne lance aucun trafic %s', async (_caseName, consent) => {
     const fetcher = vi.fn();
     await expect(createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, consent)).resolves.toMatchObject({
@@ -44,12 +47,25 @@ describe('passerelle distante bornée', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it('n’accorde une capacité qu’au ResolvedShare attesté et refuse ses copies', async () => {
+    const forged = Object.freeze({ ...resolvedShare });
+    const cloned = JSON.parse(JSON.stringify(resolvedShare));
+    expect(createRemoteGatewayConsent(forged)).toBeUndefined();
+    expect(createRemoteGatewayConsent(cloned)).toBeUndefined();
+
+    const fetcher = vi.fn();
+    await expect(createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, forged as unknown as ReturnType<typeof consent>)).resolves.toMatchObject({
+      ok: false, error: { code: 'consent-required' },
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it('consomme le consentement au premier emploi et ne lance pas de second trafic', async () => {
     const fetcher = vi.fn().mockResolvedValue(response('<html>public</html>'));
-    const consent = createRemoteGatewayConsent(shareUrl);
+    const oneUseConsent = consent();
     const gateway = createRemoteGateway(fetcher, configured);
-    await expect(gateway.fetchHtml(shareUrl, consent)).resolves.toMatchObject({ ok: true });
-    await expect(gateway.fetchHtml(shareUrl, consent)).resolves.toMatchObject({
+    await expect(gateway.fetchHtml(shareUrl, oneUseConsent)).resolves.toMatchObject({ ok: true });
+    await expect(gateway.fetchHtml(shareUrl, oneUseConsent)).resolves.toMatchObject({
       ok: false, error: { code: 'consent-required' },
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
@@ -63,7 +79,7 @@ describe('passerelle distante bornée', () => {
     expect(invalidFetcher).not.toHaveBeenCalled();
 
     const missingConfigFetcher = vi.fn();
-    await expect(createRemoteGateway(missingConfigFetcher, unconfigured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl))).resolves.toMatchObject({
+    await expect(createRemoteGateway(missingConfigFetcher, unconfigured).fetchHtml(shareUrl, consent())).resolves.toMatchObject({
       ok: false, error: { code: 'configuration' },
     });
     expect(missingConfigFetcher).not.toHaveBeenCalled();
@@ -71,16 +87,16 @@ describe('passerelle distante bornée', () => {
 
   it('retourne des erreurs atomiques de réseau, configuration, politique, HTTP et taille', async () => {
     const network = await createRemoteGateway(vi.fn().mockRejectedValue(new TypeError('offline')), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     const configuration = await createRemoteGateway(vi.fn().mockResolvedValue(response('<html>refusé</html>', 401)), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     const policy = await createRemoteGateway(vi.fn().mockResolvedValue(response('<html>refusé</html>', 403)), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     const http = await createRemoteGateway(vi.fn().mockResolvedValue(response('', 502)), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     const large = await createRemoteGateway(vi.fn().mockResolvedValue(response('x', 200, {
       'content-length': String(CHATGPT_SHARE_LIMITS.maxBytes + 1),
-    })), configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    })), configured).fetchHtml(shareUrl, consent());
     for (const result of [network, configuration, policy, http, large]) expect(result).toMatchObject({ ok: false });
     expect(network.ok ? undefined : network.error.code).toBe('network');
     expect(configuration.ok ? undefined : configuration.error).toEqual({
@@ -102,7 +118,7 @@ describe('passerelle distante bornée', () => {
       cancel: canceled,
     }), { status });
     const result = await createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     expect(canceled).toHaveBeenCalledOnce();
     expect(result).toEqual({ ok: false, error: expectedError });
     expect(result).not.toHaveProperty('html');
@@ -115,7 +131,7 @@ describe('passerelle distante bornée', () => {
       cancel: canceled,
     }), { status });
     const result = await createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+      .fetchHtml(shareUrl, consent());
     expect(canceled).toHaveBeenCalledOnce();
     expect(result).toEqual({ ok: false, error: expectedError });
     expect(result).not.toHaveProperty('html');
@@ -125,14 +141,14 @@ describe('passerelle distante bornée', () => {
     const canceled = vi.fn(() => new Promise<void>(() => {}));
     const refused = new Response(new ReadableStream<Uint8Array>({ cancel: canceled }), { status: 502 });
     await expect(createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
-      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl)))
+      .fetchHtml(shareUrl, consent()))
       .resolves.toEqual({ ok: false, error: refusedErrors[2][1] });
     expect(canceled).toHaveBeenCalledOnce();
   });
 
   it.each(refusedErrors)('ne livre aucun événement lorsque CorsProxy retourne HTTP %i', async (status, expectedError) => {
     const gateway = createRemoteGateway(vi.fn().mockResolvedValue(response('<html>refusé</html>', status)), configured);
-    await expect(importChatGptShare(shareUrl, createRemoteGatewayConsent(shareUrl), gateway)).resolves.toMatchObject({
+    await expect(importChatGptShare(shareUrl, consent(), gateway)).resolves.toMatchObject({
       ok: false, events: [], error: expectedError,
     });
   });
@@ -147,7 +163,7 @@ describe('passerelle distante bornée', () => {
       },
       cancel: canceled,
     }));
-    await expect(createRemoteGateway(vi.fn().mockResolvedValue(body), configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl)))
+    await expect(createRemoteGateway(vi.fn().mockResolvedValue(body), configured).fetchHtml(shareUrl, consent()))
       .resolves.toMatchObject({ ok: false, error: { code: 'response-too-large' } });
     expect(canceled).toHaveBeenCalledOnce();
   });
@@ -156,7 +172,7 @@ describe('passerelle distante bornée', () => {
     const canceled = vi.fn();
     const body = new ReadableStream<Uint8Array>({ cancel: canceled });
     const oversized = new Response(body, { headers: { 'content-length': String(CHATGPT_SHARE_LIMITS.maxBytes + 1) } });
-    await expect(createRemoteGateway(vi.fn().mockResolvedValue(oversized), configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl)))
+    await expect(createRemoteGateway(vi.fn().mockResolvedValue(oversized), configured).fetchHtml(shareUrl, consent()))
       .resolves.toMatchObject({ ok: false, error: { code: 'response-too-large' } });
     expect(canceled).toHaveBeenCalledOnce();
   });
@@ -166,7 +182,7 @@ describe('passerelle distante bornée', () => {
     const fetcher = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
       init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
     }));
-    const pending = createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    const pending = createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, consent());
     await vi.advanceTimersByTimeAsync(CHATGPT_SHARE_LIMITS.timeoutMs);
     await expect(pending).resolves.toMatchObject({ ok: false, error: { code: 'timeout' } });
     vi.useRealTimers();
@@ -179,7 +195,7 @@ describe('passerelle distante bornée', () => {
         init?.signal?.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')));
       },
     }))));
-    const pending = createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    const pending = createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, consent());
     await vi.advanceTimersByTimeAsync(CHATGPT_SHARE_LIMITS.timeoutMs);
     await expect(pending).resolves.toMatchObject({ ok: false, error: { code: 'timeout' } });
     vi.useRealTimers();

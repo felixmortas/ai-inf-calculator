@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
 import { chatGptShareProvider, importChatGptShare } from '../application/import/chatgptShare';
-import { CORSPROXY_ORIGIN, createRemoteGateway, type RemoteGatewayConsent } from '../application/import/remoteGateway';
+import { resolveShare } from '../application/import/registry';
+import { CORSPROXY_ORIGIN, createRemoteGateway, createRemoteGatewayConsent, type RemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ImportProvider } from '../application/import/types';
 import * as remoteGateway from '../application/import/remoteGateway';
 import { ConversationImport } from './ConversationImport';
@@ -36,6 +37,37 @@ async function consent(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('ConversationImport', () => {
+  it.each([
+    ['ChatGPT', 'https://chatgpt.com/share/abc-123'],
+    ['Claude', 'https://claude.ai/share/opaque_id'],
+    ['Mistral', 'https://chat.mistral.ai/chat/opaque_id'],
+    ['Gemini', 'https://share.gemini.google/opaque_id'],
+  ])('détecte %s et demande le consentement avant toute récupération', async (label, url) => {
+    const user = userEvent.setup();
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} />);
+    await user.type(screen.getByLabelText('Lien de partage'), url);
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent(`page publique ${label}`);
+    expect(screen.getByRole('status')).toHaveTextContent(label);
+  });
+
+  it('invalide le consentement ouvert si le registre ou le résolveur change', async () => {
+    const user = userEvent.setup();
+    const first = providerWith();
+    const second = { ...providerWith(), id: 'chatgpt' };
+    const { rerender } = render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[first]} />);
+    await openConsent(user);
+    rerender(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[second]} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toBeVisible();
+    rerender(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[second]} resolve={() => undefined} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(first.importFromUrl).not.toHaveBeenCalled();
+    expect(second.importFromUrl).not.toHaveBeenCalled();
+  });
+
   it('ouvre le consentement avant tout import, informe en français et restaure le focus après annulation', async () => {
     const user = userEvent.setup();
     const provider = providerWith();
@@ -136,13 +168,13 @@ describe('ConversationImport', () => {
 
   it('transmet exactement la capacité créée pour le consentement courant', async () => {
     const user = userEvent.setup();
-    const capability = Object.freeze({ url: shareUrl });
+    const capability = createRemoteGatewayConsent(resolveShare(shareUrl)!)!;
     const createConsent = vi.spyOn(remoteGateway, 'createRemoteGatewayConsent').mockReturnValue(capability);
     const provider = providerWith();
     try {
       render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
       await consent(user);
-      expect(createConsent).toHaveBeenCalledWith(shareUrl);
+      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }));
       expect(provider.importFromUrl).toHaveBeenCalledWith(shareUrl, capability);
     } finally {
       createConsent.mockRestore();
@@ -222,16 +254,15 @@ describe('ConversationImport', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it('invalide également le consentement si le fournisseur change', async () => {
+  it('invalide également le consentement lorsqu’un autre fournisseur est détecté', async () => {
     const user = userEvent.setup();
-    const first = providerWith();
-    const second = { ...providerWith(), id: 'other', label: 'Autre' };
-    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[first, second]} />);
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} />);
     await openConsent(user);
-    await user.selectOptions(screen.getByLabelText('Fournisseur de partage'), 'other');
+    await user.clear(screen.getByLabelText('Lien de partage'));
+    await user.type(screen.getByLabelText('Lien de partage'), 'https://claude.ai/share/opaque_id');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(first.importFromUrl).not.toHaveBeenCalled();
-    expect(second.importFromUrl).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique Claude');
   });
 
   it('conserve la session et affiche les erreurs de l’import après consentement', async () => {

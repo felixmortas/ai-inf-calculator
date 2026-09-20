@@ -1,5 +1,6 @@
 import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
-import type { ImportError, ImportErrorCode } from './types';
+import { isAttestedResolvedShare } from './resolvedShareAttestation';
+import type { ImportError, ImportErrorCode, ResolvedShare } from './types';
 
 export const CORSPROXY_ORIGIN = 'https://corsproxy.io/' as const;
 
@@ -7,7 +8,7 @@ type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respo
 
 /** Preuve ponctuelle, créée par le parcours de consentement pour une URL donnée. */
 export interface RemoteGatewayConsent {
-  readonly url: string;
+  readonly __opaqueConsent: never;
 }
 
 export type RemoteGatewayResult =
@@ -36,10 +37,13 @@ function discardResponseBody(response: Response): void {
   try { void response.body?.cancel('response-not-accepted').catch(() => { /* L’erreur métier reste prioritaire. */ }); } catch { /* L’erreur métier reste prioritaire. */ }
 }
 
-/** Le composant de consentement ne peut autoriser que l'URL actuellement validée. */
-export function createRemoteGatewayConsent(url: string): RemoteGatewayConsent | undefined {
-  if (!validateChatGptShareUrl(url)) return undefined;
-  const consent = Object.freeze({ url });
+/**
+ * Capacité ponctuelle : l'identité (et non une copie des champs) du partage
+ * attesté, sa politique et l'origine proxy courante doivent toutes coïncider.
+ */
+export function createRemoteGatewayConsent(resolved: ResolvedShare, proxyOrigin: string = CORSPROXY_ORIGIN): RemoteGatewayConsent | undefined {
+  if (!isAttestedResolvedShare(resolved) || resolved.policyVersion === '' || proxyOrigin !== CORSPROXY_ORIGIN) return undefined;
+  const consent = Object.freeze({ resolved, policyVersion: resolved.policyVersion, proxyOrigin }) as unknown as RemoteGatewayConsent;
   unusedConsents.add(consent);
   return consent;
 }
@@ -99,7 +103,10 @@ export function createRemoteGateway(
       if (!validateChatGptShareUrl(url)) {
         return error('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.');
       }
-      if (!consent || consent.url !== url || !unusedConsents.has(consent)) {
+      const capability = consent as unknown as { resolved?: ResolvedShare; policyVersion?: string; proxyOrigin?: string } | undefined;
+      if (!consent || !capability || !isAttestedResolvedShare(capability.resolved) || capability.resolved.canonicalUrl !== url
+        || capability.resolved.policyVersion !== capability.policyVersion || capability.proxyOrigin !== CORSPROXY_ORIGIN
+        || !unusedConsents.has(consent)) {
         return error('consent-required', 'Votre consentement ponctuel est requis pour cette URL.');
       }
       unusedConsents.delete(consent);

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { previewConversationImport, type ConversationPreview } from '../application/import/conversationPreview';
-import { importProviders } from '../application/import/registry';
+import { importProviders, resolveShare } from '../application/import/registry';
 import { createRemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
-import type { ImportProvider } from '../application/import/types';
+import type { ImportProvider, ResolvedShare } from '../application/import/types';
 import { hasConversationBlockContent } from '../domain/conversationContent';
 import { fr } from '../i18n/fr';
 
@@ -11,17 +11,18 @@ interface ConversationImportProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
   readonly providers?: readonly ImportProvider[];
+  /** Injection de test ; le parcours publié emploie uniquement le registre fermé. */
+  readonly resolve?: (value: string) => ResolvedShare | undefined;
 }
 
 interface PendingConsent {
-  readonly url: string;
-  readonly providerId: string;
+  readonly resolved: ResolvedShare;
   readonly version: number;
   readonly capability: unknown;
 }
 
-export function ConversationImport({ state, dispatch, providers = importProviders }: ConversationImportProps) {
-  const [providerId, setProviderId] = useState(providers[0]?.id ?? '');
+export function ConversationImport({ state, dispatch, providers = importProviders, resolve = resolveShare }: ConversationImportProps) {
+  const [detectedProvider, setDetectedProvider] = useState<string>();
   const [url, setUrl] = useState('');
   const [preview, setPreview] = useState<ConversationPreview>();
   const [error, setError] = useState<string>();
@@ -32,7 +33,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
   const importStarted = useRef(false);
   const analyseButtonRef = useRef<HTMLButtonElement>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
-  const provider = providers.find((item) => item.id === providerId);
+  const provider = detectedProvider ? providers.find((item) => item.id === detectedProvider) ?? (providers.length === 1 ? providers[0] : undefined) : undefined;
   const hasExistingContent = state.blocks.some(hasConversationBlockContent);
 
   useEffect(() => {
@@ -49,6 +50,10 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     setConfirming(false);
   }
 
+  useEffect(() => {
+    invalidateAnalysis();
+  }, [providers, resolve]);
+
   function closeConsent() {
     importStarted.current = false;
     setPendingConsent(undefined);
@@ -56,26 +61,30 @@ export function ConversationImport({ state, dispatch, providers = importProvider
   }
 
   function analyse() {
-    if (!provider) return;
     const version = ++analysisVersion.current;
     importStarted.current = false;
     setError(undefined); setPreview(undefined); setConfirming(false); setPendingConsent(undefined);
-    const invalid = provider.validateUrl(url);
-    if (invalid?.ok === false) { setError(invalid.error.message); return; }
-    const capability = createRemoteGatewayConsent(url);
+    const resolved = resolve(url);
+    if (!resolved) { setDetectedProvider(undefined); setError('Ce lien de partage public n’est pas pris en charge.'); return; }
+    const resolvedProvider = providers.find((item) => item.id === resolved.providerId) ?? (providers.length === 1 ? providers[0] : undefined);
+    if (!resolvedProvider) { setDetectedProvider(undefined); setError('Ce fournisseur de partage n’est pas disponible.'); return; }
+    setDetectedProvider(resolved.providerId);
+    const capability = createRemoteGatewayConsent(resolved);
     if (!capability) { setError(fr.importUnexpectedError); return; }
-    setPendingConsent({ url, providerId: provider.id, version, capability });
+    setPendingConsent({ resolved, version, capability });
   }
 
   async function continueImport() {
     const consent = pendingConsent;
     if (!consent || !provider || importStarted.current
-      || consent.url !== url || consent.providerId !== provider.id || consent.version !== analysisVersion.current) return;
+      || consent.resolved.canonicalUrl !== url
+      || (providers.length > 1 && consent.resolved.providerId !== provider.id)
+      || consent.version !== analysisVersion.current) return;
     importStarted.current = true;
     setPendingConsent(undefined);
     setAnalysing(true);
     try {
-      const result = await provider.importFromUrl(consent.url, consent.capability);
+      const result = await provider.importFromUrl(consent.resolved.canonicalUrl, consent.capability);
       if (consent.version !== analysisVersion.current) return;
       setAnalysing(false);
       if (result.ok === false) { setError(result.error.message); return; }
@@ -120,23 +129,18 @@ export function ConversationImport({ state, dispatch, providers = importProvider
 
   return <section className="conversation-import" aria-labelledby="conversation-import-title">
     <h2 id="conversation-import-title">{fr.importTitle}</h2>
-    <div className="field">
-      <label htmlFor="import-provider">{fr.importProviderLabel}</label>
-      <select id="import-provider" value={providerId} onChange={(event) => { invalidateAnalysis(); setProviderId(event.currentTarget.value); }}>
-        {providers.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-      </select>
-    </div>
+    {detectedProvider ? <p role="status"><strong>{fr.importProviderLabel}</strong> : {provider?.label}</p> : null}
     <div className="field">
       <label htmlFor="import-url">{fr.importUrlLabel}</label>
-      <input id="import-url" type="url" value={url} onChange={(event) => { invalidateAnalysis(); setUrl(event.currentTarget.value); }} />
+      <input id="import-url" type="url" value={url} onChange={(event) => { invalidateAnalysis(); setDetectedProvider(undefined); setUrl(event.currentTarget.value); }} />
       <p className="help">{fr.importUrlHelp}</p>
     </div>
-    <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing || !provider}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
+    <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
     {pendingConsent ? <div className="import-consent-backdrop">
       <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={trapConsentFocus}>
         <h3 id="import-consent-title">{fr.importConsentTitle}</h3>
-        <p>{fr.importConsentPurpose}</p>
-        <p><strong>{fr.importConsentUrlLabel}</strong>: <span className="import-consent-url">{pendingConsent.url}</span></p>
+        <p>{fr.importConsentPurpose(provider?.label ?? pendingConsent.resolved.providerId)}</p>
+        <p><strong>{fr.importConsentUrlLabel}</strong>: <span className="import-consent-url">{pendingConsent.resolved.canonicalUrl}</span></p>
         <p>{fr.importConsentMetadata}</p>
         <p>{fr.importConsentLocalData}</p>
         <p className="import-consent-links">

@@ -2,7 +2,8 @@
 title: 'Story 5.1 v2 — Consentir à l’import distant multi-fournisseur'
 type: 'feature'
 created: '2026-09-20'
-status: 'ready-for-dev'
+status: 'done'
+baseline_commit: 'c2cd21ac21d6edd43252d41380184447d53729ac'
 route: 'dispatch'
 version: 'v2-multi-provider'
 supersedes_for_future_dispatch:
@@ -26,10 +27,10 @@ Adapter le dialogue V1 sans effacer sa fiche `done` : après résolution d’une
 
 ## Tâches
 
-- [ ] Remplacer l’état de consentement URL-only par une capacité opaque liée au `ResolvedShare`, `policyVersion` et à la configuration proxy courantes.
-- [ ] Afficher le fournisseur détecté, l’URL canonique sortante, `corsproxy.io`, les métadonnées possibles, les données locales exclues et les liens documentés.
-- [ ] Invalider l’autorisation et toute réponse en attente après URL, fournisseur, adaptateur/politique, limites ou proxy modifiés ; conserver Annuler, `Escape` et l’import manuel sans trafic.
-- [ ] Étendre les tests UI aux quatre fournisseurs, au focus, à l’unicité de « Continuer », à l’invalidation et à l’absence de mutation.
+- [x] Remplacer l’état de consentement URL-only par une capacité opaque liée au `ResolvedShare`, `policyVersion` et à la configuration proxy courantes.
+- [x] Afficher le fournisseur détecté, l’URL canonique sortante, `corsproxy.io`, les métadonnées possibles, les données locales exclues et les liens documentés.
+- [x] Invalider l’autorisation et toute réponse en attente après URL, fournisseur, adaptateur/politique, limites ou proxy modifiés ; conserver Annuler, `Escape` et l’import manuel sans trafic.
+- [x] Étendre les tests UI aux quatre fournisseurs, au focus, à l’unicité de « Continuer », à l’invalidation et à l’absence de mutation.
 
 ## Critères d’acceptation
 
@@ -43,3 +44,17 @@ Adapter le dialogue V1 sans effacer sa fiche `done` : après résolution d’une
 - `npm test -- --run src/ui/ConversationImport.test.tsx`
 - `npm run lint`
 - `npm run build`
+
+## Review Triage Log
+
+| Finding | Verdict | Evidence and route |
+| --- | --- | --- |
+| `resolvedShareAttestation.ts` exports the minting helper | medium / patch | The helper lets any application module manufacture an attested value, contradicting the registry-only identity contract. Move the attestation set and minting operation back into the registry; only its predicate is needed by the consent boundary. |
+| `createRemoteGatewayConsent` accepts a raw URL | medium / patch | The legacy overload canonicalises a URL outside the active closed registry and hard-codes ChatGPT policy. Remove it and migrate the in-repository callers/tests to a share resolved by the registry. |
+| Non-ChatGPT dialogs promise a retrieval that their current providers refuse | low / rejected | The reviewed behavior is reachable, but this delivery order expressly reserves the network consumer for story 5.2; this story is required to offer consent for all four providers before that consumer exists. The current error keeps the session unchanged and manual import available. |
+| Consent survives changed provider/resolver configuration | high / patch | React can receive new `providers` or `resolve` props while the dialog is open; no dependency invalidates the pending capability. Invalidate pending consent whenever either identity source changes. |
+| Arbitrary multi-provider test injection no longer works | low / rejected | The prop is documented as test injection and production uses the closed registry. Restoring a dynamic provider resolver would weaken the required closed-registry path without a user-facing need. |
+| Edge: provider/resolver props change with a dialog open | high / patch | This is the same stale-capability defect above: a prop update leaves the old `ResolvedShare` consumable. Cover it with a UI regression test. |
+| Edge: singleton injected provider can receive a different resolved provider | false | The singleton fallback exists only for the test adapter and its `importFromUrl` does not select or redirect a real registered provider; the published path has all four providers and requires a matching ID. |
+| Gateway attestation boundary has no direct test | medium / patch | Existing tests exercise only the legacy string overload. Add resolved, forged and cloned share tests, including no fetch on rejection. |
+| `chatgptShare.test.ts` asserts the old single-provider registry | medium / patch | The assertion conflicts with this diff's deliberate four-provider activation and fails in the normal suite; update it to the registered-provider expectation. |

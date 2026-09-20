@@ -13,7 +13,7 @@ describe('registre fermé des partages', () => {
     expect(shares.every((share) => Object.isFrozen(share))).toBe(true);
     expect(shares.map((share) => share && providerForResolvedShare(share)?.id)).toEqual(['chatgpt', 'claude', 'mistral', 'gemini']);
     expect(allImportProviders.map(({ id }) => id)).toEqual(['chatgpt', 'claude', 'mistral', 'gemini']);
-    expect(activeImportProviders.map(({ id }) => id)).toEqual(['chatgpt']);
+    expect(activeImportProviders.map(({ id }) => id)).toEqual(['chatgpt', 'claude', 'mistral', 'gemini']);
   });
 
   it('refuse un clone ou une capacité forgée', () => {
