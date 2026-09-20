@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { previewConversationImport, type ConversationPreview } from '../application/import/conversationPreview';
-import { importProviders, resolveShare } from '../application/import/registry';
+import { importProviders, isResolvedShare, resolveShare } from '../application/import/registry';
 import { createRemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import type { ImportProvider, ResolvedShare } from '../application/import/types';
@@ -51,7 +51,10 @@ export function ConversationImport({ state, dispatch, providers = importProvider
   }
 
   useEffect(() => {
+    const wasOpen = pendingConsent !== undefined;
     invalidateAnalysis();
+    setDetectedProvider(undefined);
+    if (wasOpen) analyseButtonRef.current?.focus();
   }, [providers, resolve]);
 
   function closeConsent() {
@@ -69,7 +72,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     const resolvedProvider = providers.find((item) => item.id === resolved.providerId) ?? (providers.length === 1 ? providers[0] : undefined);
     if (!resolvedProvider) { setDetectedProvider(undefined); setError('Ce fournisseur de partage n’est pas disponible.'); return; }
     setDetectedProvider(resolved.providerId);
-    const capability = createRemoteGatewayConsent(resolved);
+    const capability = createRemoteGatewayConsent(resolved, isResolvedShare);
     if (!capability) { setError(fr.importUnexpectedError); return; }
     setPendingConsent({ resolved, version, capability });
   }

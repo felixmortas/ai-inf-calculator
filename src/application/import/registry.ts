@@ -2,7 +2,6 @@ import { chatGptShareProvider } from './chatgptShare';
 import { claudeShareProvider } from './claudeShare';
 import { geminiShareProvider } from './geminiShare';
 import { mistralShareProvider } from './mistralShare';
-import { isAttestedResolvedShare } from './resolvedShareAttestation';
 import type { ImportProvider, ImportProviderId, ResolvedShare } from './types';
 
 /** Catalogue fermé pour les futurs parcours de consentement et passerelle. */
@@ -14,9 +13,7 @@ export const allImportProviders: readonly ImportProvider[] = Object.freeze([
 export const importProviders: readonly ImportProvider[] = allImportProviders;
 export const activeImportProviders = importProviders;
 
-const attestationKey = Symbol.for('ai-env-impact-calculator.resolved-share-attestations');
-const globalAttestations = globalThis as typeof globalThis & { [attestationKey]?: WeakSet<object> };
-const attestations = globalAttestations[attestationKey] ??= new WeakSet<object>();
+const attestations = new WeakSet<object>();
 
 /** Résout localement, canonicalise et atteste la seule capacité consommable ensuite. */
 export function resolveShare(value: string): ResolvedShare | undefined {
@@ -32,7 +29,7 @@ export function resolveShare(value: string): ResolvedShare | undefined {
 
 /** Rejette les clones et les objets sérialisés : seule l'identité attestée compte. */
 export function isResolvedShare(value: unknown): value is ResolvedShare {
-  return isAttestedResolvedShare(value);
+  return typeof value === 'object' && value !== null && attestations.has(value);
 }
 
 export function providerForResolvedShare(value: unknown): ImportProvider | undefined {

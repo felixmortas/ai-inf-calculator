@@ -6,11 +6,11 @@ import {
   createRemoteGateway,
   createRemoteGatewayConsent,
 } from './remoteGateway';
-import { resolveShare } from './registry';
+import { isResolvedShare, resolveShare } from './registry';
 
 const shareUrl = 'https://chatgpt.com/share/abc-123';
 const resolvedShare = resolveShare(shareUrl)!;
-const consent = () => createRemoteGatewayConsent(resolvedShare);
+const consent = () => createRemoteGatewayConsent(resolvedShare, isResolvedShare);
 const response = (body: string, status = 200, headers: HeadersInit = {}) => new Response(body, { status, headers });
 
 const testApiKey = 'test value / encoded';
@@ -38,7 +38,7 @@ describe('passerelle distante bornée', () => {
 
   it.each([
     ['sans consentement', undefined],
-    ['consentement lié à une autre URL', createRemoteGatewayConsent(resolveShare('https://chatgpt.com/share/other')!)],
+    ['consentement lié à une autre URL', createRemoteGatewayConsent(resolveShare('https://chatgpt.com/share/other')!, isResolvedShare)],
   ])('ne lance aucun trafic %s', async (_caseName, consent) => {
     const fetcher = vi.fn();
     await expect(createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, consent)).resolves.toMatchObject({
@@ -50,8 +50,8 @@ describe('passerelle distante bornée', () => {
   it('n’accorde une capacité qu’au ResolvedShare attesté et refuse ses copies', async () => {
     const forged = Object.freeze({ ...resolvedShare });
     const cloned = JSON.parse(JSON.stringify(resolvedShare));
-    expect(createRemoteGatewayConsent(forged)).toBeUndefined();
-    expect(createRemoteGatewayConsent(cloned)).toBeUndefined();
+    expect(createRemoteGatewayConsent(forged, isResolvedShare)).toBeUndefined();
+    expect(createRemoteGatewayConsent(cloned, isResolvedShare)).toBeUndefined();
 
     const fetcher = vi.fn();
     await expect(createRemoteGateway(fetcher, configured).fetchHtml(shareUrl, forged as unknown as ReturnType<typeof consent>)).resolves.toMatchObject({

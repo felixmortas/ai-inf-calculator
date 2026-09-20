@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
 import { chatGptShareProvider, importChatGptShare } from '../application/import/chatgptShare';
-import { resolveShare } from '../application/import/registry';
+import { isResolvedShare, resolveShare } from '../application/import/registry';
 import { CORSPROXY_ORIGIN, createRemoteGateway, createRemoteGatewayConsent, type RemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ImportProvider } from '../application/import/types';
 import * as remoteGateway from '../application/import/remoteGateway';
@@ -51,6 +51,29 @@ describe('ConversationImport', () => {
     expect(screen.getByRole('status')).toHaveTextContent(label);
   });
 
+  it.each([
+    ['Claude', 'https://claude.ai/share/opaque_id'],
+    ['Mistral', 'https://chat.mistral.ai/chat/opaque_id'],
+    ['Gemini', 'https://share.gemini.google/opaque_id'],
+  ])('remet la capacité à %s, qui refuse sans requête ni mutation tant que la passerelle n’est pas disponible', async (label, url) => {
+    const user = userEvent.setup();
+    const dispatch = vi.fn();
+    const fetcher = vi.fn();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetcher;
+    try {
+      render(<ConversationImport state={initialConversationState} dispatch={dispatch} />);
+      await user.type(screen.getByLabelText('Lien de partage'), url);
+      await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(`récupération distante ${label} n’est pas encore activée`);
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(dispatch).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('invalide le consentement ouvert si le registre ou le résolveur change', async () => {
     const user = userEvent.setup();
     const first = providerWith();
@@ -59,11 +82,15 @@ describe('ConversationImport', () => {
     await openConsent(user);
     rerender(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[second]} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Analyser le lien' })).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
     expect(await screen.findByRole('dialog')).toBeVisible();
     rerender(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[second]} resolve={() => undefined} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Analyser le lien' })).toHaveFocus();
     expect(first.importFromUrl).not.toHaveBeenCalled();
     expect(second.importFromUrl).not.toHaveBeenCalled();
   });
@@ -168,13 +195,13 @@ describe('ConversationImport', () => {
 
   it('transmet exactement la capacité créée pour le consentement courant', async () => {
     const user = userEvent.setup();
-    const capability = createRemoteGatewayConsent(resolveShare(shareUrl)!)!;
+    const capability = createRemoteGatewayConsent(resolveShare(shareUrl)!, isResolvedShare)!;
     const createConsent = vi.spyOn(remoteGateway, 'createRemoteGatewayConsent').mockReturnValue(capability);
     const provider = providerWith();
     try {
       render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
       await consent(user);
-      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }));
+      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }), isResolvedShare);
       expect(provider.importFromUrl).toHaveBeenCalledWith(shareUrl, capability);
     } finally {
       createConsent.mockRestore();

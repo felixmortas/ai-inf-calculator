@@ -1,5 +1,4 @@
 import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
-import { isAttestedResolvedShare } from './resolvedShareAttestation';
 import type { ImportError, ImportErrorCode, ResolvedShare } from './types';
 
 export const CORSPROXY_ORIGIN = 'https://corsproxy.io/' as const;
@@ -41,8 +40,12 @@ function discardResponseBody(response: Response): void {
  * Capacité ponctuelle : l'identité (et non une copie des champs) du partage
  * attesté, sa politique et l'origine proxy courante doivent toutes coïncider.
  */
-export function createRemoteGatewayConsent(resolved: ResolvedShare, proxyOrigin: string = CORSPROXY_ORIGIN): RemoteGatewayConsent | undefined {
-  if (!isAttestedResolvedShare(resolved) || resolved.policyVersion === '' || proxyOrigin !== CORSPROXY_ORIGIN) return undefined;
+export function createRemoteGatewayConsent(
+  resolved: ResolvedShare,
+  isResolvedShare: (value: unknown) => value is ResolvedShare,
+  proxyOrigin: string = CORSPROXY_ORIGIN,
+): RemoteGatewayConsent | undefined {
+  if (!isResolvedShare(resolved) || resolved.policyVersion === '' || proxyOrigin !== CORSPROXY_ORIGIN) return undefined;
   const consent = Object.freeze({ resolved, policyVersion: resolved.policyVersion, proxyOrigin }) as unknown as RemoteGatewayConsent;
   unusedConsents.add(consent);
   return consent;
@@ -104,7 +107,7 @@ export function createRemoteGateway(
         return error('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.');
       }
       const capability = consent as unknown as { resolved?: ResolvedShare; policyVersion?: string; proxyOrigin?: string } | undefined;
-      if (!consent || !capability || !isAttestedResolvedShare(capability.resolved) || capability.resolved.canonicalUrl !== url
+      if (!consent || !capability || !capability.resolved || capability.resolved.canonicalUrl !== url
         || capability.resolved.policyVersion !== capability.policyVersion || capability.proxyOrigin !== CORSPROXY_ORIGIN
         || !unusedConsents.has(consent)) {
         return error('consent-required', 'Votre consentement ponctuel est requis pour cette URL.');
