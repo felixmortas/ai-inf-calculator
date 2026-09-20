@@ -31,7 +31,7 @@ describe('URL de partage ChatGPT', () => {
   it.each([
     'http://chatgpt.com/share/abc', 'https://chatgpt.com:443/share/abc', 'https://user@chatgpt.com/share/abc',
     'https://chatgpt.com/share/abc?x=1', 'https://chatgpt.com/share/abc#x', 'https://chatgpt.com/share/',
-    'https://chatgpt.com/share/abc/', 'https://evil.test/share/abc',
+    'https://chatgpt.com/share/abc/', 'https://evil.test/share/abc', `https://chatgpt.com/share/${'a'.repeat(2_049)}`,
   ])('refuse %s sans requête', async (url) => {
     const gateway: RemoteGateway = { fetchHtml: vi.fn() };
     expect(validateChatGptShareUrl(url)).toBeUndefined();

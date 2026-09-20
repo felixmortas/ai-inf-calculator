@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-19-2026 22:54
-last_updated: 09-20-2026 21:32
+last_updated: 09-20-2026 22:52
 project: ao-env-impact-calculator
 project_key: NOKEY
 tracking_system: file-system
@@ -62,5 +62,5 @@ development_status:
   5-1-consentir-à-l-import-distant-avant-toute-requête: ready-for-dev
   5-2-récupérer-un-partage-par-une-passerelle-tiers-bornée: ready-for-dev
   5-3-documenter-et-vérifier-la-frontière-d-import-distant: ready-for-dev
-  5-4-ajouter-les-adaptateurs-de-partage-multi-fournisseur: ready-for-dev
+  5-4-ajouter-les-adaptateurs-de-partage-multi-fournisseur: review
   epic-5-retrospective: optional

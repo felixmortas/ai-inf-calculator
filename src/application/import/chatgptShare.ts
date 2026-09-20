@@ -1,6 +1,7 @@
 import { remoteGateway, type RemoteGateway, type RemoteGatewayConsent } from './remoteGateway';
 import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
-import type { ImportError, ImportEvent, ImportProvider, ImportResult } from './types';
+import { hasValidExtractionLimits } from './providerSupport';
+import type { ImportError, ImportEvent, ImportLimits, ImportProvider, ImportResult, RedirectPolicy } from './types';
 
 export { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
 
@@ -163,8 +164,15 @@ export async function importChatGptShare(value: string, consent?: RemoteGatewayC
 
 export const chatGptShareProvider: ImportProvider = Object.freeze({
   id: 'chatgpt', label: 'ChatGPT',
-  validateUrl(value: string) { return validateChatGptShareUrl(value) ? undefined : frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.'); },
-  importFromUrl(value: string, consent?: unknown) {
-    return importChatGptShare(value, consent as RemoteGatewayConsent | undefined);
+  limits: Object.freeze({ maxUrlLength: 2_048, ...CHATGPT_SHARE_LIMITS, maxRedirects: 0 }) as ImportLimits,
+  policyVersion: 'chatgpt-v1',
+  redirectPolicy: Object.freeze({ maxRedirects: 0, allowedOrigins: Object.freeze(['https://chatgpt.com']) }) as RedirectPolicy,
+  canonicalizeUrl: validateChatGptShareUrl,
+  extract(html: string, limits?: Pick<ImportLimits, 'maxEvents' | 'maxBytes'>) {
+    if (limits && !hasValidExtractionLimits(limits)) return frozenError('configuration', 'Les limites d’extraction sont invalides.');
+    if (limits && new TextEncoder().encode(html).byteLength > limits.maxBytes) return frozenError('response-too-large', 'La réponse dépasse la taille autorisée.');
+    return extractChatGptShareEvents(html, limits?.maxEvents);
   },
+  validateUrl(value: string) { return validateChatGptShareUrl(value) ? undefined : frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.'); },
+  importFromUrl(value: string, consent?: unknown) { return importChatGptShare(value, consent as RemoteGatewayConsent | undefined); },
 });
