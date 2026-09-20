@@ -52,6 +52,30 @@ select, textarea, input, .resolved-model {
 .import-error { border: 1px solid #9d3030; background: #fff1f1; }
 .import-confirmation { border: 2px solid #8a5a00; background: #fff7df; }
 .import-confirmation button + button { margin-left: .65rem; }
+.import-consent-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(23 32 28 / 62%);
+}
+.import-consent {
+  width: min(100%, 42rem);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 2px solid #245535;
+  border-radius: .75rem;
+  background: #fff;
+  box-shadow: 0 .75rem 2rem rgb(0 0 0 / 28%);
+}
+.import-consent h3 { margin-top: 0; }
+.import-consent-url { overflow-wrap: anywhere; }
+.import-consent-links { line-height: 1.7; }
+.import-consent-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-top: 1rem; }
+.import-consent-actions a { font-weight: 700; }
 textarea { min-height: 6rem; resize: vertical; }
 button {
   min-height: 2.75rem;
@@ -107,4 +131,6 @@ button {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
   .configuration, .conversation-import, .conversation-blocks { padding: 1rem; }
   .conversation-blocks-header, .conversation-block-heading, .conversation-actions { align-items: stretch; flex-direction: column; }
+  .import-consent { padding: 1rem; }
+  .import-consent-actions { align-items: stretch; flex-direction: column; }
 }
