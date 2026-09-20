@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  CHATGPT_SHARE_LIMITS,
-  importChatGptShare,
-} from './chatgptShare';
+import { importChatGptShare } from './chatgptShare';
+import { CHATGPT_SHARE_LIMITS } from './chatgptShareUrl';
 import {
   CORSPROXY_ORIGIN,
   createRemoteGateway,
@@ -15,6 +13,11 @@ const response = (body: string, status = 200, headers: HeadersInit = {}) => new 
 const testApiKey = 'test value / encoded';
 const configured = { apiKey: () => testApiKey };
 const unconfigured = { apiKey: () => undefined };
+const refusedErrors = [
+  [401, { code: 'configuration', message: 'La passerelle refuse sa configuration.', status: 401 }],
+  [403, { code: 'policy', message: 'La politique de la passerelle refuse cette requête.', status: 403 }],
+  [502, { code: 'http', message: 'La passerelle répond HTTP 502.', status: 502 }],
+] as const;
 
 describe('passerelle distante bornée', () => {
   it('envoie un unique GET vers l’origine CorsProxy immuable avec URL et clé encodées', async () => {
@@ -92,10 +95,45 @@ describe('passerelle distante bornée', () => {
     expect(large.ok ? undefined : large.error.code).toBe('response-too-large');
   });
 
-  it('ne livre aucun événement lorsque CorsProxy refuse la politique', async () => {
-    const gateway = createRemoteGateway(vi.fn().mockResolvedValue(response('<html>refusé</html>', 403)), configured);
+  it.each(refusedErrors)('annule une seule fois le corps HTTP %i refusé sans livrer de HTML', async (status, expectedError) => {
+    const canceled = vi.fn();
+    const refused = new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new TextEncoder().encode('<html>refusé</html>')); },
+      cancel: canceled,
+    }), { status });
+    const result = await createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
+      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    expect(canceled).toHaveBeenCalledOnce();
+    expect(result).toEqual({ ok: false, error: expectedError });
+    expect(result).not.toHaveProperty('html');
+  });
+
+  it.each(refusedErrors)('préserve l’erreur HTTP %i si l’annulation du corps échoue', async (status, expectedError) => {
+    const canceled = vi.fn().mockRejectedValue(new Error('cleanup failed'));
+    const refused = new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new TextEncoder().encode('<html>refusé</html>')); },
+      cancel: canceled,
+    }), { status });
+    const result = await createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
+      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl));
+    expect(canceled).toHaveBeenCalledOnce();
+    expect(result).toEqual({ ok: false, error: expectedError });
+    expect(result).not.toHaveProperty('html');
+  });
+
+  it('retourne sans attendre une annulation de corps refusé qui reste en attente', async () => {
+    const canceled = vi.fn(() => new Promise<void>(() => {}));
+    const refused = new Response(new ReadableStream<Uint8Array>({ cancel: canceled }), { status: 502 });
+    await expect(createRemoteGateway(vi.fn().mockResolvedValue(refused), configured)
+      .fetchHtml(shareUrl, createRemoteGatewayConsent(shareUrl)))
+      .resolves.toEqual({ ok: false, error: refusedErrors[2][1] });
+    expect(canceled).toHaveBeenCalledOnce();
+  });
+
+  it.each(refusedErrors)('ne livre aucun événement lorsque CorsProxy retourne HTTP %i', async (status, expectedError) => {
+    const gateway = createRemoteGateway(vi.fn().mockResolvedValue(response('<html>refusé</html>', status)), configured);
     await expect(importChatGptShare(shareUrl, createRemoteGatewayConsent(shareUrl), gateway)).resolves.toMatchObject({
-      ok: false, events: [], error: { code: 'policy', status: 403 },
+      ok: false, events: [], error: expectedError,
     });
   });
 

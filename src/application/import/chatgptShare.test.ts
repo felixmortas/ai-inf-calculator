@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { extractChatGptShareEvents, importChatGptShare, validateChatGptShareUrl } from './chatgptShare';
+import {
+  CHATGPT_SHARE_LIMITS,
+  extractChatGptShareEvents,
+  importChatGptShare,
+  validateChatGptShareUrl,
+} from './chatgptShare';
+import {
+  CHATGPT_SHARE_LIMITS as pureChatGptShareLimits,
+  validateChatGptShareUrl as pureValidateChatGptShareUrl,
+} from './chatgptShareUrl';
 import type { RemoteGateway } from './remoteGateway';
 import { importProviderById, importProviders } from './registry';
 
@@ -14,6 +23,11 @@ describe('registre d’import V1', () => {
 });
 
 describe('URL de partage ChatGPT', () => {
+  it('conserve les exports publics du validateur et des limites', () => {
+    expect(validateChatGptShareUrl).toBe(pureValidateChatGptShareUrl);
+    expect(CHATGPT_SHARE_LIMITS).toBe(pureChatGptShareLimits);
+  });
+
   it.each([
     'http://chatgpt.com/share/abc', 'https://chatgpt.com:443/share/abc', 'https://user@chatgpt.com/share/abc',
     'https://chatgpt.com/share/abc?x=1', 'https://chatgpt.com/share/abc#x', 'https://chatgpt.com/share/',

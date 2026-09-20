@@ -1,4 +1,4 @@
-import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShare';
+import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
 import type { ImportError, ImportErrorCode } from './types';
 
 export const CORSPROXY_ORIGIN = 'https://corsproxy.io/' as const;
@@ -29,6 +29,11 @@ function error(code: ImportErrorCode, message: string, status?: number): RemoteG
     ok: false as const,
     error: Object.freeze(status === undefined ? { code, message } : { code, message, status }),
   });
+}
+
+/** Abandonne best-effort un corps que la passerelle ne doit jamais exposer. */
+function discardResponseBody(response: Response): void {
+  try { void response.body?.cancel('response-not-accepted').catch(() => { /* L’erreur métier reste prioritaire. */ }); } catch { /* L’erreur métier reste prioritaire. */ }
 }
 
 /** Le composant de consentement ne peut autoriser que l'URL actuellement validée. */
@@ -111,12 +116,17 @@ export function createRemoteGateway(
           referrerPolicy: 'no-referrer', signal: controller.signal,
         });
         if (response.status === 401) {
+          discardResponseBody(response);
           return error('configuration', 'La passerelle refuse sa configuration.', response.status);
         }
         if (response.status === 403) {
+          discardResponseBody(response);
           return error('policy', 'La politique de la passerelle refuse cette requête.', response.status);
         }
-        if (!response.ok) return error('http', `La passerelle répond HTTP ${response.status}.`, response.status);
+        if (!response.ok) {
+          discardResponseBody(response);
+          return error('http', `La passerelle répond HTTP ${response.status}.`, response.status);
+        }
         try {
           return Object.freeze({ ok: true as const, html: await readBounded(response, CHATGPT_SHARE_LIMITS.maxBytes) });
         } catch (cause) {
