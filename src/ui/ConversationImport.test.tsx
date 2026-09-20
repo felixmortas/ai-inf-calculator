@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
+import { chatGptShareProvider, importChatGptShare } from '../application/import/chatgptShare';
+import { CORSPROXY_ORIGIN, createRemoteGateway, type RemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ImportProvider } from '../application/import/types';
 import * as remoteGateway from '../application/import/remoteGateway';
 import { ConversationImport } from './ConversationImport';
@@ -12,6 +14,14 @@ function providerWith(result: unknown = { ok: true, providerId: 'test', events: 
   { role: 'user', text: 'Bonjour', order: 1 }, { role: 'assistant', text: 'Réponse', order: 2 },
 ] }): ImportProvider {
   return { id: 'test', label: 'ChatGPT', validateUrl: () => undefined, importFromUrl: vi.fn().mockResolvedValue(result) };
+}
+
+function providerThroughGateway(fetcher: Parameters<typeof createRemoteGateway>[0], configured = true): ImportProvider {
+  const gateway = createRemoteGateway(fetcher, { apiKey: () => configured ? 'test key' : undefined });
+  return {
+    id: 'chatgpt', label: 'ChatGPT', validateUrl: chatGptShareProvider.validateUrl,
+    importFromUrl: (value, consent) => importChatGptShare(value, consent as RemoteGatewayConsent | undefined, gateway),
+  };
 }
 
 async function openConsent(user: ReturnType<typeof userEvent.setup>) {
@@ -55,17 +65,18 @@ describe('ConversationImport', () => {
 
   it('ferme avec Escape ou le parcours manuel sans requête ni mutation', async () => {
     const user = userEvent.setup();
-    const provider = providerWith();
+    const fetcher = vi.fn();
+    const provider = providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0]);
     const dispatch = vi.fn();
     render(<ConversationImport state={initialConversationState} dispatch={dispatch} providers={[provider]} />);
     await openConsent(user);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(provider.importFromUrl).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
     await user.click(screen.getByRole('link', { name: 'Importer manuellement' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(provider.importFromUrl).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
   });
 
@@ -86,6 +97,41 @@ describe('ConversationImport', () => {
     await user.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }));
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'blocksReplaced' }));
     expect(state.blocks[0].message).toBe('Bonjour');
+  });
+
+  it('relie le dialogue à la passerelle injectée puis à l’extraction locale, sans transmettre la session', async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockResolvedValue(new Response(`<script type="application/json">${JSON.stringify({ messages: [
+      { author: { role: 'user' }, content: { parts: ['Bonjour public'] } },
+      { author: { role: 'assistant' }, content: { parts: ['Réponse publique'] } },
+    ] })}</script>`));
+    const provider = providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0]);
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'local', field: 'message', value: 'secret local' });
+    const dispatch = vi.fn((action) => { state = conversationReducer(state, action); });
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
+
+    await openConsent(user);
+    expect(fetcher).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Continuer avec corsproxy.io' }));
+
+    expect(await screen.findByRole('heading', { name: 'Prévisualisation de l’import' })).toBeVisible();
+    expect(screen.getByText(/Bonjour public/)).toBeVisible();
+    expect(fetcher).toHaveBeenCalledOnce();
+    const [requestUrl, init] = fetcher.mock.calls[0];
+    expect(requestUrl).toBe(`${CORSPROXY_ORIGIN}?url=${encodeURIComponent(shareUrl)}&key=test%20key`);
+    expect(init).toMatchObject({ method: 'GET', credentials: 'omit', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer' });
+    expect(init).not.toHaveProperty('body');
+    expect(init).not.toHaveProperty('headers');
+    expect(JSON.stringify({ requestUrl, init })).not.toContain('secret local');
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(state.blocks[0].message).toBe('secret local');
+    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    expect(screen.getByRole('alertdialog')).toBeVisible();
+    expect(state.blocks[0].message).toBe('secret local');
+    await user.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }));
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'blocksReplaced' }));
+    expect(state.blocks[0].message).toBe('Bonjour public');
   });
 
   it('transmet exactement la capacité créée pour le consentement courant', async () => {
@@ -147,16 +193,33 @@ describe('ConversationImport', () => {
 
   it('invalide le consentement et ignore une réponse devenue obsolète après modification de l’URL', async () => {
     const user = userEvent.setup();
-    let resolveImport: (value: unknown) => void = () => undefined;
-    const provider: ImportProvider = { id: 'test', label: 'ChatGPT', validateUrl: () => undefined, importFromUrl: vi.fn().mockReturnValue(new Promise((resolve) => { resolveImport = resolve; })) };
-    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
+    let resolveFetch: (value: Response) => void = () => undefined;
+    const fetcher = vi.fn().mockReturnValue(new Promise<Response>((resolve) => { resolveFetch = resolve; }));
+    const provider = providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0]);
+    const originalImport = provider.importFromUrl;
+    let resolveImportSettled: () => void = () => undefined;
+    const importSettled = new Promise<void>((resolve) => { resolveImportSettled = resolve; });
+    const settledProvider: ImportProvider = {
+      ...provider,
+      importFromUrl: async (value, consent) => {
+        try { return await originalImport(value, consent); } finally { resolveImportSettled(); }
+      },
+    };
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[settledProvider]} />);
     await consent(user);
     await user.type(screen.getByLabelText('Lien de partage'), 'x');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    resolveImport({ ok: true, providerId: 'test', events: [{ role: 'user', text: 'ignoré', order: 1 }] });
-    await Promise.resolve();
+    resolveFetch(new Response(`<script type="application/json">${JSON.stringify({ messages: [
+      { author: { role: 'user' }, content: { parts: ['ignoré'] } },
+      { author: { role: 'assistant' }, content: { parts: ['ignoré aussi'] } },
+    ] })}</script>`));
+    await importSettled;
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Prévisualisation de l’import' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
     expect(screen.queryByRole('heading', { name: 'Prévisualisation de l’import' })).not.toBeInTheDocument();
-    expect(provider.importFromUrl).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it('invalide également le consentement si le fournisseur change', async () => {
@@ -179,6 +242,38 @@ describe('ConversationImport', () => {
     await consent(user);
     expect(await screen.findByRole('alert')).toHaveTextContent('Accès refusé par le réseau ou CORS.');
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('conserve la session si la passerelle réelle injectée est indisponible', async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockRejectedValue(new TypeError('offline'));
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'local', field: 'message', value: 'à conserver' });
+    const dispatch = vi.fn((action) => { state = conversationReducer(state, action); });
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0])]} />);
+
+    await consent(user);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Accès refusé par le réseau ou la passerelle.');
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(state.blocks[0].message).toBe('à conserver');
+    expect(screen.getByRole('link', { name: 'Importer manuellement' })).toHaveAttribute('href', '#conversation-title');
+  });
+
+  it('conserve le parcours manuel et la session si la passerelle n’est pas configurée', async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'local', field: 'message', value: 'à conserver' });
+    const dispatch = vi.fn((action) => { state = conversationReducer(state, action); });
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0], false)]} />);
+
+    await consent(user);
+    expect(await screen.findByRole('alert')).toHaveTextContent('La passerelle d’import distant n’est pas configurée.');
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(state.blocks[0].message).toBe('à conserver');
+    expect(screen.getByRole('link', { name: 'Importer manuellement' })).toHaveAttribute('href', '#conversation-title');
   });
 
   it('refuse une prévisualisation sans échange après consentement', async () => {

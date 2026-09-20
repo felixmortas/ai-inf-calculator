@@ -151,7 +151,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
         </div>
       </div>
     </div> : null}
-    {error ? <p role="alert" className="import-error">{error}</p> : null}
+    {error ? <div className="import-error"><p role="alert">{error}</p><a href="#conversation-title">{fr.importManualAction}</a></div> : null}
     {preview ? <div className="import-preview" aria-live="polite">
       <h3>{fr.importPreviewTitle}</h3>
       {preview.blocks.map((block, index) => <article key={index} className="import-preview-block">
