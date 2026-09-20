@@ -7,12 +7,13 @@ paradigm: application monopage client-side, en couches et noyau fonctionnel pur
 scope: Sous-projet portable `calculator/`, intégré au chemin `/calculator/` de felixmortas.com
 status: final
 created: 2026-09-18
-updated: 2026-09-19
+updated: 2026-09-20
 binds: [FR-1, FR-2, FR-3, FR-4, FR-7, FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-20, FR-21, FR-23, FR-24, NFR-1, NFR-2, NFR-3, NFR-4, NFR-5, NFR-6, NFR-7]
 sources:
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/addendum.md
   - ../../sprint-change-proposal-2026-09-19.md
+  - ../../sprint-change-proposal-2026-09-20.md
 companions: []
 ---
 
@@ -81,9 +82,10 @@ flowchart LR
 
 - **Binds:** FR-3, FR-8, FR-19, NFR-3, D-4
 - **Prevents:** l'exfiltration de données de session, une URL proxy arbitraire, le contournement d'un contrôle d'accès, ou la propagation d'une dépendance tierce dans le domaine de calcul.
-- **Rule:** `application/import/remoteGateway` est le seul adaptateur autorisé à faire une requête d'import distant. Il ne peut être appelé qu'après un consentement explicite, ponctuel et non pré-coché pour la requête courante ; un refus, une annulation ou une modification de l'URL annule l'autorisation et ne lance aucune requête. Il accepte uniquement une URL de partage ChatGPT publique déjà validée par le validateur existant et construit la requête à partir de cette seule valeur.
-- **Allowlist transitoire:** l'origine de production est exactement `https://corsproxy.io/`; aucune origine, chemin de proxy ou redirection ne provient d'une entrée utilisateur. La configuration associe cette origine à son mécanisme de clé API et d'autorisation de domaine. Une clé embarquée dans l'application statique n'est jamais considérée comme un secret : les protections effectives sont l'autorisation de domaine et les plafonds configurés chez le fournisseur, complétés par la validation, les délais et les limites applicatives.
-- **Minimisation et traitement:** la passerelle n'envoie ni bloc local, fichier, résultat, catalogue, paramètre de calcul, état du reducer, cookie applicatif, jeton de session ni secret. Le tiers reçoit nécessairement l'URL de partage et, selon sa politique, peut recevoir l'adresse IP, l'agent utilisateur et des métadonnées de requête ; l'application ne promet pas que la page ou son contenu ne seront jamais traités par lui. La réponse HTML est bornée en taille et en délai, lue comme texte non exécutable et parsée localement par l'extracteur existant ; aucun lien, artifact ou ressource citée n'est suivi ou téléchargé.
+- **Rule:** `application/import/remoteGateway` est le seul adaptateur autorisé à faire une requête d'import distant. Le registre est statique, fermé et détenu par `application/import` ; il référence les adaptateurs distincts ChatGPT, Claude, Mistral et Gemini. Aucun adaptateur ne reçoit de capacité réseau ni ne s'enregistre dynamiquement. Seul le registre fabrique un `ResolvedShare` opaque et immuable, attesté en mémoire, qui associe un adaptateur enregistré à `{ providerId, canonicalUrl, limits, policyVersion }`. La passerelle refuse toute valeur forgée, clonée ou non attestée, puis retrouve l'adaptateur, ses limites et sa politique par cette identité — jamais dans des champs contrôlés par l'appelant.
+- **Consentement et exécution:** la passerelle ne peut être appelée qu'avec un consentement explicite, ponctuel, non pré-coché et à usage unique, créé après affichage, lié par identité au même `ResolvedShare`, à `policyVersion` et à l'origine proxy. Le dialogue affiche le fournisseur détecté, l'URL cible canonique exacte qui sera encodée dans la requête (`outboundCanonicalUrl`) et l'origine proxy `https://corsproxy.io/`. La passerelle consomme ce consentement avant tout trafic ; refus, annulation, changement d'URL, de fournisseur, d'adaptateur/politique, de limites ou de configuration proxy l'invalide et ne lance aucune requête.
+- **Allowlist transitoire:** l'origine de production est exactement `https://corsproxy.io/`; méthode, chemin, paramètres, encodage, en-têtes, `credentials: omit`, cache et politique de référent sont fixés par `remoteGateway`. Aucune origine, chemin de proxy, destination, en-tête applicatif, corps, cookie, identifiant de session ou redirection ne provient d'une entrée utilisateur, d'un adaptateur ou de l'état local. La seule destination encodée est `outboundCanonicalUrl`. Les hôtes, ports, chemins, requêtes, URL finale et nombre maximal de sauts autorisés pour cette destination sont définis par l'adaptateur validé. Le proxy doit appliquer et attester chaque saut de cette politique, ou le format nécessitant une redirection est refusé ; une redirection hors allowlist ou au-delà de la borne échoue sans import partiel. La configuration associe cette origine à son mécanisme de clé API et d'autorisation de domaine. Une clé embarquée dans l'application statique n'est jamais considérée comme un secret : les protections effectives sont l'autorisation de domaine et les plafonds configurés chez le fournisseur, complétés par la validation, les délais et les limites applicatives.
+- **Minimisation et traitement:** `limits` ne peuvent que resserrer les plafonds globaux et bornent au minimum la longueur d'URL, le délai total, les octets décodés effectivement lus, les redirections et le travail d'extraction ; tout dépassement annule le flux, ne produit aucun bloc et retourne une erreur typée. La passerelle n'envoie ni bloc local, fichier, résultat, catalogue, paramètre de calcul, état du reducer, cookie applicatif, jeton de session ni secret. Le tiers reçoit nécessairement l'URL de partage et, selon sa politique, peut recevoir l'adresse IP, l'agent utilisateur et des métadonnées de requête ; l'application ne promet pas que la page ou son contenu ne seront jamais traités par lui. La réponse HTML est bornée en taille et en délai, lue comme texte non exécutable et parsée localement par l'extracteur associé ; celui-ci ne retourne que des textes et métadonnées primitives bornés. Aucun lien, artifact, HTML, URL ou ressource citée n'est suivi, téléchargé, rendu ou exécuté.
 - **Défaillance et remplacement:** une erreur de consentement, de politique, réseau, délai, taille ou format est typée, atomique et conserve la session ; le parcours manuel/local reste disponible. `corsproxy.io` est une dépendance transitoire : son origine et son contrat restent confinés à la configuration de `remoteGateway` afin qu'un proxy géré par le projet puisse le remplacer ultérieurement sans changement du domaine, du parseur ou de l'interface de consentement. Toute évolution de la politique ou des conditions du fournisseur déclenche une revue de D-4 et peut désactiver cette voie au profit de l'import manuel.
 
 ## Consistency Conventions
@@ -94,7 +96,7 @@ flowchart LR
 | Nombres et unités | Calculs non arrondis en Wh, gCO2e et L ; seul l’affichage formate et arrondit. Aucun `NaN` ou infini ne franchit la frontière du domaine. |
 | Données | Les fichiers portent `schemaVersion`, `dataVersion`, provenance et date de calibration ; une valeur environnementale absente cherche seulement sa valeur Monde du même facteur. |
 | Mutation | Les actions du reducer sont les seules mutations de session. Une mutation ne lance jamais de calcul sans intention utilisateur explicite. |
-| Confidentialité | Par défaut, les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. La seule exception est l'URL canonique d'un partage ChatGPT, transmise à l'origine allowlistée après consentement conforme à AD-8 ; aucun contenu local n'est inclus par le calculateur. |
+| Confidentialité | Par défaut, les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. La seule exception est l'URL canonique d'un partage du fournisseur détecté, émise par son adaptateur validé et transmise à l'origine allowlistée après consentement conforme à AD-8 ; aucun contenu local n'est inclus par le calculateur. |
 
 ## Stack
 
@@ -137,16 +139,21 @@ flowchart TB
 sequenceDiagram
   participant U as Personne
   participant UI as UI d'import
+  participant R as Registre / adaptateur validé
   participant G as remoteGateway
   participant P as corsproxy.io allowlisté
-  participant X as Extracteur local
-  U->>UI: Consentir pour cette URL valide
-  UI->>G: URL canonique ChatGPT uniquement
+  participant X as Extracteur local du fournisseur
+  U->>UI: Saisir une URL de partage
+  UI->>R: Valider et canonicaliser l'URL
+  R-->>UI: ResolvedShare { fournisseur, URL, limites }
+  UI->>U: Afficher fournisseur et URL transmise ; demander consentement
+  U->>UI: Consentir pour ce ResolvedShare
+  UI->>G: ResolvedShare validé + consentement courant
   G->>P: Requête bornée vers l'origine allowlistée
   P-->>G: HTML public borné
-  G->>X: Texte HTML non exécutable
+  G->>X: Texte HTML non exécutable et borné
   X-->>UI: Blocs extraits ou erreur typée
-  Note over UI,X: Aucun bloc local, fichier, résultat ou paramètre n'est transmis
+  Note over UI,X: Aucun bloc local, fichier, résultat ou paramètre n'est transmis ; redirections limitées à l'allowlist du fournisseur
 ```
 
 ## Capability → Architecture Map

@@ -1,5 +1,5 @@
 ---
-title: 'Prévisualiser et confirmer l’import dans l’interface'
+title: 'Prévisualiser et confirmer l’import : V1 et extension multi-fournisseur'
 type: 'feature'
 created: '2026-09-19'
 status: 'done'
@@ -36,6 +36,17 @@ context:
 | Échec d’analyse | URL, réseau/CORS/HTTP ou format refusé | Une erreur actionnable est affichée | Prévisualisation remplacée/invalidée, session préexistante inchangée |
 
 </frozen-after-approval>
+
+## Amendement multi-fournisseur
+
+La livraison V1 documentée ci-dessous demeure l’historique ChatGPT. L’extension consomme un `ResolvedShare` déjà résolu par le registre, affiche le fournisseur détecté et garde une seule prévisualisation commune. Elle ne choisit aucun parseur ni règle par condition UI : les événements normalisés des quatre adaptateurs sont regroupés, avertis et confirmés de façon identique.
+
+Les résultats asynchrones sont rejetés s’ils ne correspondent plus au même `ResolvedShare` et à son consentement courant. Une erreur de fournisseur, de redirection, de limite ou de format conserve les blocs et expose une alternative manuelle ; elle ne rend indisponible ni les autres adaptateurs ni les calculs.
+
+**Critères d’acceptation d’extension :**
+
+- Given une URL résolue pour ChatGPT, Claude, Mistral ou Gemini, when son import réussit, then la prévisualisation et la confirmation produisent les mêmes blocs éditables sans branchement fournisseur dans les blocs, tokens ou calculs.
+- Given une réponse périmée, un `ResolvedShare` différent ou un consentement consommé/invalide, when un résultat arrive, then l’interface l’ignore et la session reste intacte.
 
 ## Code Map
 

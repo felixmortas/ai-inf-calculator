@@ -2,8 +2,13 @@
 title: Epics et stories — Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-18
-updated: 2026-09-19
+updated: 2026-09-20
 stepsCompleted: [1, 2, 3, 4]
+targetedValidations:
+  - epic: 5
+    source: sprint-change-proposal-2026-09-20.md
+    status: confirmed-with-dispatch-order
+    date: 2026-09-20
 inputDocuments:
   - prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - architecture/architecture-ai-env-impact-calculator-2026-09-18/ARCHITECTURE-SPINE.md
@@ -11,6 +16,7 @@ inputDocuments:
   - ../specs/spec-ai-env-impact-calculator/functional-contract.md
   - ../specs/spec-ai-env-impact-calculator/calculation-contract.md
   - sprint-change-proposal-2026-09-19.md
+  - sprint-change-proposal-2026-09-20.md
   - ../specs/spec-import-chatgpt-share/SPEC.md
   - ../specs/spec-import-chatgpt-share/import-contract.md
   - ../specs/spec-import-chatgpt-share/stories/4-consentement-informe-avant-import-distant.md
@@ -190,9 +196,9 @@ La personne adapte les références de sa session, restaure les valeurs par déf
 
 ### Epic 5: Importer un partage via un intermédiaire tiers consenti
 
-La personne peut décider, en connaissance de cause, de transmettre uniquement une URL ChatGPT canonique à `corsproxy.io` pour prévisualiser une page publique, ou poursuivre l’import manuel sans transmission.
+La personne peut importer une conversation publique ChatGPT, Claude, Mistral ou Gemini depuis son lien de partage, après un consentement éclairé pour transmettre uniquement son URL canonique validée à `corsproxy.io`, ou poursuivre l’import manuel sans transmission.
 
-**Requirements covered:** CAP-1, CAP-6; NFR-2, NFR-3, NFR-4, NFR-7
+**Requirements covered:** CAP-1, CAP-5, CAP-6; NFR-2, NFR-3, NFR-4, NFR-7
 
 ## Epic 1: Configurer et saisir une conversation
 
@@ -640,7 +646,9 @@ So that je retiens des gestes pour réduire l’impact de mes prochains usages.
 
 ## Epic 5: Importer un partage via un intermédiaire tiers consenti
 
-La personne peut décider, en connaissance de cause, de transmettre uniquement une URL ChatGPT canonique à `corsproxy.io` pour prévisualiser une page publique, ou poursuivre l’import manuel sans transmission.
+La personne peut importer une conversation publique ChatGPT, Claude, Mistral ou Gemini depuis son lien de partage, après un consentement éclairé pour transmettre uniquement son URL canonique validée à `corsproxy.io`, ou poursuivre l’import manuel sans transmission.
+
+**Ordre de livraison :** 5.4 → 5.1 → 5.2 → 5.3. La story 5.4 rend disponibles le registre, les politiques d’adaptateur et le `ResolvedShare` consommés ensuite par le consentement (5.1), la passerelle (5.2), puis les tests de parcours et la documentation (5.3). Les identifiants de stories restent stables ; cet ordre prévaut sur leur numérotation pour le dispatch.
 
 ### Story 5.1: Consentir à l’import distant avant toute requête
 
@@ -650,17 +658,17 @@ So that je garde la maîtrise de cette exception à la confidentialité locale.
 
 **Acceptance Criteria:**
 
-**Given** une URL ChatGPT canonique valide,
+**Given** une URL de partage canonique valide pour ChatGPT, Claude, Mistral ou Gemini,
 **When** je demande son analyse,
-**Then** un dialogue de consentement accessible est affiché avant tout appel d’import ou effet réseau.
+**Then** un dialogue de consentement accessible identifie le fournisseur détecté et est affiché avant tout appel d’import ou effet réseau.
 
 **Given** ce dialogue,
 **When** je consulte son contenu,
-**Then** il identifie `corsproxy.io`, la finalité, l’URL transmise, les métadonnées possibles — dont IP et agent utilisateur —, les données locales exclues et les liens fournisseur.
+**Then** il identifie `corsproxy.io`, la finalité, l’URL canonique transmise, les métadonnées possibles — dont IP et agent utilisateur —, les données locales exclues et les liens ou conditions du fournisseur détecté.
 
 **Given** le dialogue ouvert,
-**When** je refuse, annule, presse `Escape` ou modifie l’URL,
-**Then** aucune requête ni mutation de session ne survient et une nouvelle URL exige un nouveau consentement.
+**When** je refuse, annule, presse `Escape`, modifie l’URL, le fournisseur, l’adaptateur, sa politique, ses limites ou la configuration proxy,
+**Then** aucune requête ni mutation de session ne survient et un nouveau `ResolvedShare` exige un nouveau consentement.
 
 **Given** le dialogue ouvert,
 **When** je choisis l’import manuel,
@@ -674,11 +682,15 @@ So that l’import reste possible malgré CORS sans transmettre mon état local.
 
 **Acceptance Criteria:**
 
-**Given** un consentement courant et une URL ChatGPT validée,
+**Given** un consentement courant lié à un `ResolvedShare` validé,
 **When** l’import distant démarre,
-**Then** `remoteGateway` appelle uniquement `https://corsproxy.io/` et construit la destination depuis cette URL seule.
+**Then** `remoteGateway` appelle uniquement `https://corsproxy.io/` et construit la destination depuis ce seul `ResolvedShare` attesté.
 
-**Given** une absence de consentement, une annulation ou une URL modifiée,
+**Given** un `ResolvedShare` validé,
+**When** la passerelle prépare ou suit une destination,
+**Then** les hôtes, chemins, requêtes admises, redirections et limites proviennent exclusivement du registre de l’adaptateur du fournisseur ; une URL non canonique, une redirection hors allowlist ou un dépassement de limites échoue sans import partiel.
+
+**Given** une absence de consentement, une annulation, une URL modifiée ou une valeur `ResolvedShare` forgée ou clonée,
 **When** une récupération est tentée,
 **Then** aucune requête n’est lancée, une erreur typée est renvoyée et la session est préservée.
 
@@ -712,8 +724,57 @@ So that je puisse choisir l’import distant sans promesse de confidentialité n
 
 **Given** une requête distante consentie,
 **When** son contenu est vérifié,
-**Then** seule l’URL ChatGPT validée quitte le calculateur ; blocs, fichiers, résultats et paramètres locaux n’y figurent pas.
+**Then** seule l’URL canonique validée du fournisseur identifié quitte le calculateur ; blocs, fichiers, résultats et paramètres locaux n’y figurent pas.
+
+**Given** les tests d’intégration,
+**When** ils exercent les quatre fournisseurs,
+**Then** ils vérifient pour chacun le consentement, le refus, le changement d’URL ou de fournisseur, l’erreur proxy et le succès, sans donnée locale dans la requête.
 
 **Given** que le fournisseur est indisponible ou que ses politiques doivent être revues,
 **When** l’exception ne peut pas être activée,
 **Then** l’aide et le produit maintiennent l’import manuel sans promesse non vérifiée.
+
+### Story 5.4: Ajouter les adaptateurs de partage multi-fournisseur
+
+As a visiteuse,
+I want importer une conversation publique ChatGPT, Claude, Mistral ou Gemini depuis son lien de partage,
+So that mes échanges textuels deviennent des blocs calculables sans recopie.
+
+**Acceptance Criteria:**
+
+**Given** le registre d’import statique,
+**When** je fournis une URL de partage prise en charge,
+**Then** il expose et sélectionne automatiquement l’un des quatre adaptateurs distincts — ChatGPT, Claude, Mistral ou Gemini — avant le consentement.
+
+**Given** chaque adaptateur,
+**When** il valide puis canonicalise une URL,
+**Then** il applique ses propres règles de format, limites, politique de redirection et `policyVersion`, et le registre crée le seul `ResolvedShare` opaque, immuable et attesté accepté par la passerelle.
+
+**Given** un HTML public borné pour un fournisseur,
+**When** son extracteur local associé l’analyse,
+**Then** il préserve l’ordre des messages textuels publics, ignore les rôles ou contenus non textuels non pris en charge, et retourne `format-unknown` sans inventer de message si l’état public n’est pas reconnu.
+
+**Given** une URL authentifiée, un hôte ressemblant, un format invalide, une query ou un fragment non admis, ou une redirection non allowlistée,
+**When** son analyse est demandée,
+**Then** elle échoue sans requête ou import partiel et le parcours manuel reste disponible.
+
+**Given** les tests et fixtures de régression,
+**When** ils couvrent chaque fournisseur,
+**Then** ils incluent au minimum une conversation à deux rôles, un artifact ou contenu non textuel ignoré, l’absence d’état public, le dépassement de limites, la révocation du consentement et des fixtures HTML publiques minimisées.
+
+**Given** qu’un échantillon de régression révèle un changement de structure pour un fournisseur,
+**When** son adaptateur ne peut plus extraire le format,
+**Then** seul l’import de ce fournisseur est désactivé avec un message expliquant l’alternative manuelle, sans affecter les autres fournisseurs, les calculs ou les blocs existants.
+
+## Passe ciblée — traçabilité du changement approuvé (Epic 5)
+
+`epics.md` est la source de vérité exécutable pour l’extension approuvée le 20 septembre 2026 ; `sprint-change-proposal-2026-09-20.md`, le SPEC d’import et son contrat conservent le contexte, les décisions et le détail technique.
+
+| Changement approuvé | Critères Epic 5 qui le portent |
+| --- | --- |
+| Détection des quatre fournisseurs et consentement informé | 5.1 : URL canonique, fournisseur détecté, dialogue avant réseau, invalidation du consentement et voie manuelle. |
+| `ResolvedShare`, passerelle unique, minimisation et échecs atomiques | 5.2 : identité attestée, politique/limites du registre, refus des valeurs forgées, requête sans état local et parsing local borné. |
+| Transparence de la dépendance tierce et tests d’intégration communs | 5.3 : aide, consentement/annulation/changement/indisponibilité, et test des quatre fournisseurs sans donnée locale sortante. |
+| Adaptateurs isolés et régression par fournisseur | 5.4 : registre à quatre adaptateurs, politiques propres, fixtures HTML minimisées, deux rôles, non-texte, état absent, limites, révocation, redirections refusées et isolement d’une dérive de structure. |
+
+La couverture de test est donc répartie volontairement : 5.3 exerce le parcours intégré des quatre fournisseurs, tandis que 5.4 fixe les fixtures et tests de contrat propres à chaque adaptateur. Les limites de redirection — y compris le chemin Gemini lorsqu’il est admis — relèvent de la politique du registre vérifiée par 5.2 et des tests de régression de 5.4. L’ordre de livraison 5.4 → 5.1 → 5.2 → 5.3 est la seule correction de planification relevée ; les critères eux-mêmes restent la source de vérité.

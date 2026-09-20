@@ -1,5 +1,5 @@
 ---
-title: 'Socle d’import extensible et adaptateur ChatGPT V1'
+title: 'Socle d’import extensible : V1 ChatGPT et extension multi-fournisseur'
 type: 'feature'
 created: '2026-09-19'
 status: 'done'
@@ -36,6 +36,18 @@ context:
 | Format inconnu ou limite | Aucune structure reconnue ou trop de messages | Refus atomique, sans événement | Erreur format/limite actionnable |
 
 </frozen-after-approval>
+
+## Amendement multi-fournisseur
+
+La section figée ci-dessus reste le constat de la V1 livrée. Pour l’extension à dispatcher, le registre statique fermé distribue `chatgpt`, `claude`, `mistral` et `gemini` et est le seul à produire un `ResolvedShare` opaque, immuable et attesté. Chaque adaptateur résout et canonicalise uniquement ses URLs publiques, resserre ses limites, extrait localement son propre état public et normalise vers les mêmes événements ; aucun sélecteur ni heuristique n’est partagé.
+
+**Exigences d’extension :** une valeur `ResolvedShare` forgée ou clonée est refusée ; les URL, hôtes, chemins, query, fragments et redirections suivent la règle de chaque adaptateur. Gemini ne suit que les redirections allowlistées et attestées, dans sa limite ; les autres fournisseurs refusent toute redirection non explicitement admise. Chaque adaptateur possède ses fixtures publiques minimisées couvrant les deux rôles, contenu non textuel ou inaccessible, état absent, dérive de structure, limites et erreurs typées atomiques. Un échec ne produit aucun événement ni mutation et ne désactive que le fournisseur concerné.
+
+**Critères d’acceptation d’extension :**
+
+- Given les quatre URLs canoniques, when le registre les résout, then il détecte le bon adaptateur et produit seulement un `ResolvedShare` attesté ou une erreur sans requête.
+- Given une fixture minimisée de chaque fournisseur, when son extracteur l’analyse dans ses limites, then il restitue les événements communs ordonnés et signale les contenus inaccessibles sans les lire ni les inventer.
+- Given une URL, une redirection, une structure ou une limite refusée, when l’adaptateur l’évalue, then il retourne l’erreur typée correspondante sans résultat partiel et le parcours manuel reste disponible.
 
 ## Code Map
 
