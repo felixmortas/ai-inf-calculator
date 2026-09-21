@@ -77,6 +77,7 @@ export interface ImportProvider {
   /** Compatibilité temporaire du parcours UI ChatGPT-only. */
   validateUrl(value: string): ImportResult | undefined;
   importFromUrl(value: string, consent?: unknown): Promise<ImportResult>;
+  importResolvedShare?(resolved: ResolvedShare, consent?: unknown): Promise<ImportResult>;
 }
 
 /**

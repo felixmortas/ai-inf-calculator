@@ -3,6 +3,7 @@ import {
   CHATGPT_SHARE_LIMITS,
   extractChatGptShareEvents,
   importChatGptShare,
+  importResolvedChatGptShare,
   validateChatGptShareUrl,
 } from './chatgptShare';
 import {
@@ -11,7 +12,7 @@ import {
 } from './chatgptShareUrl';
 import type { RemoteGateway } from './remoteGateway';
 import { createRemoteGatewayConsent } from './remoteGateway';
-import { importProviderById, importProviders, isResolvedShare, resolveShare } from './registry';
+import { importProviderById, importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from './registry';
 
 const shareUrl = 'https://chatgpt.com/share/abc-123';
 const page = (value: unknown) => `<script type="application/json">${JSON.stringify(value)}</script>`;
@@ -46,9 +47,10 @@ describe('adaptateur ChatGPT avec passerelle injectée', () => {
     const gateway: RemoteGateway = {
       fetchHtml: vi.fn().mockResolvedValue({ ok: true, html: page({ author: { role: 'user' }, content: { parts: ['bonjour'] } }) }),
     };
-    const consent = createRemoteGatewayConsent(resolveShare(shareUrl)!, isResolvedShare);
-    const result = await importChatGptShare(shareUrl, consent, gateway);
-    expect(gateway.fetchHtml).toHaveBeenCalledWith(shareUrl, consent);
+    const resolved = resolveShare(shareUrl)!;
+    const consent = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare);
+    const result = await importResolvedChatGptShare(resolved, consent, gateway);
+    expect(gateway.fetchHtml).toHaveBeenCalledWith(resolved, consent);
     expect(result).toMatchObject({ ok: true, events: [{ role: 'user', text: 'bonjour' }] });
   });
 

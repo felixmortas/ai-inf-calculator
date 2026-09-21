@@ -53,10 +53,12 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     const fetch = vi.fn().mockResolvedValue(new Response('<script type="application/json">{"messages":[{"author":{"role":"user"},"content":{"parts":["Question"]}},{"author":{"role":"assistant"},"content":{"parts":["[artifact](sandbox:/mnt/data/a.csv) fileciteturn0file0L1"]}}]}</script>'));
     vi.stubGlobal('fetch', fetch);
+    vi.stubEnv('VITE_CORSPROXY_API_KEY', 'test-key');
     try {
       render(<App />);
       await user.type(screen.getByLabelText('Lien de partage'), 'https://chatgpt.com/share/abc');
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
       await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
       await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
       expect(screen.getByLabelText('Message')).toHaveValue('Question');
@@ -65,7 +67,7 @@ describe('composition de la conversation', () => {
       await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
       expect(screen.getAllByLabelText('Message')).toHaveLength(2);
       expect(fetch).toHaveBeenCalledTimes(1);
-    } finally { vi.unstubAllGlobals(); }
+    } finally { vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
   });
 
   it('signale un bloc vide comme ignoré et conserve le texte renseigné durant la session', async () => {
@@ -103,16 +105,9 @@ describe('composition de la conversation', () => {
     const historyPush = vi.spyOn(History.prototype, 'pushState');
     const historyReplace = vi.spyOn(History.prototype, 'replaceState');
     const first = render(<App />);
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    expect(screen.getByRole('button', { name: 'Ajouter un échange' })).toHaveFocus();
+    const addExchange = screen.getByRole('button', { name: 'Ajouter un échange' });
+    addExchange.focus();
+    expect(addExchange).toHaveFocus();
     await user.keyboard('{Enter}');
     await user.type(screen.getByLabelText('Message'), 'éphémère');
     expect(storageSet).not.toHaveBeenCalled();

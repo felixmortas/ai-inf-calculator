@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
-import { chatGptShareProvider, importChatGptShare } from '../application/import/chatgptShare';
-import { isResolvedShare, resolveShare } from '../application/import/registry';
+import { chatGptShareProvider, importResolvedChatGptShare } from '../application/import/chatgptShare';
+import { isResolvedShare, providerForResolvedShare, resolveShare } from '../application/import/registry';
 import { CORSPROXY_ORIGIN, createRemoteGateway, createRemoteGatewayConsent, type RemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ImportProvider } from '../application/import/types';
 import * as remoteGateway from '../application/import/remoteGateway';
@@ -14,14 +14,15 @@ const shareUrl = 'https://chatgpt.com/share/abc';
 function providerWith(result: unknown = { ok: true, providerId: 'test', events: [
   { role: 'user', text: 'Bonjour', order: 1 }, { role: 'assistant', text: 'Réponse', order: 2 },
 ] }): ImportProvider {
-  return { id: 'test', label: 'ChatGPT', validateUrl: () => undefined, importFromUrl: vi.fn().mockResolvedValue(result) };
+  return { id: 'test', label: 'ChatGPT', validateUrl: () => undefined, importFromUrl: vi.fn(), importResolvedShare: vi.fn().mockResolvedValue(result) };
 }
 
 function providerThroughGateway(fetcher: Parameters<typeof createRemoteGateway>[0], configured = true): ImportProvider {
   const gateway = createRemoteGateway(fetcher, { apiKey: () => configured ? 'test key' : undefined });
   return {
     id: 'chatgpt', label: 'ChatGPT', validateUrl: chatGptShareProvider.validateUrl,
-    importFromUrl: (value, consent) => importChatGptShare(value, consent as RemoteGatewayConsent | undefined, gateway),
+    importFromUrl: async () => ({ ok: false as const, providerId: 'chatgpt', events: [] as const, error: { code: 'consent-required' as const, message: 'Capacité attestée requise.' } }),
+    importResolvedShare: (resolved, consent) => importResolvedChatGptShare(resolved, consent as RemoteGatewayConsent | undefined, gateway),
   };
 }
 
@@ -52,10 +53,10 @@ describe('ConversationImport', () => {
   });
 
   it.each([
-    ['Claude', 'https://claude.ai/share/opaque_id'],
-    ['Mistral', 'https://chat.mistral.ai/chat/opaque_id'],
-    ['Gemini', 'https://share.gemini.google/opaque_id'],
-  ])('remet la capacité à %s, qui refuse sans requête ni mutation tant que la passerelle n’est pas disponible', async (label, url) => {
+    ['Claude', 'https://claude.ai/share/opaque_id', 'passerelle d’import distant n’est pas configurée'],
+    ['Mistral', 'https://chat.mistral.ai/chat/opaque_id', 'passerelle d’import distant n’est pas configurée'],
+    ['Gemini', 'https://share.gemini.google/opaque_id', 'ne peut pas attester les redirections autorisées'],
+  ])('remet la capacité à %s, qui refuse sans requête ni mutation tant que la passerelle n’est pas disponible', async (_label, url, expectedError) => {
     const user = userEvent.setup();
     const dispatch = vi.fn();
     const fetcher = vi.fn();
@@ -66,7 +67,7 @@ describe('ConversationImport', () => {
       await user.type(screen.getByLabelText('Lien de partage'), url);
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
-      expect(await screen.findByRole('alert')).toHaveTextContent(`récupération distante ${label} n’est pas encore activée`);
+      expect(await screen.findByRole('alert')).toHaveTextContent(expectedError);
       expect(fetcher).not.toHaveBeenCalled();
       expect(dispatch).not.toHaveBeenCalled();
     } finally {
@@ -148,8 +149,8 @@ describe('ConversationImport', () => {
     render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
     await consent(user);
     expect(await screen.findByRole('heading', { name: 'Prévisualisation de l’import' })).toBeVisible();
-    expect(provider.importFromUrl).toHaveBeenCalledTimes(1);
-    expect(provider.importFromUrl).toHaveBeenCalledWith(shareUrl, expect.any(Object));
+    expect(provider.importResolvedShare).toHaveBeenCalledTimes(1);
+    expect(provider.importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl }), expect.any(Object));
     await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
     expect(screen.getByRole('alertdialog')).toBeVisible();
     expect(dispatch).not.toHaveBeenCalled();
@@ -195,14 +196,14 @@ describe('ConversationImport', () => {
 
   it('transmet exactement la capacité créée pour le consentement courant', async () => {
     const user = userEvent.setup();
-    const capability = createRemoteGatewayConsent(resolveShare(shareUrl)!, isResolvedShare)!;
+    const capability = createRemoteGatewayConsent(resolveShare(shareUrl)!, isResolvedShare, providerForResolvedShare)!;
     const createConsent = vi.spyOn(remoteGateway, 'createRemoteGatewayConsent').mockReturnValue(capability);
     const provider = providerWith();
     try {
       render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
       await consent(user);
-      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }), isResolvedShare);
-      expect(provider.importFromUrl).toHaveBeenCalledWith(shareUrl, capability);
+      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }), isResolvedShare, providerForResolvedShare);
+      expect(provider.importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl }), capability);
     } finally {
       createConsent.mockRestore();
     }
@@ -213,14 +214,15 @@ describe('ConversationImport', () => {
     let resolveImport: (value: unknown) => void = () => undefined;
     const provider: ImportProvider = {
       id: 'test', label: 'ChatGPT', validateUrl: () => undefined,
-      importFromUrl: vi.fn().mockReturnValue(new Promise((resolve) => { resolveImport = resolve; })),
+      importFromUrl: vi.fn(),
+      importResolvedShare: vi.fn().mockReturnValue(new Promise((resolve) => { resolveImport = resolve; })),
     };
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
     await openConsent(user);
     const continueButton = screen.getByRole('button', { name: 'Continuer avec corsproxy.io' });
     fireEvent.click(continueButton);
     fireEvent.click(continueButton);
-    expect(provider.importFromUrl).toHaveBeenCalledTimes(1);
+    expect(provider.importResolvedShare).toHaveBeenCalledTimes(1);
     resolveImport({ ok: true, providerId: 'test', events: [] });
   });
 
@@ -255,13 +257,13 @@ describe('ConversationImport', () => {
     let resolveFetch: (value: Response) => void = () => undefined;
     const fetcher = vi.fn().mockReturnValue(new Promise<Response>((resolve) => { resolveFetch = resolve; }));
     const provider = providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0]);
-    const originalImport = provider.importFromUrl;
+    const originalImport = provider.importResolvedShare!;
     let resolveImportSettled: () => void = () => undefined;
     const importSettled = new Promise<void>((resolve) => { resolveImportSettled = resolve; });
     const settledProvider: ImportProvider = {
       ...provider,
-      importFromUrl: async (value, consent) => {
-        try { return await originalImport(value, consent); } finally { resolveImportSettled(); }
+      importResolvedShare: async (resolved, consent) => {
+        try { return await originalImport(resolved, consent); } finally { resolveImportSettled(); }
       },
     };
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[settledProvider]} />);

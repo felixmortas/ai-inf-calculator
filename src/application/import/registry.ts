@@ -3,6 +3,7 @@ import { claudeShareProvider } from './claudeShare';
 import { geminiShareProvider } from './geminiShare';
 import { mistralShareProvider } from './mistralShare';
 import type { ImportProvider, ImportProviderId, ResolvedShare } from './types';
+import { attestResolvedShare, registeredProviderForResolvedShare } from './shareAttestation';
 
 /** Catalogue fermé pour les futurs parcours de consentement et passerelle. */
 export const allImportProviders: readonly ImportProvider[] = Object.freeze([
@@ -13,15 +14,13 @@ export const allImportProviders: readonly ImportProvider[] = Object.freeze([
 export const importProviders: readonly ImportProvider[] = allImportProviders;
 export const activeImportProviders = importProviders;
 
-const attestations = new WeakSet<object>();
-
 /** Résout localement, canonicalise et atteste la seule capacité consommable ensuite. */
 export function resolveShare(value: string): ResolvedShare | undefined {
   for (const provider of allImportProviders) {
     const canonicalUrl = provider.canonicalizeUrl?.(value);
     if (!canonicalUrl) continue;
     const resolved = Object.freeze({ providerId: provider.id as ImportProviderId, canonicalUrl, limits: provider.limits!, policyVersion: provider.policyVersion! });
-    attestations.add(resolved);
+    attestResolvedShare(resolved, provider);
     return resolved;
   }
   return undefined;
@@ -29,11 +28,11 @@ export function resolveShare(value: string): ResolvedShare | undefined {
 
 /** Rejette les clones et les objets sérialisés : seule l'identité attestée compte. */
 export function isResolvedShare(value: unknown): value is ResolvedShare {
-  return typeof value === 'object' && value !== null && attestations.has(value);
+  return registeredProviderForResolvedShare(value) !== undefined;
 }
 
 export function providerForResolvedShare(value: unknown): ImportProvider | undefined {
-  return isResolvedShare(value) ? allImportProviders.find((provider) => provider.id === value.providerId) : undefined;
+  return registeredProviderForResolvedShare(value);
 }
 
 export function importProviderById(id: string): ImportProvider | undefined {

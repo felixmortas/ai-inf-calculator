@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { previewConversationImport, type ConversationPreview } from '../application/import/conversationPreview';
-import { importProviders, isResolvedShare, resolveShare } from '../application/import/registry';
+import { importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from '../application/import/registry';
 import { createRemoteGatewayConsent } from '../application/import/remoteGateway';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import type { ImportProvider, ResolvedShare } from '../application/import/types';
@@ -72,7 +72,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     const resolvedProvider = providers.find((item) => item.id === resolved.providerId) ?? (providers.length === 1 ? providers[0] : undefined);
     if (!resolvedProvider) { setDetectedProvider(undefined); setError('Ce fournisseur de partage n’est pas disponible.'); return; }
     setDetectedProvider(resolved.providerId);
-    const capability = createRemoteGatewayConsent(resolved, isResolvedShare);
+    const capability = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare);
     if (!capability) { setError(fr.importUnexpectedError); return; }
     setPendingConsent({ resolved, version, capability });
   }
@@ -87,7 +87,9 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     setPendingConsent(undefined);
     setAnalysing(true);
     try {
-      const result = await provider.importFromUrl(consent.resolved.canonicalUrl, consent.capability);
+      const result = provider.importResolvedShare
+        ? await provider.importResolvedShare(consent.resolved, consent.capability)
+        : { ok: false as const, providerId: provider.id, events: [] as const, error: { code: 'configuration' as const, message: 'L’import distant exige un adaptateur de partage attesté.' } };
       if (consent.version !== analysisVersion.current) return;
       setAnalysing(false);
       if (result.ok === false) { setError(result.error.message); return; }

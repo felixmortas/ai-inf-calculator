@@ -1,5 +1,5 @@
-import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
-import type { ImportError, ImportErrorCode, ResolvedShare } from './types';
+import type { ImportError, ImportErrorCode, ImportLimits, ImportProvider, ResolvedShare } from './types';
+import { registeredProviderForResolvedShare } from './shareAttestation';
 
 export const CORSPROXY_ORIGIN = 'https://corsproxy.io/' as const;
 
@@ -15,14 +15,26 @@ export type RemoteGatewayResult =
   | { readonly ok: false; readonly error: ImportError };
 
 export interface RemoteGateway {
-  fetchHtml(url: string, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult>;
+  /** La passerelle ne reçoit jamais une URL libre : seulement la capacité du registre. */
+  fetchHtml(resolved: ResolvedShare, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult>;
 }
 
 interface RemoteGatewayConfiguration {
   readonly apiKey: () => string | undefined;
 }
 
-const unusedConsents = new WeakSet<object>();
+interface ConsentRecord {
+  readonly resolved: ResolvedShare;
+  readonly limits: ImportLimits;
+  readonly policyVersion: string;
+  readonly redirectPolicy: NonNullable<ImportProvider['redirectPolicy']>;
+}
+
+const unusedConsents = new WeakMap<object, ConsentRecord>();
+
+const GLOBAL_LIMITS: ImportLimits = Object.freeze({
+  maxUrlLength: 2_048, timeoutMs: 10_000, maxBytes: 2 * 1024 * 1024, maxEvents: 1_000, maxRedirects: 1,
+});
 
 function error(code: ImportErrorCode, message: string, status?: number): RemoteGatewayResult {
   return Object.freeze({
@@ -42,13 +54,27 @@ function discardResponseBody(response: Response): void {
  */
 export function createRemoteGatewayConsent(
   resolved: ResolvedShare,
-  isResolvedShare: (value: unknown) => value is ResolvedShare,
+  _isResolvedShare?: (value: unknown) => value is ResolvedShare,
+  _providerForResolvedShare?: (value: unknown) => ImportProvider | undefined,
   proxyOrigin: string = CORSPROXY_ORIGIN,
 ): RemoteGatewayConsent | undefined {
-  if (!isResolvedShare(resolved) || resolved.policyVersion === '' || proxyOrigin !== CORSPROXY_ORIGIN) return undefined;
-  const consent = Object.freeze({ resolved, policyVersion: resolved.policyVersion, proxyOrigin }) as unknown as RemoteGatewayConsent;
-  unusedConsents.add(consent);
+  const provider = registeredProviderForResolvedShare(resolved);
+  const limits = provider?.limits;
+  const redirectPolicy = provider?.redirectPolicy;
+  if (!provider || !limits || !redirectPolicy || resolved.policyVersion !== provider.policyVersion
+    || proxyOrigin !== CORSPROXY_ORIGIN || !hasBoundedLimits(limits, redirectPolicy)) return undefined;
+  const consent = Object.freeze({}) as unknown as RemoteGatewayConsent;
+  unusedConsents.set(consent, Object.freeze({ resolved, limits, policyVersion: provider.policyVersion!, redirectPolicy }));
   return consent;
+}
+
+function hasBoundedLimits(limits: ImportLimits, redirectPolicy: NonNullable<ImportProvider['redirectPolicy']>): boolean {
+  return Number.isInteger(limits.maxUrlLength) && limits.maxUrlLength > 0 && limits.maxUrlLength <= GLOBAL_LIMITS.maxUrlLength
+    && Number.isInteger(limits.timeoutMs) && limits.timeoutMs > 0 && limits.timeoutMs <= GLOBAL_LIMITS.timeoutMs
+    && Number.isInteger(limits.maxBytes) && limits.maxBytes > 0 && limits.maxBytes <= GLOBAL_LIMITS.maxBytes
+    && Number.isInteger(limits.maxEvents) && limits.maxEvents > 0 && limits.maxEvents <= GLOBAL_LIMITS.maxEvents
+    && Number.isInteger(limits.maxRedirects) && limits.maxRedirects >= 0 && limits.maxRedirects <= GLOBAL_LIMITS.maxRedirects
+    && limits.maxRedirects === redirectPolicy.maxRedirects && redirectPolicy.allowedOrigins.length > 0;
 }
 
 function corsProxyApiKey(): string | undefined {
@@ -59,7 +85,7 @@ function corsProxyApiKey(): string | undefined {
 async function readBounded(response: Response, maxBytes: number): Promise<string> {
   const declared = Number(response.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) {
-    try { await response.body?.cancel('response-too-large'); } catch { /* La taille reste le motif d'échec. */ }
+    discardResponseBody(response);
     throw new RangeError('too-large');
   }
   if (!response.body) {
@@ -76,7 +102,7 @@ async function readBounded(response: Response, maxBytes: number): Promise<string
       if (next.done) break;
       total += next.value.byteLength;
       if (total > maxBytes) {
-        try { await reader.cancel('response-too-large'); } catch { /* La taille reste le motif d'échec. */ }
+        try { void reader.cancel('response-too-large').catch(() => { /* La taille reste le motif d'échec. */ }); } catch { /* La taille reste le motif d'échec. */ }
         throw new RangeError('too-large');
       }
       chunks.push(next.value);
@@ -102,29 +128,39 @@ export function createRemoteGateway(
   configuration: RemoteGatewayConfiguration = { apiKey: corsProxyApiKey },
 ): RemoteGateway {
   return Object.freeze({
-    async fetchHtml(url: string, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult> {
-      if (!validateChatGptShareUrl(url)) {
-        return error('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.');
-      }
-      const capability = consent as unknown as { resolved?: ResolvedShare; policyVersion?: string; proxyOrigin?: string } | undefined;
-      if (!consent || !capability || !capability.resolved || capability.resolved.canonicalUrl !== url
-        || capability.resolved.policyVersion !== capability.policyVersion || capability.proxyOrigin !== CORSPROXY_ORIGIN
-        || !unusedConsents.has(consent)) {
+    async fetchHtml(resolved: ResolvedShare, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult> {
+      const record = consent && unusedConsents.get(consent);
+      if (!record || record.resolved !== resolved || !hasBoundedLimits(record.limits, record.redirectPolicy)
+        || resolved.canonicalUrl.length > record.limits.maxUrlLength) {
         return error('consent-required', 'Votre consentement ponctuel est requis pour cette URL.');
       }
-      unusedConsents.delete(consent);
+      unusedConsents.delete(consent!);
+      if (record.limits.maxRedirects > 0) {
+        return error('redirect-disallowed', 'La passerelle actuelle ne peut pas attester les redirections autorisées.');
+      }
       const apiKey = configuration.apiKey();
       if (!apiKey) {
         return error('configuration', 'La passerelle d’import distant n’est pas configurée.');
       }
 
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), CHATGPT_SHARE_LIMITS.timeoutMs);
+      let timedOut = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+          reject(new DOMException('aborted', 'AbortError'));
+        }, record.limits.timeoutMs);
+      });
       try {
-        const response = await fetcher(`${CORSPROXY_ORIGIN}?url=${encodeURIComponent(url)}&key=${encodeURIComponent(apiKey)}`, {
+        // `outboundCanonicalUrl` est l'unique destination issue d'une capacité locale attestée.
+        const outboundCanonicalUrl = record.resolved.canonicalUrl;
+        const proxyRequestUrl = `${CORSPROXY_ORIGIN}?url=${encodeURIComponent(outboundCanonicalUrl)}&key=${encodeURIComponent(apiKey)}`;
+        const response = await Promise.race([fetcher(proxyRequestUrl, {
           method: 'GET', credentials: 'omit', redirect: 'error', cache: 'no-store',
           referrerPolicy: 'no-referrer', signal: controller.signal,
-        });
+        }), timeout]);
         if (response.status === 401) {
           discardResponseBody(response);
           return error('configuration', 'La passerelle refuse sa configuration.', response.status);
@@ -138,22 +174,24 @@ export function createRemoteGateway(
           return error('http', `La passerelle répond HTTP ${response.status}.`, response.status);
         }
         try {
-          return Object.freeze({ ok: true as const, html: await readBounded(response, CHATGPT_SHARE_LIMITS.maxBytes) });
+          return Object.freeze({ ok: true as const, html: await Promise.race([readBounded(response, record.limits.maxBytes), timeout]) });
         } catch (cause) {
-          if (controller.signal.aborted) return error('timeout', 'La lecture a dépassé le délai autorisé.');
+          if (timedOut) return error('timeout', 'La lecture a dépassé le délai autorisé.');
           return cause instanceof RangeError
             ? error('response-too-large', 'La réponse dépasse la taille autorisée.')
             : error('network', 'La réponse de la passerelle ne peut pas être lue.');
         }
       } catch {
-        return error(controller.signal.aborted ? 'timeout' : 'network', controller.signal.aborted
+        return error(timedOut ? 'timeout' : 'network', timedOut
           ? 'La lecture a dépassé le délai autorisé.'
           : 'Accès refusé par le réseau ou la passerelle.');
       } finally {
-        clearTimeout(timer);
+        if (timer !== undefined) clearTimeout(timer);
       }
     },
   });
 }
 
-export const remoteGateway = createRemoteGateway();
+// La liaison reste tardive afin que le navigateur (et les tests) fournisse
+// l'implémentation fetch courante sans élargir la surface de la passerelle.
+export const remoteGateway = createRemoteGateway((input, init) => fetch(input, init));

@@ -1,7 +1,8 @@
 import { remoteGateway, type RemoteGateway, type RemoteGatewayConsent } from './remoteGateway';
 import { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
 import { hasValidExtractionLimits } from './providerSupport';
-import type { ImportError, ImportEvent, ImportLimits, ImportProvider, ImportResult, RedirectPolicy } from './types';
+import { importResolvedProviderShare } from './resolvedShareImport';
+import type { ImportError, ImportEvent, ImportLimits, ImportProvider, ImportResult, RedirectPolicy, ResolvedShare } from './types';
 
 export { CHATGPT_SHARE_LIMITS, validateChatGptShareUrl } from './chatgptShareUrl';
 
@@ -156,10 +157,15 @@ export function extractChatGptShareEvents(source: string, maxEvents: number = CH
 }
 
 export async function importChatGptShare(value: string, consent?: RemoteGatewayConsent, gateway: RemoteGateway = remoteGateway): Promise<ImportResult> {
+  // Compatibilité d'appel volontairement sans trafic : une URL seule ne peut
+  // jamais être transformée ici en capacité attestée par le registre.
+  void consent; void gateway;
   if (!validateChatGptShareUrl(value)) return frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.');
-  const fetched = await gateway.fetchHtml(value, consent);
-  if (!fetched.ok) return frozenError(fetched.error.code, fetched.error.message, fetched.error.status);
-  return extractChatGptShareEvents(fetched.html);
+  return frozenError('consent-required', 'Résolvez puis consentez ce partage avant sa récupération.');
+}
+
+export async function importResolvedChatGptShare(resolved: ResolvedShare, consent?: RemoteGatewayConsent, gateway: RemoteGateway = remoteGateway): Promise<ImportResult> {
+  return importResolvedProviderShare(resolved, consent, chatGptShareProvider, gateway);
 }
 
 export const chatGptShareProvider: ImportProvider = Object.freeze({
@@ -175,4 +181,5 @@ export const chatGptShareProvider: ImportProvider = Object.freeze({
   },
   validateUrl(value: string) { return validateChatGptShareUrl(value) ? undefined : frozenError('invalid-url', 'Utilisez exactement https://chatgpt.com/share/<id>.'); },
   importFromUrl(value: string, consent?: unknown) { return importChatGptShare(value, consent as RemoteGatewayConsent | undefined); },
+  importResolvedShare(resolved: ResolvedShare, consent?: unknown) { return importResolvedChatGptShare(resolved, consent as RemoteGatewayConsent | undefined); },
 });
