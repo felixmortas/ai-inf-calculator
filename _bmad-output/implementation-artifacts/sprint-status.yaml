@@ -63,4 +63,4 @@ development_status:
   5-2-récupérer-un-partage-par-une-passerelle-tiers-bornée: done;
   5-3-documenter-et-vérifier-la-frontière-d-import-distant: done;
   5-4-ajouter-les-adaptateurs-de-partage-multi-fournisseur: done;
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
