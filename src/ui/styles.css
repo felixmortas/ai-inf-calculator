@@ -43,6 +43,9 @@ select, textarea, input, .resolved-model {
 .parameter-form { display: grid; gap: .45rem; margin-top: 1rem; }
 .parameter-form .field { margin-top: .25rem; }
 .conversation-import > button { margin-top: 1rem; }
+.import-help { margin-top: 1rem; padding: .8rem; border-left: 4px solid #245535; background: #f3f8f3; }
+.import-help h3 { margin-top: 0; }
+.import-help li + li { margin-top: .45rem; }
 .import-preview { display: grid; gap: .75rem; margin-top: 1rem; }
 .import-preview h3, .import-preview h4 { margin: 0; }
 .import-preview-block, .import-warnings, .import-confirmation, .import-notice, .import-error { padding: .8rem; border-radius: .35rem; }

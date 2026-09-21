@@ -13,3 +13,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-2-recuperer-un-partage-par-une-passerelle-tiers-bornee.md`
   summary: Rétablir le dialogue 5.1 et le test UI de consentement qui remettra une capacité ponctuelle à la passerelle.
   evidence: La story 5.2 expose volontairement `consent-required` sans modifier l’UI, explicitement exclue par son intent gelé.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-3-documenter-et-verifier-la-frontiere-d-import-distant-multi-fournisseur-v2.md`
+  summary: Étendre les preuves de requête réelle de `remoteGateway` aux quatre fournisseurs et permettre à la passerelle d’attester la redirection Gemini autorisée.
+  evidence: La passerelle ne teste une réussite réseau que pour ChatGPT et refuse Gemini avant `fetch`; ce comportement préexistant empêche une preuve intégrée de succès réseau pour les quatre fournisseurs.

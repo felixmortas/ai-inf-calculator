@@ -140,6 +140,20 @@ export function ConversationImport({ state, dispatch, providers = importProvider
       <input id="import-url" type="url" value={url} onChange={(event) => { invalidateAnalysis(); setDetectedProvider(undefined); setUrl(event.currentTarget.value); }} />
       <p className="help">{fr.importUrlHelp}</p>
     </div>
+    <aside className="import-help" aria-labelledby="import-help-title">
+      <h3 id="import-help-title">{fr.importHelpTitle}</h3>
+      <p>{fr.importHelpIntroduction}</p>
+      <ul>{fr.importHelpProviders.map((item) => <li key={item.name}><strong>{item.name}</strong> — {item.format}</li>)}</ul>
+      <p>{fr.importHelpLimits}</p>
+      <p>{fr.importHelpThirdParty}</p>
+      <p>{fr.importHelpUncertainty}</p>
+      <p>{fr.importHelpLocalData}</p>
+      <p className="import-consent-links">
+        <a href={fr.corsProxyDocumentationUrl} target="_blank" rel="noreferrer">{fr.corsProxyDocumentationLabel}</a>{' · '}
+        <a href={fr.corsProxyPrivacyUrl} target="_blank" rel="noreferrer">{fr.corsProxyPrivacyLabel}</a>{' · '}
+        <a href={fr.corsProxyTermsUrl} target="_blank" rel="noreferrer">{fr.corsProxyTermsLabel}</a>
+      </p>
+    </aside>
     <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
     {pendingConsent ? <div className="import-consent-backdrop">
       <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={trapConsentFocus}>

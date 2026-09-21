@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
@@ -38,6 +38,98 @@ async function consent(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('ConversationImport', () => {
+  it('documente la frontière tierce, les formats admis et le parcours manuel', () => {
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} />);
+    const help = screen.getByRole('complementary', { name: 'À savoir avant un import distant' });
+    expect(help).toHaveTextContent('https://chatgpt.com/share/<id>');
+    expect(help).toHaveTextContent('https://claude.ai/share/<id>');
+    expect(help).toHaveTextContent('https://chat.mistral.ai/chat/<id>');
+    expect(help).toHaveTextContent('https://share.gemini.google/<id>');
+    expect(help).toHaveTextContent('consentement explicite et ponctuel');
+    expect(help).toHaveTextContent('Les redirections ne sont pas admises.');
+    expect(within(help).getByText('Claude', { exact: true }).parentElement).toHaveTextContent('Format admis : https://claude.ai/share/<id>. Aucune redirection n’est admise.');
+    expect(within(help).getByText('Mistral', { exact: true }).parentElement).toHaveTextContent('Format admis : https://chat.mistral.ai/chat/<id>. Aucune redirection n’est admise.');
+    expect(within(help).getByText('Gemini', { exact: true }).parentElement).toHaveTextContent('L’import distant Gemini est actuellement indisponible, y compris sans redirection, car la passerelle ne peut pas attester sa politique ; importez manuellement.');
+    expect(help).toHaveTextContent('clé API de configuration de la passerelle');
+    expect(help).toHaveTextContent('Cette clé de configuration n’est pas une donnée locale de votre session');
+    expect(help).toHaveTextContent('Une dérive de format ou une limite propre à un fournisseur');
+    expect(help).toHaveTextContent('Une panne ou une indisponibilité de corsproxy.io concerne au contraire l’import distant de tous les fournisseurs');
+    expect(help).toHaveTextContent('adresse IP, votre agent utilisateur, l’heure et le volume');
+    expect(help).toHaveTextContent('ne permettent pas au calculateur de garantir');
+    expect(help).toHaveTextContent('recopier ou coller vos échanges manuellement');
+    expect(within(help).getAllByRole('link', { name: /corsproxy\.io/ })).toHaveLength(3);
+    expect(within(help).getByRole('link', { name: 'Documentation de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/');
+    expect(within(help).getByRole('link', { name: 'Politique de confidentialité de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/privacy-policy');
+    expect(within(help).getByRole('link', { name: 'Conditions de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/terms-of-service');
+  });
+
+  it('invalide le consentement lors d’un changement vers un fournisseur valide distinct', async () => {
+    const user = userEvent.setup();
+    const chatgpt = { ...providerWith(), id: 'chatgpt', label: 'ChatGPT' };
+    const claude = { ...providerWith(), id: 'claude', label: 'Claude' };
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[chatgpt, claude]} />);
+    const input = screen.getByLabelText('Lien de partage');
+    await user.type(input, 'https://chatgpt.com/share/abc-123');
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique ChatGPT');
+    await user.clear(input);
+    await user.type(input, 'https://claude.ai/share/opaque_id');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(chatgpt.importResolvedShare).not.toHaveBeenCalled();
+    expect(claude.importResolvedShare).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique Claude');
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(chatgpt.importResolvedShare).not.toHaveBeenCalled();
+    expect(claude.importResolvedShare).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['ChatGPT', 'chatgpt', 'https://chatgpt.com/share/abc-123'],
+    ['Claude', 'claude', 'https://claude.ai/share/opaque_id'],
+    ['Mistral', 'mistral', 'https://chat.mistral.ai/chat/opaque_id'],
+    ['Gemini', 'gemini', 'https://share.gemini.google/opaque_id'],
+  ] as const)('couvre consentement, refus, changement, erreur et succès pour %s sans mutation prématurée', async (_label, id, url) => {
+    const user = userEvent.setup();
+    const importResolvedShare = vi.fn()
+      .mockResolvedValueOnce({ ok: false, providerId: id, events: [], error: { code: 'network', message: 'Passerelle indisponible.' } })
+      .mockResolvedValueOnce({ ok: true, providerId: id, events: [
+        { role: 'user', text: 'Bonjour public', order: 1 }, { role: 'assistant', text: 'Réponse publique', order: 2 },
+      ] });
+    const provider: ImportProvider = { id, label: _label, validateUrl: () => undefined, importFromUrl: vi.fn(), importResolvedShare };
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'local', field: 'message', value: 'à préserver' });
+    const dispatch = vi.fn();
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
+
+    const input = screen.getByLabelText('Lien de partage');
+    await user.type(input, url);
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    await user.click(await screen.findByRole('button', { name: 'Annuler' }));
+    expect(importResolvedShare).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    await screen.findByRole('dialog');
+    await user.type(input, 'x');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(importResolvedShare).not.toHaveBeenCalled();
+
+    await user.clear(input);
+    await user.type(input, url);
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Passerelle indisponible.');
+    expect(importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: url, providerId: id }), expect.any(Object));
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(state.blocks[0].message).toBe('à préserver');
+
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
+    expect(await screen.findByRole('heading', { name: 'Prévisualisation de l’import' })).toBeVisible();
+    expect(screen.getByText('Message').parentElement).toHaveTextContent('Bonjour public');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['ChatGPT', 'https://chatgpt.com/share/abc-123'],
     ['Claude', 'https://claude.ai/share/opaque_id'],
@@ -108,9 +200,9 @@ describe('ConversationImport', () => {
     expect(dialog).toHaveTextContent('adresse IP et votre agent utilisateur');
     expect(dialog).toHaveTextContent('blocs locaux, ni vos fichiers, ni vos résultats, ni vos paramètres');
     for (const link of screen.getAllByRole('link').filter((item) => item.getAttribute('target') === '_blank')) expect(link).toHaveAttribute('rel', 'noreferrer');
-    expect(screen.getByRole('link', { name: 'Documentation de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/');
-    expect(screen.getByRole('link', { name: 'Politique de confidentialité de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/privacy-policy');
-    expect(screen.getByRole('link', { name: 'Conditions de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/terms-of-service');
+    expect(within(dialog).getByRole('link', { name: 'Documentation de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/');
+    expect(within(dialog).getByRole('link', { name: 'Politique de confidentialité de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/privacy-policy');
+    expect(within(dialog).getByRole('link', { name: 'Conditions de corsproxy.io' })).toHaveAttribute('href', 'https://corsproxy.io/terms-of-service');
     const manualLink = screen.getByRole('link', { name: 'Importer manuellement' });
     manualLink.focus();
     await user.tab();
