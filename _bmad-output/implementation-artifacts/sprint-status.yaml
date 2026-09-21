@@ -35,32 +35,32 @@ project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 development_status:
-  epic-1: backlog
-  1-1-accéder-au-calculateur-et-choisir-le-modèle-de-conversation: backlog
-  1-2-composer-une-conversation-en-blocs: backlog
+  epic-1: done;
+  1-1-accéder-au-calculateur-et-choisir-le-modèle-de-conversation: done;
+  1-2-composer-une-conversation-en-blocs: done;
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-compter-localement-les-textes-d-un-bloc: backlog
-  2-2-reconstituer-l-historique-et-les-versions-d-artifact: backlog
-  2-3-calculer-et-afficher-l-impact-d-un-bloc: backlog
+  epic-2: done;
+  2-1-compter-localement-les-textes-d-un-bloc: done;
+  2-2-reconstituer-l-historique-et-les-versions-d-artifact: done;
+  2-3-calculer-et-afficher-l-impact-d-un-bloc: done;
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-calculer-tous-les-échanges-et-leur-bilan: backlog
-  3-2-identifier-les-résultats-périmés-et-recalculer-le-total: backlog
+  epic-3: done;
+  3-1-calculer-tous-les-échanges-et-leur-bilan: done;
+  3-2-identifier-les-résultats-périmés-et-recalculer-le-total: done;
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-choisir-le-pays-d-hébergement-et-gérer-les-données-manquante: backlog
-  4-2-personnaliser-et-restaurer-les-paramètres-de-calcul: backlog
-  4-3-interpréter-le-carbone-par-une-durée-de-douche-locale: backlog
-  4-4-découvrir-des-bonnes-pratiques-de-sobriété: backlog
+  epic-4: done;
+  4-1-choisir-le-pays-d-hébergement-et-gérer-les-données-manquante: done;
+  4-2-personnaliser-et-restaurer-les-paramètres-de-calcul: done;
+  4-3-interpréter-le-carbone-par-une-durée-de-douche-locale: done;
+  4-4-découvrir-des-bonnes-pratiques-de-sobriété: done;
   epic-4-retrospective: optional
 
-  epic-5: in-progress
-  5-1-consentir-à-l-import-distant-avant-toute-requête: review
-  5-2-récupérer-un-partage-par-une-passerelle-tiers-bornée: review
-  5-3-documenter-et-vérifier-la-frontière-d-import-distant: review
-  5-4-ajouter-les-adaptateurs-de-partage-multi-fournisseur: review
+  epic-5: done;
+  5-1-consentir-à-l-import-distant-avant-toute-requête: done;
+  5-2-récupérer-un-partage-par-une-passerelle-tiers-bornée: done;
+  5-3-documenter-et-vérifier-la-frontière-d-import-distant: done;
+  5-4-ajouter-les-adaptateurs-de-partage-multi-fournisseur: done;
   epic-5-retrospective: optional
