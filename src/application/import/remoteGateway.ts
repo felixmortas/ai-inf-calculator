@@ -1,7 +1,7 @@
 import type { ImportError, ImportErrorCode, ImportLimits, ImportProvider, ResolvedShare } from './types';
 import { registeredProviderForResolvedShare } from './shareAttestation';
 
-export const CORSPROXY_ORIGIN = 'https://corsproxy.io/' as const;
+export const PRODUCTION_IMPORT_ENDPOINT = 'https://proxy-felix.felix-mortas.workers.dev/v1/import-html' as const;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -19,15 +19,14 @@ export interface RemoteGateway {
   fetchHtml(resolved: ResolvedShare, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult>;
 }
 
-interface RemoteGatewayConfiguration {
-  readonly apiKey: () => string | undefined;
-}
+interface RemoteGatewayConfiguration { readonly endpoint: () => string | undefined; }
 
 interface ConsentRecord {
   readonly resolved: ResolvedShare;
   readonly limits: ImportLimits;
   readonly policyVersion: string;
   readonly redirectPolicy: NonNullable<ImportProvider['redirectPolicy']>;
+  readonly endpoint: string;
 }
 
 const unusedConsents = new WeakMap<object, ConsentRecord>();
@@ -50,21 +49,21 @@ function discardResponseBody(response: Response): void {
 
 /**
  * Capacité ponctuelle : l'identité (et non une copie des champs) du partage
- * attesté, sa politique et l'origine proxy courante doivent toutes coïncider.
+ * attesté, sa politique et l'endpoint Worker courant doivent tous coïncider.
  */
 export function createRemoteGatewayConsent(
   resolved: ResolvedShare,
   _isResolvedShare?: (value: unknown) => value is ResolvedShare,
   _providerForResolvedShare?: (value: unknown) => ImportProvider | undefined,
-  proxyOrigin: string = CORSPROXY_ORIGIN,
+  endpoint: string | undefined = workerImportEndpoint(),
 ): RemoteGatewayConsent | undefined {
   const provider = registeredProviderForResolvedShare(resolved);
   const limits = provider?.limits;
   const redirectPolicy = provider?.redirectPolicy;
   if (!provider || !limits || !redirectPolicy || resolved.policyVersion !== provider.policyVersion
-    || proxyOrigin !== CORSPROXY_ORIGIN || !hasBoundedLimits(limits, redirectPolicy)) return undefined;
+    || !endpoint || !isAllowedWorkerEndpoint(endpoint) || !hasBoundedLimits(limits, redirectPolicy)) return undefined;
   const consent = Object.freeze({}) as unknown as RemoteGatewayConsent;
-  unusedConsents.set(consent, Object.freeze({ resolved, limits, policyVersion: provider.policyVersion!, redirectPolicy }));
+  unusedConsents.set(consent, Object.freeze({ resolved, limits, policyVersion: provider.policyVersion!, redirectPolicy, endpoint }));
   return consent;
 }
 
@@ -77,9 +76,15 @@ function hasBoundedLimits(limits: ImportLimits, redirectPolicy: NonNullable<Impo
     && limits.maxRedirects === redirectPolicy.maxRedirects && redirectPolicy.allowedOrigins.length > 0;
 }
 
-function corsProxyApiKey(): string | undefined {
-  const value = import.meta.env.VITE_CORSPROXY_API_KEY;
-  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+export function isAllowedWorkerEndpoint(value: string): boolean {
+  return value === PRODUCTION_IMPORT_ENDPOINT
+    || /^https:\/\/[a-z0-9-]+-proxy-felix\.felix-mortas\.workers\.dev\/v1\/import-html$/.test(value);
+}
+
+export function workerImportEndpoint(): string | undefined {
+  const configured = import.meta.env.VITE_IMPORT_HTML_WORKER_URL;
+  const value = typeof configured === 'string' && configured !== '' ? configured : PRODUCTION_IMPORT_ENDPOINT;
+  return isAllowedWorkerEndpoint(value) ? value : undefined;
 }
 
 async function readBounded(response: Response, maxBytes: number): Promise<string> {
@@ -120,12 +125,11 @@ async function readBounded(response: Response, maxBytes: number): Promise<string
 }
 
 /**
- * Seule frontière réseau de l'import distant. La clé de build ne sort que dans
- * le paramètre CorsProxy encodé, jamais dans les erreurs ou les logs.
+ * Seule frontière réseau de l'import distant.
  */
 export function createRemoteGateway(
   fetcher: FetchLike = fetch,
-  configuration: RemoteGatewayConfiguration = { apiKey: corsProxyApiKey },
+  configuration: RemoteGatewayConfiguration = { endpoint: workerImportEndpoint },
 ): RemoteGateway {
   return Object.freeze({
     async fetchHtml(resolved: ResolvedShare, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult> {
@@ -135,11 +139,8 @@ export function createRemoteGateway(
         return error('consent-required', 'Votre consentement ponctuel est requis pour cette URL.');
       }
       unusedConsents.delete(consent!);
-      if (record.limits.maxRedirects > 0) {
-        return error('redirect-disallowed', 'La passerelle actuelle ne peut pas attester les redirections autorisées.');
-      }
-      const apiKey = configuration.apiKey();
-      if (!apiKey) {
+      const endpoint = configuration.endpoint();
+      if (!endpoint || !isAllowedWorkerEndpoint(endpoint) || record.endpoint !== endpoint) {
         return error('configuration', 'La passerelle d’import distant n’est pas configurée.');
       }
 
@@ -156,9 +157,9 @@ export function createRemoteGateway(
       try {
         // `outboundCanonicalUrl` est l'unique destination issue d'une capacité locale attestée.
         const outboundCanonicalUrl = record.resolved.canonicalUrl;
-        const proxyRequestUrl = `${CORSPROXY_ORIGIN}?url=${encodeURIComponent(outboundCanonicalUrl)}&key=${encodeURIComponent(apiKey)}`;
-        const response = await Promise.race([fetcher(proxyRequestUrl, {
-          method: 'GET', credentials: 'omit', redirect: 'error', cache: 'no-store',
+        const response = await Promise.race([fetcher(endpoint, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ shareUrl: outboundCanonicalUrl }),
+          credentials: 'omit', redirect: 'error', cache: 'no-store',
           referrerPolicy: 'no-referrer', signal: controller.signal,
         }), timeout]);
         if (response.status === 401) {
@@ -173,8 +174,18 @@ export function createRemoteGateway(
           discardResponseBody(response);
           return error('http', `La passerelle répond HTTP ${response.status}.`, response.status);
         }
+        const contentType = response.headers.get('content-type');
+        if (contentType && !/^text\/html(?:\s*;|$)/i.test(contentType)) {
+          discardResponseBody(response);
+          return error('format-unknown', 'La réponse du Worker n’est pas une page HTML.');
+        }
         try {
-          return Object.freeze({ ok: true as const, html: await Promise.race([readBounded(response, record.limits.maxBytes), timeout]) });
+          const html = await Promise.race([readBounded(response, record.limits.maxBytes), timeout]);
+          if (!/^(?:\uFEFF|\s|<!--[\s\S]*?-->)*(?:<!doctype\s+html\b|<html\b)/i.test(html)
+            || !/<\/html\s*>(?:\s|<!--[\s\S]*?-->)*$/i.test(html)) {
+            return error('format-unknown', 'La réponse du Worker n’est pas une page HTML complète.');
+          }
+          return Object.freeze({ ok: true as const, html });
         } catch (cause) {
           if (timedOut) return error('timeout', 'La lecture a dépassé le délai autorisé.');
           return cause instanceof RangeError

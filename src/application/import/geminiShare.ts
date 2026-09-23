@@ -5,10 +5,10 @@ import type { RemoteGatewayConsent } from './remoteGateway';
 import type { ResolvedShare } from './types';
 
 export const GEMINI_SHARE_LIMITS: ImportLimits = Object.freeze({ maxUrlLength: 2_048, timeoutMs: 10_000, maxBytes: 2 * 1024 * 1024, maxEvents: 1_000, maxRedirects: 1 });
-/** Déclarative seulement : l'exécution est réservée à la passerelle de la story 5.2. */
+/** La redirection éventuelle est suivie par le Worker, hors du navigateur. */
 export const GEMINI_REDIRECT_POLICY: RedirectPolicy = Object.freeze({ maxRedirects: 1, allowedOrigins: Object.freeze(['https://share.gemini.google', 'https://gemini.google.com']) });
 export function validateGeminiShareUrl(value: string): string | undefined {
-  if (value.length > GEMINI_SHARE_LIMITS.maxUrlLength || !/^https:\/\/share\.gemini\.google\/[^/?#]+$/.test(value)) return undefined;
+  if (value.length > GEMINI_SHARE_LIMITS.maxUrlLength || !/^https:\/\/share\.gemini\.google\/[A-Za-z0-9]{12}$/.test(value)) return undefined;
   try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'share.gemini.google' && !url.port && !url.username && !url.password && !url.search && !url.hash ? value : undefined; } catch { return undefined; }
 }
 export function extractGeminiShareEvents(html: string, limits: Pick<ImportLimits, 'maxEvents' | 'maxBytes'> = GEMINI_SHARE_LIMITS): ImportResult {

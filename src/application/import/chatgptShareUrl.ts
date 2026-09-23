@@ -10,7 +10,7 @@ export function validateChatGptShareUrl(value: string): string | undefined {
   try {
     // URL normalise le port HTTPS explicite en chaîne vide : contrôler aussi la
     // forme saisie évite donc d’accepter silencieusement un port interdit.
-    if (value.length > 2_048 || !/^https:\/\/chatgpt\.com\/share\/[A-Za-z0-9-]+$/.test(value)) return undefined;
+    if (value.length > 2_048 || !/^https:\/\/chatgpt\.com\/share\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value)) return undefined;
     const url = new URL(value);
     return url.protocol === 'https:'
       && url.hostname === 'chatgpt.com'
@@ -19,7 +19,7 @@ export function validateChatGptShareUrl(value: string): string | undefined {
       && url.password === ''
       && url.search === ''
       && url.hash === ''
-      && /^\/share\/[A-Za-z0-9-]+$/.test(url.pathname)
+      && /^\/share\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(url.pathname)
       ? value
       : undefined;
   } catch { return undefined; }

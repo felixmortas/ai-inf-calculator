@@ -1,19 +1,24 @@
-# Importer un partage ChatGPT
+# Importer une conversation partagée
 
-Le calculateur accepte uniquement un lien public strictement au format `https://chatgpt.com/share/<id>`. Il analyse une seule réponse publique dans le navigateur, puis affiche une prévisualisation avant toute modification de la conversation.
+Le calculateur accepte les liens publics aux formats suivants :
 
-Si la session contient déjà un échange renseigné, le remplacement doit être confirmé. Annuler, une URL invalide, un refus CORS, une erreur réseau ou un format public inconnu ne modifient jamais les échanges ni leurs résultats.
+- ChatGPT : `https://chatgpt.com/share/<UUID>`
+- Claude : `https://claude.ai/share/<UUID>`
+- Mistral : `https://chat.mistral.ai/chat/<UUID>`
+- Gemini : `https://share.gemini.google/<ID>` où l’ID comporte exactement 12 caractères alphanumériques.
 
-Les limites CORS du navigateur peuvent empêcher la lecture de certains partages. Les artifacts `sandbox:/mnt/data/...` et les citations de fichiers sont signalés sans téléchargement : collez le contenu d’un artifact dans son champ correspondant.
+Les URL doivent être exactement sous ces formes, sans port, paramètre de requête ni fragment. Un UUID suit la forme `8-4-4-4-12` en chiffres hexadécimaux. L’analyse locale du lien précède toute requête réseau.
 
-## Import distant exceptionnel via corsproxy.io
+## Import distant via le Worker
 
-Lorsqu’un partage public ne peut pas être lu directement par le navigateur, vous pouvez choisir, pour **une requête précise**, de le faire récupérer par le fournisseur tiers [corsproxy.io](https://corsproxy.io/). Cette exception est facultative : le dialogue affiche l’URL exacte qui sera transmise et ne lance aucune requête avant votre confirmation. Une modification de l’URL, un refus ou une annulation annule ce consentement ; il faut confirmer à nouveau pour une nouvelle requête.
+Après votre consentement explicite pour ce lien précis, le navigateur envoie un seul `POST` à l’endpoint d’import HTML du Worker du projet. Le corps JSON contient uniquement `{ "shareUrl": "<URL canonique>" }`. En production, l’endpoint est `https://proxy-felix.felix-mortas.workers.dev/v1/import-html`. Une build preview peut utiliser un hôte Worker preview concret fourni lors du build ; le dialogue affiche toujours l’endpoint effectivement utilisé.
 
-La seule donnée métier transmise est l’URL publique ChatGPT validée, sous la forme `https://chatgpt.com/share/<id>`. La requête peut également comporter la clé de configuration CorsProxy de cette instance, utilisée par le fournisseur pour autoriser le service ; ce n’est ni une donnée de session ni un contenu de votre conversation. Le calculateur n’envoie pas vos blocs locaux, fichiers, résultats, paramètres de calcul, cookies applicatifs ou autres données de session. Comme pour toute requête web, le fournisseur peut aussi recevoir des métadonnées telles que votre adresse IP et votre agent utilisateur.
+Pour une build preview, fournissez l’endpoint réel dans `VITE_IMPORT_HTML_WORKER_URL` lors du build. Il doit suivre la forme `https://<préfixe>-proxy-felix.felix-mortas.workers.dev/v1/import-html` ; une valeur hors de ce contrat désactive l’import distant.
 
-CorsProxy récupère la page publique pour la renvoyer au navigateur ; l’extraction des messages se fait ensuite localement, comme du texte non exécutable. Consultez sa [documentation](https://corsproxy.io/), sa [politique de confidentialité](https://corsproxy.io/privacy-policy) et ses [conditions de service](https://corsproxy.io/terms-of-service) avant d’accepter. Ces documents et cette aide décrivent l’exception, mais ne permettent pas de garantir comment le tiers traite ou conserve le contenu de la page : ne partagez donc pas un lien que vous ne souhaitez pas exposer à ce fournisseur.
+Le Worker récupère la page publique et gère automatiquement les éventuelles redirections du fournisseur. Le calculateur ne contrôle pas ces redirections. Le Worker reçoit l’URL de partage et peut recevoir des métadonnées réseau, notamment votre adresse IP et votre agent utilisateur. Il traite le contenu de la page pour fournir le service. Aucun bloc local, fichier, résultat, paramètre de calcul, cookie applicatif ou jeton de session n’est envoyé.
 
-Cette intégration est soumise à revue et peut être désactivée si la politique ou la disponibilité du tiers ne convient plus. Une erreur du proxy, une configuration absente ou son indisponibilité ne modifie pas votre session et ne bloque jamais l’import manuel : vous pouvez toujours recopier les messages et réponses dans les champs de conversation locaux.
+Le navigateur lit seulement une page HTML complète, avec une limite de 2 Mio et un délai de 10 secondes, puis extrait les échanges localement comme des données non exécutables. Une prévisualisation est affichée avant tout remplacement. Si la session contient déjà des échanges, le remplacement demande une confirmation supplémentaire.
 
-Pour compter un fichier source cité, ajoutez-le au bloc concerné avec le champ « Fichiers source locaux ». Sont acceptés les textes UTF-8 de 5 Mio maximum : `.txt`, `.md`, `.markdown`, `.json`, `.csv`, `.log`, `.py`, `.js`, `.ts`, `.html`, `.xml`, `.yaml`, `.yml`, les types `text/*` et `application/json`. Le fichier est lu uniquement dans la mémoire de cette session de navigateur, n’est jamais envoyé ni conservé à la fermeture de la page. Pour les formats exclus, les fichiers illisibles ou plus volumineux, collez le contenu pertinent dans Message ou Artifact.
+Une URL invalide, un refus, une annulation, une erreur réseau, un dépassement de limite ou un format inconnu ne modifient jamais la session. Vous pouvez toujours saisir les échanges manuellement.
+
+Pour compter un fichier source cité, ajoutez-le au bloc concerné avec le champ « Fichiers source locaux ». Les textes UTF-8 de 5 Mio maximum sont lus uniquement dans la mémoire du navigateur. Pour les formats exclus ou les fichiers illisibles, collez le contenu pertinent dans Message ou Artifact.

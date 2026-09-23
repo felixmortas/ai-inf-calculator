@@ -6,11 +6,11 @@ import { createRemoteGateway, createRemoteGatewayConsent } from './remoteGateway
 import { isResolvedShare, providerForResolvedShare, resolveShare } from './registry';
 import { importResolvedProviderShare } from './resolvedShareImport';
 
-const configured = { apiKey: () => 'test-key' };
+const configured = { endpoint: () => 'https://proxy-felix.felix-mortas.workers.dev/v1/import-html' };
 const cases = [
-  [claudeShareProvider, 'https://claude.ai/share/opaque', '<script data-claude-share type="application/json">{"turns":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],
-  [mistralShareProvider, 'https://chat.mistral.ai/chat/opaque', '<script data-mistral-share type="application/json">{"messages":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],
-  [geminiShareProvider, 'https://share.gemini.google/opaque', '<script data-gemini-share type="application/json">{"turns":[{"role":"user","content":"Bonjour"},{"role":"model","content":"Réponse"}]}</script>'],
+  [claudeShareProvider, 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000', '<script data-claude-share type="application/json">{"turns":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],
+  [mistralShareProvider, 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000', '<script data-mistral-share type="application/json">{"messages":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],
+  [geminiShareProvider, 'https://share.gemini.google/Ab12Cd34Ef56', '<script data-gemini-share type="application/json">{"turns":[{"role":"user","content":"Bonjour"},{"role":"model","content":"Réponse"}]}</script>'],
 ] as const;
 
 describe('import de partage résolu', () => {
@@ -23,7 +23,7 @@ describe('import de partage résolu', () => {
   });
 
   it('refuse un fournisseur différent sans fetch, et un consentement déjà consommé', async () => {
-    const resolved = resolveShare('https://claude.ai/share/opaque')!;
+    const resolved = resolveShare('https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000')!;
     const fetcher = vi.fn().mockResolvedValue(new Response('<script data-claude-share type="application/json">{"turns":[]}</script>'));
     const gateway = createRemoteGateway(fetcher, configured);
     const mismatch = await importResolvedProviderShare(resolved, undefined, mistralShareProvider, gateway);

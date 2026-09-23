@@ -10,9 +10,9 @@ const html = (attribute: string, state: unknown) => `<script ${attribute}>${JSON
 
 describe('adaptateurs locaux Claude, Mistral et Gemini', () => {
   it.each([
-    ['Claude', validateClaudeShareUrl, 'https://claude.ai/share/opaque_id'],
-    ['Mistral', validateMistralShareUrl, 'https://chat.mistral.ai/chat/opaque_id'],
-    ['Gemini', validateGeminiShareUrl, 'https://share.gemini.google/opaque_id'],
+    ['Claude', validateClaudeShareUrl, 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000'],
+    ['Mistral', validateMistralShareUrl, 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000'],
+    ['Gemini', validateGeminiShareUrl, 'https://share.gemini.google/Ab12Cd34Ef56'],
   ])('%s canonicalise une URL exacte et refuse ses variantes', (_name, validate, url) => {
     expect(validate(url)).toBe(url);
     for (const invalid of [url.replace('https:', 'http:'), `${url}?x=1`, `${url}#x`, `${url}/`, url.replace('https://', 'https://user@'), url.replace('https://', 'https://example.com/'), url.replace(/^https:\/\/([^/]+)/, 'https://$1:444'), `https://claude.ai/share/${'x'.repeat(2_049)}`]) expect(validate(invalid)).toBeUndefined();
@@ -40,11 +40,18 @@ describe('adaptateurs locaux Claude, Mistral et Gemini', () => {
     expect(extract(fixture, { maxBytes: Number.NaN, maxEvents: Number.POSITIVE_INFINITY })).toMatchObject({ ok: false, events: [], error: { code: 'configuration' } });
   });
 
-  it('normalise model en assistant pour Gemini et déclare sa politique sans redirection', () => {
+  it('normalise model en assistant pour Gemini et déclare sa politique de redirection', () => {
     const result = extractGeminiShareEvents(geminiFixture);
     expect(result).toMatchObject({ ok: true });
     if (result.ok) expect(result.events.map((event) => event.role)).toEqual(['user', 'assistant', 'inaccessible-content']);
     expect(GEMINI_REDIRECT_POLICY).toEqual({ maxRedirects: 1, allowedOrigins: ['https://share.gemini.google', 'https://gemini.google.com'] });
+  });
+
+  it('refuse les identifiants hors contrat avant toute attestation', () => {
+    expect(validateClaudeShareUrl('https://claude.ai/share/123e4567-e89b-12d3-a456-42661417400g')).toBeUndefined();
+    expect(validateMistralShareUrl('https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-42661417400')).toBeUndefined();
+    expect(validateGeminiShareUrl('https://share.gemini.google/Ab12Cd34Ef5')).toBeUndefined();
+    expect(validateGeminiShareUrl('https://share.gemini.google/Ab12Cd34Ef56-')).toBeUndefined();
   });
 
   it.each([
@@ -66,9 +73,9 @@ describe('adaptateurs locaux Claude, Mistral et Gemini', () => {
   });
 
   it.each([
-    ['Claude', claudeShareProvider, 'https://claude.ai/share/opaque_id'],
-    ['Mistral', mistralShareProvider, 'https://chat.mistral.ai/chat/opaque_id'],
-    ['Gemini', geminiShareProvider, 'https://share.gemini.google/opaque_id'],
+    ['Claude', claudeShareProvider, 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000'],
+    ['Mistral', mistralShareProvider, 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000'],
+    ['Gemini', geminiShareProvider, 'https://share.gemini.google/Ab12Cd34Ef56'],
   ])('%s ne déclenche aucune récupération distante dans ce socle local', async (_name, provider, url) => {
     await expect(provider.importFromUrl(url)).resolves.toMatchObject({ ok: false, events: [], error: { code: 'policy' } });
   });

@@ -8,7 +8,7 @@ export const CLAUDE_SHARE_LIMITS: ImportLimits = Object.freeze({ maxUrlLength: 2
 export const CLAUDE_REDIRECT_POLICY: RedirectPolicy = Object.freeze({ maxRedirects: 0, allowedOrigins: Object.freeze(['https://claude.ai']) });
 
 export function validateClaudeShareUrl(value: string): string | undefined {
-  if (value.length > CLAUDE_SHARE_LIMITS.maxUrlLength || !/^https:\/\/claude\.ai\/share\/[^/?#]+$/.test(value)) return undefined;
+  if (value.length > CLAUDE_SHARE_LIMITS.maxUrlLength || !/^https:\/\/claude\.ai\/share\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value)) return undefined;
   try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'claude.ai' && !url.port && !url.username && !url.password && !url.search && !url.hash ? value : undefined; } catch { return undefined; }
 }
 

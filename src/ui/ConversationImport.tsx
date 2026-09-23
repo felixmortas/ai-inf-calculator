@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { previewConversationImport, type ConversationPreview } from '../application/import/conversationPreview';
 import { importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from '../application/import/registry';
-import { createRemoteGatewayConsent } from '../application/import/remoteGateway';
+import { createRemoteGatewayConsent, workerImportEndpoint } from '../application/import/remoteGateway';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import type { ImportProvider, ResolvedShare } from '../application/import/types';
 import { hasConversationBlockContent } from '../domain/conversationContent';
@@ -19,6 +19,7 @@ interface PendingConsent {
   readonly resolved: ResolvedShare;
   readonly version: number;
   readonly capability: unknown;
+  readonly endpoint: string;
 }
 
 export function ConversationImport({ state, dispatch, providers = importProviders, resolve = resolveShare }: ConversationImportProps) {
@@ -72,15 +73,16 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     const resolvedProvider = providers.find((item) => item.id === resolved.providerId) ?? (providers.length === 1 ? providers[0] : undefined);
     if (!resolvedProvider) { setDetectedProvider(undefined); setError('Ce fournisseur de partage n’est pas disponible.'); return; }
     setDetectedProvider(resolved.providerId);
-    const capability = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare);
+    const endpoint = workerImportEndpoint();
+    const capability = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare, endpoint);
     if (!capability) { setError(fr.importUnexpectedError); return; }
-    setPendingConsent({ resolved, version, capability });
+    setPendingConsent({ resolved, version, capability, endpoint: endpoint! });
   }
 
   async function continueImport() {
     const consent = pendingConsent;
     if (!consent || !provider || importStarted.current
-      || consent.resolved.canonicalUrl !== url
+      || consent.resolved.canonicalUrl !== url || consent.endpoint !== workerImportEndpoint()
       || (providers.length > 1 && consent.resolved.providerId !== provider.id)
       || consent.version !== analysisVersion.current) return;
     importStarted.current = true;
@@ -148,25 +150,16 @@ export function ConversationImport({ state, dispatch, providers = importProvider
       <p>{fr.importHelpThirdParty}</p>
       <p>{fr.importHelpUncertainty}</p>
       <p>{fr.importHelpLocalData}</p>
-      <p className="import-consent-links">
-        <a href={fr.corsProxyDocumentationUrl} target="_blank" rel="noreferrer">{fr.corsProxyDocumentationLabel}</a>{' · '}
-        <a href={fr.corsProxyPrivacyUrl} target="_blank" rel="noreferrer">{fr.corsProxyPrivacyLabel}</a>{' · '}
-        <a href={fr.corsProxyTermsUrl} target="_blank" rel="noreferrer">{fr.corsProxyTermsLabel}</a>
-      </p>
     </aside>
     <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
     {pendingConsent ? <div className="import-consent-backdrop">
       <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={trapConsentFocus}>
         <h3 id="import-consent-title">{fr.importConsentTitle}</h3>
         <p>{fr.importConsentPurpose(provider?.label ?? pendingConsent.resolved.providerId)}</p>
+        <p><strong>{fr.importConsentWorkerLabel}</strong>: <span className="import-consent-url">{pendingConsent.endpoint}</span></p>
         <p><strong>{fr.importConsentUrlLabel}</strong>: <span className="import-consent-url">{pendingConsent.resolved.canonicalUrl}</span></p>
         <p>{fr.importConsentMetadata}</p>
         <p>{fr.importConsentLocalData}</p>
-        <p className="import-consent-links">
-          <a href={fr.corsProxyDocumentationUrl} target="_blank" rel="noreferrer">{fr.corsProxyDocumentationLabel}</a>{' · '}
-          <a href={fr.corsProxyPrivacyUrl} target="_blank" rel="noreferrer">{fr.corsProxyPrivacyLabel}</a>{' · '}
-          <a href={fr.corsProxyTermsUrl} target="_blank" rel="noreferrer">{fr.corsProxyTermsLabel}</a>
-        </p>
         <div className="import-consent-actions">
           <button ref={continueButtonRef} type="button" onClick={() => void continueImport()}>{fr.importConsentContinueAction}</button>
           <button type="button" onClick={closeConsent}>{fr.importCancelAction}</button>

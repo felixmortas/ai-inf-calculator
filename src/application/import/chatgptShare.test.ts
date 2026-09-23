@@ -14,7 +14,7 @@ import type { RemoteGateway } from './remoteGateway';
 import { createRemoteGatewayConsent } from './remoteGateway';
 import { importProviderById, importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from './registry';
 
-const shareUrl = 'https://chatgpt.com/share/abc-123';
+const shareUrl = 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000';
 const page = (value: unknown) => `<script type="application/json">${JSON.stringify(value)}</script>`;
 
 describe('registre d’import', () => {

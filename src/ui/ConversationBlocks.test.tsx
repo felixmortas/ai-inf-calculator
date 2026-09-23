@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -51,14 +51,14 @@ describe('composition de la conversation', () => {
 
   it('importe via le registre, conserve les avis de contenus inaccessibles, puis ajoute un échange manuel', async () => {
     const user = userEvent.setup();
-    const fetch = vi.fn().mockResolvedValue(new Response('<script type="application/json">{"messages":[{"author":{"role":"user"},"content":{"parts":["Question"]}},{"author":{"role":"assistant"},"content":{"parts":["[artifact](sandbox:/mnt/data/a.csv) fileciteturn0file0L1"]}}]}</script>'));
+    const fetch = vi.fn().mockResolvedValue(new Response('<html><script type="application/json">{"messages":[{"author":{"role":"user"},"content":{"parts":["Question"]}},{"author":{"role":"assistant"},"content":{"parts":["[artifact](sandbox:/mnt/data/a.csv) fileciteturn0file0L1"]}}]}</script></html>', { headers: { 'content-type': 'text/html' } }));
     vi.stubGlobal('fetch', fetch);
-    vi.stubEnv('VITE_CORSPROXY_API_KEY', 'test-key');
+
     try {
       render(<App />);
-      await user.type(screen.getByLabelText('Lien de partage'), 'https://chatgpt.com/share/abc');
+      fireEvent.change(screen.getByLabelText('Lien de partage'), { target: { value: 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000' } });
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
-      await user.click(await screen.findByRole('button', { name: 'Continuer avec corsproxy.io' }));
+      await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
       await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
       await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
       expect(screen.getByLabelText('Message')).toHaveValue('Question');

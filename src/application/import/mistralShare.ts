@@ -7,7 +7,7 @@ import type { ResolvedShare } from './types';
 export const MISTRAL_SHARE_LIMITS: ImportLimits = Object.freeze({ maxUrlLength: 2_048, timeoutMs: 10_000, maxBytes: 2 * 1024 * 1024, maxEvents: 1_000, maxRedirects: 0 });
 export const MISTRAL_REDIRECT_POLICY: RedirectPolicy = Object.freeze({ maxRedirects: 0, allowedOrigins: Object.freeze(['https://chat.mistral.ai']) });
 export function validateMistralShareUrl(value: string): string | undefined {
-  if (value.length > MISTRAL_SHARE_LIMITS.maxUrlLength || !/^https:\/\/chat\.mistral\.ai\/chat\/[^/?#]+$/.test(value)) return undefined;
+  if (value.length > MISTRAL_SHARE_LIMITS.maxUrlLength || !/^https:\/\/chat\.mistral\.ai\/chat\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value)) return undefined;
   try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'chat.mistral.ai' && !url.port && !url.username && !url.password && !url.search && !url.hash ? value : undefined; } catch { return undefined; }
 }
 export function extractMistralShareEvents(html: string, limits: Pick<ImportLimits, 'maxEvents' | 'maxBytes'> = MISTRAL_SHARE_LIMITS): ImportResult {
