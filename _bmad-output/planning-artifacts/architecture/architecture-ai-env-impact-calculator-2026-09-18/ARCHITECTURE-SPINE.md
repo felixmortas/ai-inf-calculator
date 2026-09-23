@@ -7,13 +7,16 @@ paradigm: application monopage client-side, en couches et noyau fonctionnel pur
 scope: Sous-projet portable `calculator/`, intégré au chemin `/calculator/` de felixmortas.com
 status: final
 created: 2026-09-18
-updated: 2026-09-20
+updated: 2026-09-23
 binds: [FR-1, FR-2, FR-3, FR-4, FR-7, FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-20, FR-21, FR-23, FR-24, NFR-1, NFR-2, NFR-3, NFR-4, NFR-5, NFR-6, NFR-7]
 sources:
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/addendum.md
   - ../../sprint-change-proposal-2026-09-19.md
   - ../../sprint-change-proposal-2026-09-20.md
+  - ../../sprint-change-proposal-2026-09-23.md
+  - ../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
+  - ../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
 companions: []
 ---
 
@@ -25,13 +28,11 @@ Application monopage client-side, en couches, avec un noyau de domaine fonctionn
 
 ```mermaid
 flowchart LR
-  UI[React : composants et reducer] --> APP[Application : cas d’usage]
-  APP --> DOMAIN[Domaine pur : tokens, historique, impacts, fraîcheur]
+  UI[React : composants et vues] --> APP[Application : reducer, cas d’usage, fraîcheur]
+  APP --> DOMAIN[Domaine pur : tokens, historique, impacts]
   APP --> CATALOG[Catalogues locaux typés]
-  APP <--> WORKER[Worker : adaptateur de tokenisation]
+  APP --> WORKER[Web Worker : tokenisation locale]
   APP --> REMOTE[remoteGateway : frontière d'import distant]
-  DOMAIN --> APP
-  CATALOG --> APP
 ```
 
 ## Invariants & Rules
@@ -52,7 +53,7 @@ flowchart LR
 
 - **Binds:** FR-10 à FR-14, FR-17, FR-18, FR-21, NFR-3, NFR-4
 - **Prevents:** la conservation accidentelle d’une conversation, le total calculé sur des résultats périmés, ou des invalidations dépendantes de l’ordre de rendu.
-- **Rule:** un unique reducer React possède les textes, les sélections et les surcharges de session. Le domaine produit une représentation canonique, ordonnée et comparée octet à octet pour chaque empreinte : `impactFingerprint` couvre les entrées pertinentes, paramètres d’impact résolus, catalogue et version d’algorithme ; `showerFingerprint` couvre `impactFingerprint`, pays utilisateur et paramètres douche. La fraîcheur est dérivée de ces empreintes : une modification douche ne périt que l’équivalence, jamais les impacts. Total et équivalences n’utilisent que leurs dépendances actuelles. Aucun stockage durable, analytics, cookie applicatif ou journalisation distante n’est permis.
+- **Rule:** un unique reducer React possède les textes, les sélections et les surcharges de session ; accueil, fil et bilan sont des vues de cette même session et un retour d’étape conserve les textes. `application` construit les empreintes déterministes à partir de l’état et des paramètres résolus : `impactFingerprint` couvre les entrées pertinentes, paramètres d’impact résolus, catalogue et version d’algorithme ; `showerFingerprint` couvre `impactFingerprint`, pays utilisateur et paramètres douche. La fraîcheur est dérivée de ces empreintes : une modification douche ne périt que l’équivalence, jamais les impacts. Chaque calcul part d’une intention explicite ; modifier un texte, un modèle ou un paramètre ne recalcule rien. « Tout calculer » calcule tous les échanges renseignés, attend leurs résultats actuels, puis agrège ; « Recalculer le total » n’effectue aucun calcul d’échange et désigne les résultats manquants ou périmés. Les réponses tardives restent soumises aux empreintes. Aucun total ancien ou incomplet n’est présenté comme actuel. Aucun stockage durable, analytics, cookie applicatif ou journalisation distante n’est permis.
 
 ### AD-4 — Tokenisation locale isolée [ADOPTED]
 
@@ -64,7 +65,7 @@ flowchart LR
 
 - **Binds:** FR-1, FR-2, FR-15, FR-17, FR-20, FR-23, FR-24, NFR-6
 - **Prevents:** des constantes dispersées, des prix mêlés aux formules, ou la modification durable des données publiées par les paramètres avancés.
-- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux, risques, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. Une unique fonction de domaine résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
+- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux, risques, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. La clé fournisseur est normalisée entre modèles et pays d’hébergement ; chaque référence de modèle doit résoudre ses facteurs et son pays avant publication. Une table locale unique propose les références ChatGPT `sans abonnement → gpt-5.6-luna`, `avec abonnement → gpt-5.6-terra`, et Mistral `rapide → mistral-small`, `réflexion → mistral-large` ; si le mode Mistral d’un import est inconnu, la personne le choisit. Ce préremplissage est une estimation : le choix explicite valide de la personne prévaut, et le reducer accepte le choix direct de tout modèle valide du chatbot sélectionné, ChatGPT compris, pour toute la conversation. Une unique fonction de `data/modelCatalog`, appelée par `application`, résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. `domain` reçoit les paramètres résolus, sans dépendre du catalogue concret. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
 
 ### AD-6 — Localisation indicative sans donnée externe [ADOPTED]
 
@@ -80,23 +81,27 @@ flowchart LR
 
 ### AD-8 — Import distant exceptionnel, consenti et allowlisté [ADOPTED]
 
-- **Binds:** FR-3, FR-8, FR-19, NFR-3, D-4
-- **Prevents:** l'exfiltration de données de session, une URL proxy arbitraire, le contournement d'un contrôle d'accès, ou la propagation d'une dépendance tierce dans le domaine de calcul.
-- **Rule:** `application/import/remoteGateway` est le seul adaptateur autorisé à faire une requête d'import distant. Le registre est statique, fermé et détenu par `application/import` ; il référence les adaptateurs distincts ChatGPT, Claude, Mistral et Gemini. Aucun adaptateur ne reçoit de capacité réseau ni ne s'enregistre dynamiquement. Seul le registre fabrique un `ResolvedShare` opaque et immuable, attesté en mémoire, qui associe un adaptateur enregistré à `{ providerId, canonicalUrl, limits, policyVersion }`. La passerelle refuse toute valeur forgée, clonée ou non attestée, puis retrouve l'adaptateur, ses limites et sa politique par cette identité — jamais dans des champs contrôlés par l'appelant.
-- **Consentement et exécution:** la passerelle ne peut être appelée qu'avec un consentement explicite, ponctuel, non pré-coché et à usage unique, créé après affichage, lié par identité au même `ResolvedShare`, à `policyVersion` et à l'origine proxy. Le dialogue affiche le fournisseur détecté, l'URL cible canonique exacte qui sera encodée dans la requête (`outboundCanonicalUrl`) et l'origine proxy `https://corsproxy.io/`. La passerelle consomme ce consentement avant tout trafic ; refus, annulation, changement d'URL, de fournisseur, d'adaptateur/politique, de limites ou de configuration proxy l'invalide et ne lance aucune requête.
-- **Allowlist transitoire:** l'origine de production est exactement `https://corsproxy.io/`; méthode, chemin, paramètres, encodage, en-têtes, `credentials: omit`, cache et politique de référent sont fixés par `remoteGateway`. Aucune origine, chemin de proxy, destination, en-tête applicatif, corps, cookie, identifiant de session ou redirection ne provient d'une entrée utilisateur, d'un adaptateur ou de l'état local. La seule destination encodée est `outboundCanonicalUrl`. Les hôtes, ports, chemins, requêtes, URL finale et nombre maximal de sauts autorisés pour cette destination sont définis par l'adaptateur validé. Le proxy doit appliquer et attester chaque saut de cette politique, ou le format nécessitant une redirection est refusé ; une redirection hors allowlist ou au-delà de la borne échoue sans import partiel. La configuration associe cette origine à son mécanisme de clé API et d'autorisation de domaine. Une clé embarquée dans l'application statique n'est jamais considérée comme un secret : les protections effectives sont l'autorisation de domaine et les plafonds configurés chez le fournisseur, complétés par la validation, les délais et les limites applicatives.
-- **Minimisation et traitement:** `limits` ne peuvent que resserrer les plafonds globaux et bornent au minimum la longueur d'URL, le délai total, les octets décodés effectivement lus, les redirections et le travail d'extraction ; tout dépassement annule le flux, ne produit aucun bloc et retourne une erreur typée. La passerelle n'envoie ni bloc local, fichier, résultat, catalogue, paramètre de calcul, état du reducer, cookie applicatif, jeton de session ni secret. Le tiers reçoit nécessairement l'URL de partage et, selon sa politique, peut recevoir l'adresse IP, l'agent utilisateur et des métadonnées de requête ; l'application ne promet pas que la page ou son contenu ne seront jamais traités par lui. La réponse HTML est bornée en taille et en délai, lue comme texte non exécutable et parsée localement par l'extracteur associé ; celui-ci ne retourne que des textes et métadonnées primitives bornés. Aucun lien, artifact, HTML, URL ou ressource citée n'est suivi, téléchargé, rendu ou exécuté.
-- **Défaillance et remplacement:** une erreur de consentement, de politique, réseau, délai, taille ou format est typée, atomique et conserve la session ; le parcours manuel/local reste disponible. `corsproxy.io` est une dépendance transitoire : son origine et son contrat restent confinés à la configuration de `remoteGateway` afin qu'un proxy géré par le projet puisse le remplacer ultérieurement sans changement du domaine, du parseur ou de l'interface de consentement. Toute évolution de la politique ou des conditions du fournisseur déclenche une revue de D-4 et peut désactiver cette voie au profit de l'import manuel.
+- **Binds:** FR-3, FR-8, FR-19, NFR-2, NFR-3, D-4, epic 6.3
+- **Prevents:** l’envoi de données de session, l’import publié d’un autre fournisseur, un consentement adressé au mauvais endpoint et la confusion entre contrôles du navigateur et du Worker.
+- **Rule:** `application/import` possède un registre statique et fermé d’adaptateurs ; les adaptateurs ChatGPT, Claude et Gemini restent isolés dans le code, mais la politique publiée ne peut attester qu’un lien public Mistral. La restriction s’applique avant création du consentement et de nouveau à la frontière `remoteGateway` : un autre fournisseur est refusé localement sans requête. Seul le registre fabrique un `ResolvedShare` opaque, immuable et attesté en mémoire, associé à `{ providerId, canonicalUrl, limits, policyVersion }`. La passerelle refuse toute valeur forgée, clonée, non attestée ou non admise par la politique publiée ; elle retrouve les limites et l’adaptateur par l’identité attestée.
+- **Consentement et destination:** le dialogue montre intégralement l’URL Mistral canonique et l’endpoint Worker actif issu de la configuration allowlistée. Après consentement explicite, ponctuel et à usage unique, lié à l’identité du même `ResolvedShare`, à sa version de politique et à cet endpoint, `remoteGateway` est le seul module autorisé à lancer l’import distant. Refus, annulation, changement d’URL, de politique, de limites ou d’endpoint invalident ce consentement avant trafic. Aucun endpoint libre n’est accepté. Le navigateur envoie au Worker un `POST` JSON dont le seul champ est `shareUrl` canonique, avec `credentials: omit`, `redirect: error`, `cache: no-store` et `referrerPolicy: no-referrer` ; il n’envoie aucun texte local, fichier, résultat ni paramètre de calcul.
+- **Réponse et défaillance:** les plafonds globaux navigateur sont de 10 s pour requête et lecture, 2 Mio lus et 1 000 événements extraits ; les limites d’adaptateur ne peuvent que les resserrer. Le navigateur accepte seulement un HTML complet non exécuté, puis l’extracteur Mistral produit une prévisualisation locale. Rien n’est ajouté au fil avant confirmation ; si le fil contient du texte, le remplacement exige une confirmation distincte. Tout dépassement et toute erreur de politique, de configuration, de réseau ou de format sont typés et laissent la session intacte, sans prévisualisation partielle ; la saisie manuelle reste disponible. Le navigateur refuse les redirections de sa requête vers le Worker ; le suivi éventuel des redirections entre Worker et site de partage et leur contrôle relèvent du contrat du Worker. Le Worker reçoit l’URL, peut traiter la page et des métadonnées de requête selon sa politique documentée ; aucune garantie sur sa conservation interne n’est déduite du code navigateur.
+
+### AD-9 — Projection des résultats et unités [ADOPTED]
+
+- **Binds:** FR-10, FR-22, epic 6.2, epic 6.4
+- **Prevents:** des formules ou agrégations différentes selon la vue et un total construit à partir de nombres arrondis.
+- **Rule:** le domaine garde par échange et au total les valeurs non arrondies en Wh, gCO₂e et L ; la présentation seule choisit les métriques et unités. La carte d’échange montre carbone et eau après calcul explicite, avec incertitude et état de fraîcheur ; le bilan valide montre carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations. Un formateur partagé suit les séries, seuils et cas extrêmes de `EXPERIENCE.md` : au plus trois chiffres significatifs, unité adaptée, virgule française et nom accessible complet. Le risque de sécheresse reste qualitatif. Replis et indisponibilités sont signalés près du résultat concerné.
 
 ## Consistency Conventions
 
 | Concern | Convention |
 | --- | --- |
 | Types et erreurs | `camelCase`; identifiants stables `blockId`; erreurs attendues en union discriminée `code` + contexte non sensible. |
-| Nombres et unités | Calculs non arrondis en Wh, gCO2e et L ; seul l’affichage formate et arrondit. Aucun `NaN` ou infini ne franchit la frontière du domaine. |
+| Nombres et unités | Calculs non arrondis en Wh, gCO₂e et L ; seul le formateur partagé adapte l’unité et arrondit à trois chiffres significatifs au plus. Aucun `NaN` ou infini ne franchit la frontière du domaine. |
 | Données | Les fichiers portent `schemaVersion`, `dataVersion`, provenance et date de calibration ; une valeur environnementale absente cherche seulement sa valeur Monde du même facteur. |
 | Mutation | Les actions du reducer sont les seules mutations de session. Une mutation ne lance jamais de calcul sans intention utilisateur explicite. |
-| Confidentialité | Par défaut, les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. La seule exception est l'URL canonique d'un partage du fournisseur détecté, émise par son adaptateur validé et transmise à l'origine allowlistée après consentement conforme à AD-8 ; aucun contenu local n'est inclus par le calculateur. |
+| Confidentialité | Les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. Seule l’URL canonique du partage Mistral admis est transmise au Worker allowlisté après consentement conforme à AD-8 ; aucun contenu local n’est inclus par le calculateur. |
 
 ## Stack
 
@@ -104,7 +109,7 @@ flowchart LR
 | --- | --- |
 | React et React DOM | 19.3.0 |
 | TypeScript | 7.0.2 |
-| Vite | 7.3.3 |
+| Vite | 8.3.0 |
 | js-tiktoken | 1.0.21 |
 | Vitest | 5.0.1 |
 | GitHub Pages | service géré |
@@ -141,37 +146,40 @@ sequenceDiagram
   participant UI as UI d'import
   participant R as Registre / adaptateur validé
   participant G as remoteGateway
-  participant P as corsproxy.io allowlisté
-  participant X as Extracteur local du fournisseur
+  participant W as Worker HTML allowlisté
+  participant X as Extracteur Mistral local
   U->>UI: Saisir une URL de partage
-  UI->>R: Valider et canonicaliser l'URL
-  R-->>UI: ResolvedShare { fournisseur, URL, limites }
-  UI->>U: Afficher fournisseur et URL transmise ; demander consentement
-  U->>UI: Consentir pour ce ResolvedShare
-  UI->>G: ResolvedShare validé + consentement courant
-  G->>P: Requête bornée vers l'origine allowlistée
-  P-->>G: HTML public borné
+  UI->>R: Valider Mistral et canonicaliser l'URL
+  R-->>UI: ResolvedShare Mistral attesté
+  UI->>U: Afficher URL canonique et endpoint Worker actif
+  U->>UI: Consentir pour cette URL et cet endpoint
+  UI->>G: ResolvedShare admis + consentement courant
+  G->>W: POST JSON {shareUrl}, borné
+  W-->>G: HTML complet borné
   G->>X: Texte HTML non exécutable et borné
-  X-->>UI: Blocs extraits ou erreur typée
-  Note over UI,X: Aucun bloc local, fichier, résultat ou paramètre n'est transmis ; redirections limitées à l'allowlist du fournisseur
+  X-->>UI: Prévisualisation ou erreur typée
+  UI->>U: Confirmer l'ajout ou le remplacement séparé
+  Note over UI,X: Aucun texte local, fichier, résultat ou paramètre n'est transmis
 ```
 
 ## Capability → Architecture Map
 
 | Capability / Area | Lives in | Governed by |
 | --- | --- | --- |
-| Saisie, blocs, calcul manuel et péremption | `ui/`, `application/`, `domain/` | AD-2, AD-3 |
+| Accueil, fil, bilan, calcul explicite et péremption | `ui/`, `application/`, `domain/` | AD-2, AD-3, AD-9 |
 | Historique, artifact et total | `domain/` | AD-2, AD-3 |
 | Comptage local et fallback | `workers/`, `domain/` | AD-2, AD-4 |
-| Modèles, paramètres avancés et calcul environnemental | `data/`, `application/`, `domain/` | AD-3, AD-5 |
-| Pays, eau, carbone, sécheresse et douche | `data/`, `domain/`, `ui/` | AD-5, AD-6 |
+| Modèles, références initiales, paramètres et calcul | `data/`, `application/`, `domain/` | AD-3, AD-5 |
+| Pays, eau, carbone, sécheresse, douche et affichage | `data/`, `domain/`, `ui/`, `i18n/` | AD-5, AD-6, AD-9 |
 | Français et extensions de langues | `i18n/`, `ui/` | AD-7 |
 | Consentement et import de partage distant | `ui/`, `application/import/` | AD-8 |
 | Publication GitHub Pages | `calculator/` et workflow du repo hôte | AD-1 |
 
 ## Deferred
 
-- Granularité exacte du diff d’artifact, segmentation des mots de fallback, règles d’arrondi et bornes numériques : D-2 du PRD les fixe avant les tests de référence ; ils ne modifient pas les frontières ci-dessus.
+- Migration de l’epic 6.3 : `ConversationImport.tsx`, `registry.ts` et `remoteGateway.ts` acceptent encore quatre fournisseurs dans le code actuel. Appliquer et vérifier la politique Mistral seul aux trois frontières avant publication ; AD-8 est le contrat cible approuvé.
+- Granularité exacte du diff d’artifact et segmentation des mots de fallback : D-2 du PRD les fixe avant les tests de référence ; ils ne modifient pas les frontières ci-dessus.
 - Schéma concret et contenu du catalogue `models_params`, calibration tarifaire et processus de mise à jour : D-1/D-6 ; ils doivent satisfaire AD-5 avant publication.
-- Choix définitif du proxy géré par le projet, y compris son origine, son contrat de traitement et ses protections opérationnelles : il remplacera `corsproxy.io` par changement de configuration de `remoteGateway`, après revue D-4 et du consentement ; il ne change pas le domaine, le parseur local ou les calculs.
+- Garanties internes et exploitation du Worker existant : traitement et conservation du lien, page et métadonnées, politique de redirection entre Worker et fournisseur, limites effectives et observabilité ; documenter et revoir D-4 avant publication de l’epic 6.3. Le navigateur ne peut pas les attester.
+- Alignement amont du PRD et des SPEC historiques avec le périmètre publié de l’epic 6 : Worker, Mistral seul et trois chiffres significatifs. Leurs anciennes exigences restent une trace des epics 1–5 ; la proposition approuvée du 2026-09-23 et l’UX finale gouvernent l’epic 6.
 - Workflow GitHub Actions précis du dépôt hôte : décidé lors de l’intégration ; il doit respecter AD-1 et publier aussi le site racine.

@@ -4,3 +4,5 @@ Gemini,gemini-3.6-flash,500,200,1500,0.25,0.15
 Claude,claude-sonnet-5,1000,150,1000,0.2,0.1
 ChatGPT,gpt-5.6-luna,100,10,1500,0.2,0.1
 ChatGPT,gpt-5.6-terra,300,35,1800,0.3,0.2
+MistralAI,mistral-small,100,35,1800,0.3,0.2
+MistralAI,mistral-large,300,60,1500,0.2,0.1
