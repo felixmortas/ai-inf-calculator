@@ -4,7 +4,7 @@
 
 Felix indique que son site `felixmortas.com` est réalisé en HTML/CSS/JavaScript purs. Le calculateur y constituera une page, utilisable sans compte depuis un ordinateur ou un mobile.
 
-Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages et compatible avec le site actuel. Aucun framework ni outil de compilation n’est imposé à ce stade. L’étude d’import par URL de partage devra respecter cette contrainte d’hébergement ; aucun serveur complémentaire n’est prévu.
+Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages et compatible avec le site actuel. La récupération d’un partage public Mistral utilise l’endpoint HTML du Worker du projet configuré pour la page ; elle n’exige pas de serveur de calcul. Les autres liens restent hors du parcours d’import publié.
 
 ## Choix de comptage
 
@@ -32,7 +32,7 @@ duree_equivalente_minutes = C / (0.348 × EF_utilisateur)
 duree_equivalente_secondes = 60 × duree_equivalente_minutes
 ```
 
-Ces formules de durée s’appliquent lorsque le facteur d’émission est disponible et strictement positif. Un facteur manquant utilise la référence « Monde », signalée à l’utilisateur. Si les émissions de la douche de référence sont nulles, la durée est indiquée comme non calculable, conformément à NFR-6 ; aucune division par zéro n’est permise. Les règles d’arrondi restent à préciser avant développement (D-2).
+Ces formules de durée s’appliquent lorsque le facteur d’émission est disponible et strictement positif. Un facteur manquant utilise la référence « Monde », signalée à l’utilisateur. Si les émissions de la douche de référence sont nulles, la durée est indiquée comme non calculable, conformément à NFR-6 ; aucune division par zéro n’est permise. Les valeurs internes restent non arrondies ; la présentation suit les unités et la précision définies dans `EXPERIENCE.md`, à valider sur des valeurs représentatives avant livraison (D-2).
 
 `EF_utilisateur` dépend du pays détecté automatiquement ou corrigé manuellement par l’utilisateur. Il est sélectionné indépendamment du facteur d’émission du pays d’hébergement utilisé pour calculer `C`. Le changement du pays utilisateur modifie l’équivalence, pas `C`.
 

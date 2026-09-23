@@ -2,16 +2,16 @@
 title: Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-17
-updated: 2026-09-19
+updated: 2026-09-23
 ---
 
 # PRD — Calculateur d’empreinte environnementale des LLM
 
 ## 1. Objet et vision
 
-Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Une personne non technique colle ses textes, déclenche les calculs, consulte l’énergie, l’eau et le carbone estimés ainsi que le risque de sécheresse associé au pays d’hébergement retenu. Elle peut également coller l'URL partagé de la conversation avec un Chatbot comme ChatGPT, Claude, Gemini ou Mistral ce qui automatise le remplissage des textes. Une équivalence carbone en durée de douche chaude l’aide à interpréter le résultat ; une liste commune de bonnes pratiques lui donne des gestes à retenir.
+Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Dès l’accueil, une personne non technique choisit la saisie manuelle ou l’import d’un lien public Mistral. Elle déclenche les calculs, consulte le carbone et l’eau estimés près de chaque échange, puis le bilan de la conversation : carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche chaude et bonnes pratiques.
 
-Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le parcours courant garde le chatbot, le modèle et la conversation visibles ; les réglages mathématiques restent dans une section avancée discrète. Les conversations restent dans le navigateur, sauf quand les conversations sont importées depuis l'URL de partage d'un chatbot. Les calculs mathématiques, eux, restent dans le navigateur ; la session n’est pas sauvegardée après fermeture. Dans le cas 
+Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le fil affiche le chatbot et le modèle, directement modifiables ; les réglages mathématiques restent dans une section avancée discrète. Les textes et calculs restent dans le navigateur. Seule l’URL canonique d’un partage Mistral est transmise au Worker d’import après consentement explicite ; la session n’est pas sauvegardée après fermeture.
 
 Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables.
 
@@ -23,34 +23,34 @@ Le produit s’adresse à des personnes non techniques qui souhaitent connaître
 
 **Contexte et entrée.** Camille, une personne non technique, souhaite connaître l’impact environnemental de sa conversation avec ChatGPT. Elle ouvre la page du calculateur sur `felixmortas.com` depuis son PC, sans créer de compte ni se connecter. Le produit est également utilisable sur mobile.
 
-Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.6-luna` pour tous ses échanges, selon la règle du projet fournie par Felix et décrite ci-dessous.
+Camille choisit « Saisir un échange », indique ChatGPT et vérifie le modèle de référence `gpt-5.6-luna` proposé parce qu’elle n’a pas d’abonnement payant. Elle peut choisir directement un autre modèle ChatGPT du catalogue pour toute la conversation.
 
 **Déroulement.**
 
-1. Elle colle son premier message dans un champ dédié, puis la réponse finale dans un autre champ.
+1. Elle colle son premier message dans un champ dédié, puis la réponse finale dans un autre champ de l’éditeur ouvert.
 2. Elle colle le contenu de l’artifact, s’il y en a un, et le texte de toutes les étapes de raisonnement si elles sont visibles, dans les champs associés.
-3. Elle déclenche le calcul du bloc et découvre les estimations de consommation électrique, de consommation d’eau et d’émissions carbone de ce premier échange.
-4. Après un deuxième échange dans la même conversation ChatGPT, elle ajoute un bloc dans le calculateur et y colle son nouveau message, la réponse, le raisonnement visible et l’artifact éventuel.
+3. Elle déclenche le calcul de l’échange et découvre près de ses textes le carbone et l’eau estimés, avec unité adaptée et mention d’incertitude.
+4. Après un deuxième échange, elle ajoute une carte : l’échange précédent se replie, le nouvel éditeur s’ouvre et le focus va sur sa question. Elle y colle son message, la réponse, le raisonnement visible et l’artifact éventuel.
 5. Elle colle la nouvelle version complète de l’artifact. Le calculateur détecte automatiquement les passages ajoutés ou modifiés par rapport à la version précédente et ne comptabilise que ceux-ci en tokens de sortie.
 6. Elle peut lancer le calcul d’un bloc individuellement ou calculer tous les blocs et leur total en un clic. Le total s'accompagne d'un indicateur du risque de sécheresse associé au pays d’hébergement retenu pour le calcul. Celui-ci est prérempli avec le pays de référence du fournisseur ; Camille peut le modifier dans les paramètres avancés. Elle peut aussi recalculer uniquement le total à partir des résultats déjà disponibles, sans relancer le calcul des blocs.
 
-**Résultat.** Camille voit l’impact de chaque échange et le cumul de la conversation. Elle peut comparer les émissions carbone estimées à une durée de douche chaude. Cette équivalence utilise le facteur d’émission du pays où elle se trouve, déterminé séparément de celui retenu pour le modèle. La quantité d’eau ne fait pas l’objet d’une comparaison.
+**Résultat.** Camille voit carbone et eau près de chaque échange. Après une action explicite, le bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations. Cette équivalence utilise le facteur d’émission du pays où elle se trouve, déterminé séparément de celui retenu pour le modèle. La quantité d’eau ne fait pas l’objet d’une comparaison.
 
 **Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
 
 ### UJ-2 — Camille évalue une conversation passée à partir de son lien
 
-**Contexte et entrée.** Plus tard, Camille souhaite évaluer une conversation récente avec ChatGPT.
+**Contexte et entrée.** Plus tard, Camille souhaite évaluer une conversation récente avec Mistral et choisit l’import depuis l’accueil.
 
-**Déroulement.** Elle copie l’URL de partage depuis ChatGPT et la colle dans le calculateur. Celui-ci remplit automatiquement les blocs et champs de la conversation.
+**Déroulement.** Elle colle l’URL publique Mistral. Après validation locale, elle voit l’URL canonique et l’endpoint Worker dans un dialogue de consentement. Si elle accepte, les échanges récupérés et leurs avertissements apparaissent en prévisualisation. Elle confirme leur ajout ; si sa conversation actuelle contient du texte, elle confirme séparément son remplacement. Un refus, un lien non Mistral ou un échec préserve les textes existants et laisse la saisie manuelle accessible.
 
-**Résultat.** Camille consulte l’impact de chaque échange et celui de la conversation complète.
+**Résultat.** Camille déclenche les calculs et consulte carbone et eau par échange, puis le bilan complet.
 
 **Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
 
 ## 3. Périmètre du lancement
 
-**Inclus :** saisie manuelle de blocs, import automatique depuis l'URL, ajout/modification/suppression, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable.
+**Inclus :** accueil à deux voies, saisie manuelle pour les chatbots du catalogue, import d’un lien public Mistral après consentement et prévisualisation, ajout/modification/suppression d’échanges, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable. Les anciens importeurs ChatGPT, Claude et Gemini restent hors du parcours publié.
 
 **Catalogue :** les chatbots et modèles disponibles, avec la tarification par type de tokens sont ceux du fichier fourni, nommé `models_params`.
 
@@ -79,24 +79,28 @@ Camille ne dispose pas d’un abonnement payant : le calculateur retient `gpt-5.
 
 La personne accède au calculateur depuis une page de `felixmortas.com` et peut réaliser le parcours de saisie et consulter les résultats sans inscription ni connexion.
 
-#### FR-1 — Déterminer le modèle de référence pour ChatGPT
+#### FR-1 — Proposer un modèle de référence modifiable pour ChatGPT
 
-Le calculateur distingue l’utilisation de ChatGPT sans abonnement payant et avec abonnement payant. Il applique à tous les échanges de la conversation le modèle de référence suivant :
+Le calculateur distingue l’utilisation de ChatGPT sans abonnement payant et avec abonnement payant. Il propose pour toute la conversation le modèle de référence suivant, explicitement présenté comme une convention d’estimation modifiable :
 
 - Sans abonnement payant : `gpt-5.6-luna`.
 - Avec abonnement payant : `gpt-5.6-terra`, retenu par Felix comme compromis entre Luna et Sol.
 
-La correspondance sans abonnement → `gpt-5.6-luna` est une règle du projet fondée sur l’affirmation explicite de Felix. La correspondance avec abonnement → `gpt-5.6-terra` est une convention d’estimation choisie par Felix comme compromis entre Luna et Sol.
+La personne peut remplacer directement ce modèle par tout autre modèle ChatGPT valide du catalogue. Le calculateur ne prétend pas connaître le modèle réellement utilisé. Les deux correspondances sont des conventions d’estimation choisies par Felix ; la seconde retient Terra comme compromis entre Luna et Sol.
 
-#### FR-2 — Choisir le modèle pour les autres fournisseurs
+#### FR-2 — Choisir le modèle pour tout fournisseur
 
-Pour les autres fournisseurs, la personne peut choisir le modèle indiqué dans le chatbot. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc.
+Pour tout fournisseur, ChatGPT compris, la personne peut choisir directement un modèle valide de son catalogue. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc. Pour Mistral, le mode indiqué par la personne propose `mistral-small` pour « rapide » et `mistral-large` pour « réflexion » ; ces références sont modifiables. Si le mode d’une conversation importée n’est pas révélé de façon fiable, le calculateur demande ce choix sans l’inférer du texte. Les correspondances de modes sont maintenues dans une table locale unique, facile à modifier.
 
-Le catalogue `models_params`, détermine les chatbots et modèles proposés. Les choix de l’interface doivent correspondre à ce catalogue. Les modèles absents ne sont pas proposés à la sélection. Ce catalogue fournira également le nombre de tokens du prompt système pour chaque modèle.
+Le catalogue `models_params` détermine les chatbots et modèles proposés. Les modèles absents ne sont pas proposés à la sélection. Ce catalogue fournit également le nombre de tokens du prompt système pour chaque modèle. Un changement de chatbot, de mode ou de modèle signale les résultats devenus périmés sans déclencher de calcul.
 
 #### FR-16 — Garder le chatbot, le modèle et la conversation visibles
 
-L’interface principale présente systématiquement le nom du chatbot, le modèle sélectionné et la conversation de Camille, sans exiger l’ouverture des paramètres avancés. Le chatbot et le modèle s’appliquent à tous les blocs. Les autres paramètres de calcul sont regroupés dans les paramètres avancés.
+Après l’accueil à deux voies et le choix manuel, l’en-tête du fil présente le chatbot et le modèle sélectionné, consultables et modifiables sans ouvrir les paramètres avancés. Le chatbot et le modèle s’appliquent à tous les échanges. Les échanges antérieurs sont des cartes chronologiques compactes et dépliables ; l’éditeur courant reste ouvert. Un retour à l’étape précédente conserve les textes. Les autres paramètres de calcul sont regroupés dans les paramètres avancés.
+
+#### FR-25 — Importer uniquement un partage public Mistral dans le parcours publié
+
+Le parcours publié propose et accepte un lien public Mistral. Une URL d’un autre fournisseur ou non reconnue est refusée localement, sans requête distante ni consentement consommé ; la saisie manuelle reste accessible. L’endpoint d’import publié refuse aussi un `shareUrl` non Mistral lors d’un appel direct. Après consentement ponctuel, les échanges exploitables et les avertissements sont présentés en prévisualisation avant tout ajout. Une conversation existante contenant du texte n’est remplacée qu’après une confirmation distincte. Un refus, une annulation, un échec ou une prévisualisation inexploitable préserve la conversation ; aucun import partiel n’est ajouté.
 
 ### 5.2 Saisie et comptage
 
@@ -217,7 +221,7 @@ Les formules, constantes initiales, hypothèses et sources sont réunies dans [a
 
 Camille dispose d’une action de calcul sur chaque bloc de conversation. Le calcul des impacts est déclenché à sa demande ; une modification de champ ne lance pas automatiquement ce calcul. L’action individuelle calcule le résultat du bloc concerné sans déclencher le calcul des impacts des autres blocs.
 
-Cette action actualise également l’équivalence douche de ce bloc avec les paramètres courants. Si seule cette équivalence est périmée, les impacts déjà valides peuvent être réutilisés. « Tout calculer » actualise les équivalences de tous les blocs ; « Recalculer le total » actualise uniquement celle du total. Une équivalence individuelle périmée est masquée et signalée comme à recalculer, même si l’équivalence du total est à jour.
+Cette action présente près des textes le carbone et l’eau estimés pour cet échange, avec leurs unités et leur incertitude. L’énergie reste calculée pour chaque échange, mais n’est présentée que dans le bilan. L’équivalence douche est réservée au bilan ; « Recalculer le total » peut la mettre à jour à partir du carbone encore valide sans recalculer les impacts des échanges.
 
 Un bloc peut être calculé même si les blocs précédents n’ont pas encore de résultat : leur texte suffit à reconstituer son historique. Un résultat périmé est signalé comme à recalculer et n’est jamais présenté comme actuel.
 
@@ -243,6 +247,8 @@ Si une modification rend périmé le résultat d’un bloc, le calculateur ident
 - Le total est de nouveau disponible uniquement à partir de résultats à jour ; il n’est pas affiché avec un simple avertissement de péremption.
 
 Les blocs entièrement vides sont ignorés et ne bloquent pas l’affichage du total. Un bloc renseigné mais jamais calculé nécessite un calcul avant de pouvoir afficher un total complet ; il ne doit pas être assimilé silencieusement à un impact nul.
+
+Dans le bilan, cet état est nommé « total incomplet » ; les échanges non calculés ou périmés sont indiqués avec un accès à leurs cartes. Aucun total ancien ou partiel n’est présenté comme actuel.
 
 ### 5.4 Réglages et données géographiques
 
@@ -271,7 +277,7 @@ Une section discrète « Paramètres avancés » permet de modifier les paramèt
 
 - Les paramètres s’appliquent à toute la conversation et ne sont pas configurés séparément pour chaque bloc.
 - Toute modification invalide les résultats qui en dépendent, sans lancer automatiquement de calcul.
-- Un changement limité à la référence de douche invalide les équivalences concernées sans invalider les impacts énergie, eau et carbone des blocs.
+- Un changement limité à la référence de douche invalide l’équivalence du bilan sans invalider les impacts énergie, eau et carbone des blocs.
 - Les noms, unités et valeurs des paramètres modifiables sont disponibles dans la section avancée. Le nombre de tokens du prompt système n’y apparaît pas.
 
 Les contrôles minimaux sont définis dans NFR-6 ; les bornes supplémentaires seront arrêtées avant développement (D-2). Les formules restent celles du modèle retenu.
@@ -308,11 +314,12 @@ Chaque résultat numérique est présenté sous la forme d’une valeur estimée
 
 **Conséquences vérifiables :**
 
-- La consommation électrique, la consommation d’eau et les émissions carbone sont affichées comme des estimations pour chaque bloc et pour le total.
-- L’équivalence carbone en durée de douche reste elle aussi présentée comme une estimation.
+- Chaque échange affiche le carbone et l’eau estimés près de ses textes. Le bilan valide affiche carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations après une action explicite.
+- L’équivalence carbone en durée de douche, affichée uniquement dans le bilan, reste présentée comme une estimation.
 - L’information sur l’incertitude est accessible dans le parcours courant, sans ouvrir les paramètres avancés.
 - Aucun intervalle de confiance ni précision garantie n’est ajouté sans méthode définie.
 - Le risque de sécheresse reste un indicateur catégoriel associé au pays retenu, et non une grandeur à sommer.
+- Les valeurs internes d’énergie, d’eau et de carbone restent non arrondies par échange et pour le total. Seul l’affichage adapte l’unité et utilise au plus trois chiffres significatifs, une virgule décimale française et le groupement des milliers selon `EXPERIENCE.md` : carbone de µgCO₂e à tCO₂e, eau de µL à ML, électricité de mWh à GWh et durée de douche de ms à j. Zéro, valeur sous la plus petite unité, changement d’unité après arrondi et dépassement de l’unité maximale sont traités explicitement ; les unités abrégées ont un nom accessible complet.
 
 #### FR-5 — Comparer le carbone à une durée de douche chaude locale
 
@@ -355,19 +362,19 @@ Les conseils seront contextualisés sans être personnalisés : conserver le con
 
 ### NFR-1 — Utilisation sur ordinateur et mobile
 
-La page doit permettre la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. Les critères détaillés d’adaptation de l’interface restent à définir lors de la conception UX.
+La page permet la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. L’accueil présente les deux voies, l’import Mistral en premier et la saisie manuelle en second. Le fil et le bilan suivent [DESIGN.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md) et [EXPERIENCE.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md) du 23 septembre 2026 ; ces documents priment sur les quatre maquettes statiques en cas d’écart.
 
 ### NFR-2 — Compatibilité avec GitHub Pages
 
 La page livrée doit être hébergeable sur GitHub Pages et s’intégrer au site existant `felixmortas.com`. Le choix du langage et des outils de développement est libre, sous réserve de respecter cette contrainte. Le contexte technique fourni par Felix est conservé dans [addendum.md](addendum.md#intégration-au-site-existant).
 
-L’étude de faisabilité de l’import par lien devra tenir compte de cet hébergement. Aucun service serveur complémentaire n’est prévu.
+La page reste hébergeable statiquement. La récupération distante des liens publics Mistral utilise l’endpoint d’import HTML du Worker du projet, résolu depuis la configuration active ; aucun autre service réseau n’est ajouté pour le calcul.
 
 ### NFR-3 — Garder les conversations dans le navigateur
 
 Par défaut, les messages, réponses, raisonnements, artifacts, fichiers locaux, calculs, tokenisation et comparaisons restent dans le navigateur, en mémoire de session, sans analytics ni journal distant. Le comptage, le calcul des impacts et la comparaison des versions d’artifacts sont réalisés localement.
 
-L’import d’un lien de partage public constitue une exception strictement limitée : avant chaque requête, la personne doit consentir explicitement à l’envoi de l’URL canonique de partage à `corsproxy.io`, intermédiaire tiers retenu pour récupérer la page publique. Le calculateur ne transmet ni bloc local, fichier ajouté, résultat ni paramètre de calcul. Selon la politique du fournisseur, l’URL, l’adresse IP, l’agent utilisateur et des métadonnées de requête sont transmis ; le produit ne doit pas promettre que la page ou son contenu ne seront jamais traités par ce tiers. Le refus, l’annulation ou l’indisponibilité du tiers ne génère aucune requête distante, maintient les données dans le navigateur et laisse l’import manuel disponible.
+L’import d’un lien public Mistral constitue une exception strictement limitée. Après validation et canonicalisation locales, la personne consent explicitement, pour chaque requête, à l’envoi de cette URL canonique à l’endpoint Worker actif, affiché intégralement dans le dialogue. Le navigateur transmet un `POST` borné dont le corps ne contient que `shareUrl` ; ni texte local, fichier, résultat ni paramètre de calcul ne sont transmis. Le Worker reçoit l’URL et peut traiter la page ainsi que des métadonnées de requête selon sa politique documentée. L’endpoint est contraint par la configuration autorisée, sans URL libre. Une URL non Mistral, un refus, une annulation, une modification de l’URL ou de la configuration avant consentement, une erreur réseau ou un format inconnu ne déclenchent aucun import et préservent la conversation. Les liens non Mistral sont refusés avant toute requête distante.
 
 ### NFR-4 — Ne pas conserver la session après fermeture
 
@@ -399,9 +406,9 @@ Les données de catalogue indispensables manquantes ne sont pas inventées : le 
 
 ### NFR-7 — Rendre le parcours utilisable au clavier et sur petit écran
 
-[ASSUMPTION A-1] Ces critères de base concrétisent l’usage grand public demandé et seront précisés lors de la conception UX.
+Ces critères appliquent les décisions UX approuvées le 23 septembre 2026.
 
-Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Un résultat périmé ou un risque de sécheresse ne se distingue pas uniquement par sa couleur. Sur mobile, les actions de calcul, les résultats et la correction des champs restent accessibles sans dépendre du survol.
+Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Les états périmés, les erreurs et les facteurs de repli portent un texte et ne dépendent pas seulement de la couleur. Le parcours reste utilisable à 320 px, aux zooms 200 % et 400 %, avec des cibles d’au moins 44 × 44 px et sans commande réservée au survol. Les dialogues de consentement et de remplacement sont distincts, avec fond inerte, focus initial sur l’action conservatrice, focus retenu dans le dialogue, fermeture par Échap et restitution au déclencheur. Après prévisualisation, seuls les comptes d’échanges et d’avertissements sont annoncés, puis le focus va au titre ; après ajout d’un échange, il va à la nouvelle question. Les annonces de péremption restent concises.
 
 Ces critères concrétisent l’usage grand public sur ordinateur et mobile ; ils ne constituent pas une déclaration de certification d’accessibilité.
 
@@ -410,7 +417,7 @@ Ces critères concrétisent l’usage grand public sur ordinateur et mobile ; il
 
 **SM-1 — Signal retenu par Felix :** recevoir des retours positifs par email ou sur LinkedIn. Felix apprécie directement ces retours ; aucun volume, échéance ni collecte automatisée n’est imposé. Ce signal concerne l’expérience globale, la compréhension des résultats et les conseils ; il ne prouve pas la justesse scientifique ni une baisse réelle des impacts.
 
-Avant publication, vérifier des scénarios représentatifs : premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact.
+Avant publication, vérifier des scénarios représentatifs : les deux voies d’accueil ; choix de modèle ChatGPT et des modes Mistral ; refus local d’un lien non Mistral et refus par le Worker lors d’un appel direct ; consentement avant réseau, prévisualisation et remplacement confirmé ; premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Vérifier également les unités et seuils sur des valeurs représentatives, le clavier, 320 px et les zooms 200 % et 400 %. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact.
 
 ## 8. Dépendances et points à préciser
 
@@ -418,17 +425,17 @@ Le cadrage produit est établi. Les points ci-dessous relèvent de la conception
 
 | ID | Livrable ou décision restante | Responsable | À résoudre avant |
 |---|---|---|---|
-| D-1 | Fournir le catalogue, paramètres totaux/activés, tokens système, tarifs tokens, pays fournisseurs, facteurs, risques et valeurs « Monde » ; contrôler leur cohérence avec les modèles ChatGPT imposés. | Felix pour la fourniture ; responsable technique pour la validation | Intégration des données et publication |
-| D-2 | Définir segmentation des mots en fallback, précision d’affichage, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche pour éviter des paramètres contradictoires ; fixer des exemples de référence sans modifier les règles produit. | Responsable technique | Développement du moteur et de ses tests |
+| D-1 | Valider le catalogue, les facteurs et valeurs « Monde », les modèles de référence ChatGPT et Mistral, ainsi que la résolution du pays et des facteurs pour `mistral-small` et `mistral-large` ; aligner les clés fournisseur `MistralAI` / `Mistral AI` et centraliser la correspondance rapide/réflexion. | Felix pour les données ; responsable technique pour la validation | Story 6.1 et publication |
+| D-2 | Conserver segmentation des mots, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche ; valider sur des données représentatives les seuils, extrêmes et changements d’unité après arrondi du contrat d’affichage `EXPERIENCE.md`, sans modifier les valeurs internes ni les formules. | Responsable technique | Livraison de l’affichage de l’epic 6 |
 | D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; saisie manuelle en cas d’échec, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
-| D-4 | Documenter avant publication l’exception d’import distant : fournisseur retenu (`corsproxy.io`), origine, données transmises, juridiction et politique applicables, rétention et traitement déclarés, mécanisme de consentement explicite par requête et revue des risques. Vérifier à chaque publication les documents du fournisseur ; toute évolution déclenche une revue de l’exception et, si nécessaire, un retour au parcours manuel. | Responsable technique ; Felix pour la validation de la décision et du fournisseur | Activation ou publication de l’import distant |
-| D-5 | Rédiger les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; arrêter disposition responsive et précision des unités. | Responsable UX ; Felix pour la validation éditoriale | Publication |
+| D-4 | Documenter avant publication l’exception d’import via le Worker actif : endpoint affiché, `POST` borné à `shareUrl`, données et métadonnées traitées, origine, juridiction, politique et rétention déclarées, consentement ponctuel par URL et endpoint, restriction Mistral à la frontière publique et revue des risques. Vérifier ces informations à chaque publication ; toute évolution déclenche une nouvelle revue et, si nécessaire, un retour à la saisie manuelle. | Responsable technique ; Felix pour la validation | Activation ou publication de l’import distant |
+| D-5 | Rédiger et valider les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; appliquer les spines `DESIGN.md` et `EXPERIENCE.md` et vérifier l’affichage adapté des unités sur des exemples réels. | Responsable UX ; Felix pour la validation éditoriale | Publication |
 | D-6 | Préparer la calibration des ratios tarifaires et la provenance datée des données ; choisir le processus de maintenance du catalogue. | Responsable technique ; Felix pour la maintenance | Publication, puis toute mise à jour de données |
 
 Les intitulés « responsable technique », « responsable architecture » et « responsable UX » désignent des rôles à attribuer par Felix, pas des personnes déjà engagées.
 
 ## 9. Hypothèses de conception à suivre
 
-- **A-1 — Données numériques :** les règles minimales de validation de NFR-6 et les critères d’utilisabilité de NFR-7 concrétisent les contraintes exprimées. Leurs détails seront arrêtés pendant la conception, avant développement.
+- **A-1 — Données numériques :** les règles minimales de validation de NFR-6 concrétisent les contraintes exprimées. Leurs bornes détaillées restent à arrêter ; les critères UX de NFR-7 sont des décisions approuvées.
 
 Les hypothèses scientifiques (cache intégral, ratios tarifaires, données de modèles, matériel et eau sur site) sont des conventions explicites dans l’addendum. Elles ne deviennent pas des observations du service réel.
