@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trois directions mobiles · Calculateur d’impact IA</title>
+  <style>
+    /* Direction A: fond #F4F0E8, encre #25332E, accent #C85B40, surface #FFFCF6, sauge #E4EAE1. */
+    /* Direction B: fond #E9F0FB, encre #17223F, accent #6455D8, surface #FFFFFF, lavande #F0ECFF. */
+    /* Direction C: fond #E8ECE8, encre #102922, accent #D4FF60, surface #102922, panneau #1D3E34. */
+    * { box-sizing: border-box; }
+    html { background: #edf0ed; }
+    body { margin: 0; color: #242d29; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .intro { max-width: 1280px; margin: 0 auto; padding: 42px 28px 16px; }
+    .intro small { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #6b7770; }
+    .intro h1 { margin: 9px 0 10px; font-size: clamp(28px,4vw,45px); line-height: 1.05; letter-spacing: -.045em; }
+    .intro p { max-width: 720px; margin: 0; line-height: 1.55; color: #63716a; }
+    .gallery { max-width: 1390px; margin: 0 auto; padding: 28px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 28px; align-items: start; }
+    .direction { min-width: 0; }
+    .direction > h2 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.03em; }
+    .rationale { min-height: 74px; max-width: 390px; margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: #596760; }
+    .phone { width: min(100%,390px); height: 844px; border: 8px solid #242a27; border-radius: 42px; overflow: hidden; box-shadow: 0 20px 45px #263e3030, 0 4px 12px #25362a18; position: relative; isolation: isolate; }
+    .phone::before { content: ""; width: 112px; height: 21px; border-radius: 0 0 15px 15px; background: #242a27; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+    .screen { height: 100%; overflow: hidden; position: relative; }
+    .status { height: 34px; padding: 13px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px; font-weight: 700; letter-spacing: .01em; }
+    .status .right { font-size: 10px; letter-spacing: .12em; }
+    .state { width: min(100%,390px); margin-top: 14px; padding: 14px 16px; border-radius: 18px; font-size: 12px; line-height: 1.45; }
+    .state strong { display: block; margin-bottom: 3px; font-size: 13px; }
+    .state p { margin: 0; }
+    button { font: inherit; cursor: default; }
+
+    /* A — a calm, printed-field-guide rhythm; the chat guide speaks first. */
+    .a .screen { background: #f4f0e8; color: #25332e; }
+    .a .status { color: #25332e; }
+    .a .top { display: flex; justify-content: space-between; align-items: center; padding: 20px 21px 18px; border-bottom: 1px solid #d8d9cf; }
+    .a .brand { display: flex; gap: 9px; align-items: center; font-size: 13px; font-weight: 800; letter-spacing: -.025em; }
+    .a .brandmark { width: 23px; height: 23px; background: #c85b40; border-radius: 7px 7px 3px 7px; display: grid; place-items: center; color: white; font-size: 15px; }
+    .a .top span:last-child { color: #77847b; font-size: 11px; }
+    .a .body { padding: 27px 21px; }
+    .a .eyebrow { color: #a0442d; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; font-weight: 800; }
+    .a h3 { max-width: 320px; margin: 12px 0 22px; font-family: Georgia, "Times New Roman", serif; font-size: 33px; font-weight: 500; letter-spacing: -.055em; line-height: 1.04; }
+    .a .guide { display: flex; align-items: flex-end; gap: 9px; margin-bottom: 16px; }
+    .a .avatar { flex: none; width: 29px; height: 29px; border-radius: 50%; background: #dce3d8; display: grid; place-items: center; color: #43624e; font-family: Georgia, serif; font-size: 18px; }
+    .a .bubble { background: #fffcf6; border: 1px solid #e5e1d6; border-radius: 17px 17px 17px 4px; padding: 15px 16px; font-size: 14px; line-height: 1.45; box-shadow: 0 3px 8px #39482b0d; }
+    .a .choice { margin-left: 38px; padding: 17px; background: #fffcf6; border: 1px solid #deddd4; border-radius: 18px; }
+    .a .choice .label { font-size: 11px; color: #8c624a; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .a .choice h4 { margin: 7px 0 5px; font-size: 18px; letter-spacing: -.035em; }
+    .a .choice p { margin: 0 0 15px; color: #66736a; font-size: 12px; line-height: 1.45; }
+    .a .url { padding: 12px; border: 1px solid #d9dcd3; border-radius: 9px; color: #9ba49a; font-size: 12px; background: #faf9f4; }
+    .a .primary { width: 100%; margin-top: 10px; background: #c85b40; border: 0; border-radius: 9px; color: white; padding: 12px; font-size: 13px; font-weight: 700; }
+    .a .manual { display: flex; align-items: flex-start; gap: 11px; margin: 19px 0 0 38px; color: #25332e; }
+    .a .manual .arrow { font-size: 21px; line-height: 1; color: #c85b40; }
+    .a .manual b { display: block; font-size: 14px; }
+    .a .manual small { display: block; margin-top: 3px; color: #727f74; font-size: 11px; }
+    .a .bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 22px 21px 28px; background: linear-gradient(transparent,#f4f0e8 18%); }
+    .a .bottom .progress { display: flex; align-items: center; gap: 7px; color: #8b958a; font-size: 11px; }
+    .a .bottom .progress i { width: 22px; height: 4px; border-radius: 4px; background: #c85b40; }
+    .a .bottom .progress i:nth-child(n+2) { background: #d8dbd1; }
+    .a .state { background: #fffcf6; border: 1px solid #dadbd1; color: #394a3f; }
+
+    /* B — an immediately recognizable messenger: compact header, animated-feeling bubbles, pill actions. */
+    .b .screen { background: #e9f0fb; color: #17223f; }
+    .b .status { color: #263357; }
+    .b .top { margin: 10px 12px 0; height: 57px; border-radius: 18px; background: #fff; display: flex; align-items: center; gap: 10px; padding: 0 13px; box-shadow: 0 4px 15px #273b7612; }
+    .b .spark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 11px; background: #6455d8; color: white; font-size: 21px; }
+    .b .top b { font-size: 13px; }
+    .b .top small { display: block; margin-top: 2px; font-size: 10px; color: #7782a0; }
+    .b .top .dots { margin-left: auto; color: #8792b1; font-size: 20px; }
+    .b .body { padding: 30px 17px 0; }
+    .b .day { text-align: center; text-transform: uppercase; letter-spacing: .12em; color: #8a97b6; font-size: 10px; font-weight: 700; margin-bottom: 26px; }
+    .b .msg { max-width: 280px; background: #fff; border-radius: 17px 17px 17px 5px; padding: 15px; font-size: 14px; line-height: 1.43; box-shadow: 0 4px 15px #304c7712; }
+    .b .msg strong { font-weight: 800; }
+    .b .time { margin: 7px 0 17px 4px; color: #8895af; font-size: 10px; }
+    .b .prompt { margin-left: 34px; max-width: 300px; background: #f0ecff; border: 1px solid #dbd4fb; color: #302776; border-radius: 17px 17px 5px 17px; padding: 13px; font-size: 13px; line-height: 1.42; }
+    .b .options { margin: 18px 0 0 34px; }
+    .b .option { background: #fff; box-shadow: 0 4px 15px #304c7712; border: 1px solid #e4e8f3; border-radius: 17px; margin-bottom: 10px; padding: 14px; }
+    .b .option .row { display: flex; align-items: center; gap: 9px; }
+    .b .option .icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 10px; background: #ece9ff; color: #6455d8; font-size: 16px; }
+    .b .option b { font-size: 13px; }
+    .b .option small { display: block; margin: 4px 0 0 40px; color: #72809a; font-size: 11px; line-height: 1.35; }
+    .b .option.primary { border-color: #bfb8f5; }
+    .b .option.primary .input { border: 1px solid #dde2ef; border-radius: 10px; margin-top: 11px; padding: 11px; color: #9ca6bb; font-size: 11px; }
+    .b .option.primary button { margin-top: 9px; width: 100%; background: #6455d8; border: 0; color: white; border-radius: 10px; padding: 10px; font-size: 12px; font-weight: 800; }
+    .b .compose { position: absolute; bottom: 19px; left: 13px; right: 13px; display: flex; align-items: center; gap: 9px; padding: 8px; border-radius: 18px; background: white; box-shadow: 0 4px 20px #25427622; }
+    .b .compose span { flex: 1; color: #9aa6ba; font-size: 12px; padding-left: 8px; }
+    .b .compose b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 11px; background: #dcd8fb; color: #6455d8; }
+    .b .state { background: #f0ecff; color: #42388d; border: 1px solid #d7d0fa; }
+
+    /* C — contemporary impact instrument, dense but human; high-contrast panels and a bright action. */
+    .c .screen { background: #102922; color: #eef6eb; }
+    .c .status { color: #eef6eb; }
+    .c .top { display: flex; align-items: center; justify-content: space-between; padding: 19px 20px 13px; }
+    .c .brand { font-size: 17px; font-weight: 850; letter-spacing: -.06em; }
+    .c .brand em { color: #d4ff60; font-style: normal; }
+    .c .counter { border: 1px solid #436256; border-radius: 100px; padding: 7px 10px; color: #b7c9ba; font-size: 10px; }
+    .c .body { padding: 21px 20px; }
+    .c .index { display: flex; align-items: center; gap: 8px; color: #a6baa6; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: .15em; }
+    .c .index::before { content: ""; width: 17px; height: 2px; background: #d4ff60; }
+    .c h3 { margin: 17px 0 13px; font-size: 36px; line-height: 1.02; letter-spacing: -.07em; max-width: 300px; }
+    .c h3 span { color: #d4ff60; }
+    .c .subtitle { margin: 0 0 22px; color: #b4c8b5; font-size: 13px; line-height: 1.5; }
+    .c .ask { border: 1px solid #47685a; border-radius: 15px; padding: 15px; font-size: 13px; line-height: 1.4; margin-bottom: 13px; }
+    .c .ask small { display: block; color: #d4ff60; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; font-size: 9px; margin-bottom: 6px; }
+    .c .card { background: #1d3e34; border: 1px solid #406558; border-radius: 17px; padding: 17px; }
+    .c .card .line { display: flex; justify-content: space-between; align-items: center; }
+    .c .card .num { color: #d4ff60; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+    .c .card .tag { border: 1px solid #5a7667; border-radius: 100px; color: #b9c9b7; padding: 5px 8px; font-size: 9px; }
+    .c .card h4 { margin: 13px 0 5px; font-size: 20px; letter-spacing: -.045em; }
+    .c .card p { color: #adc3ae; font-size: 11px; line-height: 1.4; margin: 0 0 14px; }
+    .c .card .url { color: #7f9d8e; background: #143127; border: 1px solid #426150; border-radius: 9px; padding: 11px; font-size: 11px; }
+    .c .card button { width: 100%; border: 0; border-radius: 9px; margin-top: 9px; padding: 12px; color: #102922; background: #d4ff60; font-size: 12px; font-weight: 850; }
+    .c .alternate { margin-top: 12px; border: 1px solid #416254; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; padding: 15px; }
+    .c .alternate b { font-size: 12px; }
+    .c .alternate small { display: block; color: #a6bba7; font-size: 10px; margin-top: 3px; }
+    .c .alternate .arrow { color: #d4ff60; font-size: 19px; }
+    .c .foot { position: absolute; bottom: 24px; left: 20px; right: 20px; color: #87a18d; border-top: 1px solid #325447; padding-top: 13px; font-size: 10px; line-height: 1.35; }
+    .c .state { background: #1d3e34; color: #d2ecd0; border: 1px solid #406558; }
+    @media (max-width: 1050px) { .gallery { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 720px) { .intro { padding: 28px 18px 6px; } .gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 22px 18px 32px; gap: 18px; } .direction { flex: 0 0 min(390px,calc(100vw - 38px)); scroll-snap-align: center; } .rationale { min-height: 0; } }
+  </style>
+</head>
+<body>
+  <header class="intro">
+    <small>Exploration UX · mobile · 23 septembre 2026</small>
+    <h1>Une conversation pour commencer</h1>
+    <p>Le même moment de départ, décliné en trois caractères visuels. Dans chaque piste, Camille peut importer un lien Mistral ou saisir un échange avec n’importe quel chatbot.</p>
+  </header>
+  <main class="gallery">
+    <section class="direction a" aria-labelledby="direction-a">
+      <h2 id="direction-a">01 · Le guide calme</h2>
+      <p class="rationale">Une voix d’accompagnement pose une question à la fois, dans une page chaleureuse proche d’un carnet. Les choix restent visibles, sans transformer l’accueil en formulaire.</p>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span class="right">●●●  ▰  ▣</span></div>
+        <div class="top"><div class="brand"><span class="brandmark">✳</span> Empreinte IA</div><span>À propos</span></div>
+        <div class="body">
+          <div class="eyebrow">Votre conversation, simplement</div>
+          <h3>Voyons ce que votre échange représente.</h3>
+          <div class="guide"><div class="avatar">✳</div><div class="bubble">Vous avez un lien de conversation Mistral à partager ?</div></div>
+          <div class="choice">
+            <div class="label">Option la plus rapide</div>
+            <h4>Importer depuis Mistral</h4>
+            <p>Collez le lien de partage de votre conversation.</p>
+            <div class="url">https://chat.mistral.ai/chat/…</div>
+            <button class="primary">Importer la conversation →</button>
+          </div>
+          <div class="manual"><span class="arrow">↗</span><div><b>Je vais saisir un échange</b><small>Choisir le chatbot, puis coller la question et la réponse.</small></div></div>
+        </div>
+        <div class="bottom"><div class="progress"><i></i><i></i><i></i><span>Quelques étapes, à votre rythme</span></div></div>
+      </div></div>
+      <div class="state"><strong>Étape suivante · saisie manuelle</strong><p>« Quel chatbot avez-vous utilisé ? » Puis un modèle de référence est proposé et reste modifiable.</p></div>
+    </section>
+    <section class="direction b" aria-labelledby="direction-b">
+      <h2 id="direction-b">02 · La messagerie familière</h2>
+      <p class="rationale">Les bulles, horodatages et réponses proposées empruntent directement les codes d’une messagerie. L’accueil ressemble déjà à la conversation que Camille va reconstituer.</p>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span class="right">●●●  ▰  ▣</span></div>
+        <div class="top"><div class="spark">✦</div><div><b>Empreinte IA</b><small>Prêt à vous guider</small></div><span class="dots">···</span></div>
+        <div class="body">
+          <div class="day">Aujourd’hui</div>
+          <div class="msg">Bonjour 👋<br><strong>Estimons l’impact de votre conversation IA.</strong></div>
+          <div class="time">Empreinte IA · 9:41</div>
+          <div class="prompt">Comment souhaitez-vous commencer ?</div>
+          <div class="options">
+            <div class="option primary"><div class="row"><span class="icon">↗</span><b>Importer depuis Mistral</b></div><small>Collez le lien de partage de votre conversation.</small><div class="input">https://chat.mistral.ai/chat/…</div><button>Importer →</button></div>
+            <div class="option"><div class="row"><span class="icon">✎</span><b>Saisir un échange</b></div><small>Choisissez le chatbot, puis collez question et réponse.</small></div>
+          </div>
+        </div>
+        <div class="compose"><span>Votre conversation commence ici</span><b>➜</b></div>
+      </div></div>
+      <div class="state"><strong>Étape suivante · un échange saisi</strong><p>La question et la réponse deviennent deux bulles. « Calculer cet échange » révèle carbone et eau, puis « Ajouter un échange ».</p></div>
+    </section>
+    <section class="direction c" aria-labelledby="direction-c">
+      <h2 id="direction-c">03 · Le studio d’impact</h2>
+      <p class="rationale">Une interface sombre et précise donne un sentiment d’outil de mesure accessible. Les étapes numérotées et le contraste fort indiquent immédiatement où agir.</p>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span class="right">●●●  ▰  ▣</span></div>
+        <div class="top"><div class="brand">empreinte<span>·</span><em>ia</em></div><span class="counter">Nouvelle estimation</span></div>
+        <div class="body">
+          <div class="index">01 / Commencer</div>
+          <h3>Combien pèse votre <span>conversation&nbsp;?</span></h3>
+          <p class="subtitle">Quelques échanges suffisent pour obtenir une estimation claire.</p>
+          <div class="ask"><small>Assistant</small>Vous avez utilisé Mistral ? Collez le lien de votre conversation pour commencer.</div>
+          <div class="card"><div class="line"><span class="num">01 — IMPORT</span><span class="tag">Mistral</span></div><h4>Coller un lien</h4><p>La conversation sera ajoutée en une étape.</p><div class="url">https://chat.mistral.ai/chat/…</div><button>Importer la conversation ↗</button></div>
+          <div class="alternate"><div><b>02 — Saisir un échange</b><small>Autre chatbot ou pas de lien ?</small></div><span class="arrow">↗</span></div>
+        </div>
+        <div class="foot">Ensuite : estimer un échange à tout moment, ou calculer le bilan complet.</div>
+      </div></div>
+      <div class="state"><strong>Étape suivante · mesure visible</strong><p>Une carte compacte montre CO₂e et eau pour l’échange. Le bilan complet ajoute électricité, risque de sécheresse et conseils.</p></div>
+    </section>
+  </main>
+</body>
+</html>

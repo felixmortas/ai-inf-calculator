@@ -1,0 +1,177 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Validation UX — Empreinte IA</title><style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style></head><body><div class="container"><header class="report-header"><div class="title"><h1>Empreinte IA — validation UX</h1><div class="subtitle">DESIGN.md + EXPERIENCE.md</div></div></header><div class="synthesis"><p>Les deux parcours principaux sont couverts. Les remarques sur l'import, les réglages, le bilan incomplet et l'accessibilité ont été intégrées aux spines. Le point critique initial citait l'ancienne architecture CorsProxy ; le produit utilise maintenant le Worker d'import.</p></div><div class="dimension-summary"><div class="dim-card"><div class="dim-name">Couverture des parcours</div><div class="dim-verdict" style="color:var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Complétude des tokens</div><div class="dim-verdict" style="color:var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Couverture des composants</div><div class="dim-verdict" style="color:var(--verdict-thin)">thin</div></div><div class="dim-card"><div class="dim-name">Couverture des états</div><div class="dim-verdict" style="color:var(--verdict-thin)">thin</div></div><div class="dim-card"><div class="dim-name">Références visuelles</div><div class="dim-verdict" style="color:var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Volume et précision</div><div class="dim-verdict" style="color:var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Discipline des sources</div><div class="dim-verdict" style="color:var(--verdict-broken)">broken</div></div><div class="dim-card"><div class="dim-name">Adéquation de la forme</div><div class="dim-verdict" style="color:var(--verdict-strong)">strong</div></div></div><section class="dimension"><details ><summary><h2>Couverture des parcours</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>UJ-1 et UJ-2 présents ; le parcours de réglages et le recalcul du total ont été ajoutés.</p></div></div></details></section><section class="dimension"><details ><summary><h2>Complétude des tokens</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Tokens nommés et résolus ; focus, états et contour interactif précisés.</p></div></div></details></section><section class="dimension"><details open><summary><h2>Couverture des composants</h2><span class="verdict-pill verdict-thin">thin</span></summary><div class="dim-body"><div class="dim-judgment"><p>La revue initiale relevait des composants absents ; consentement, prévisualisation, modèle et paramètres sont désormais décrits.</p></div></div></details></section><section class="dimension"><details open><summary><h2>Couverture des états</h2><span class="verdict-pill verdict-thin">thin</span></summary><div class="dim-body"><div class="dim-judgment"><p>La revue initiale relevait des états manquants ; import, paramètres et bilan incomplet sont désormais couverts.</p></div></div></details></section><section class="dimension"><details ><summary><h2>Références visuelles</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Quatre maquettes ont été promues et liées aux sections pertinentes ; trois surfaces restent décrites par les spines seules, selon le choix de Felix.</p></div></div></details></section><section class="dimension"><details ><summary><h2>Volume et précision</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Le tableau des écarts au produit existant est conservé comme note de migration explicite.</p></div></div></details></section><section class="dimension"><details open><summary><h2>Discipline des sources</h2><span class="verdict-pill verdict-broken">broken</span></summary><div class="dim-body"><div class="dim-judgment"><p>Le point critique initial provient de l’architecture CorsProxy antérieure. Le code et la spécification de migration confirment le Worker actuel ; le dialogue affiche l’endpoint configuré.</p></div></div></details></section><section class="dimension"><details ><summary><h2>Adéquation de la forme</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Sections canoniques et parcours nommés présents.</p></div></div></details></section><section class="reviewer-section"><details open><summary><h2>Constats consolidés · couverture et accessibilité</h2><span class="reviewer-source">review-rubric.md · review-accessibility.md</span></summary><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-critical">critical</span><h3 class="finding-title">Destination d’import</h3><span class="finding-location">Discipline des sources</span></header><div class="finding-note">Le reviewer citait CorsProxy depuis AD-8. La migration implémentée utilise le Worker ; la source récente est ajoutée et la destination doit provenir de la configuration active.</div><div class="finding-fix"><strong>État :</strong> résolu</div></article><article class="finding"><header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Contraste des contrôles</h3><span class="finding-location">Accessibilité</span></header><div class="finding-note">Le contour initial de Canopée claire était trop pâle. Un token interactif #5C7866 et ses usages ont été ajoutés aux spines et maquettes finales.</div><div class="finding-fix"><strong>État :</strong> résolu</div></article><article class="finding"><header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Annonce de la prévisualisation</h3><span class="finding-location">Accessibilité</span></header><div class="finding-note">Annoncer seulement le nombre d’échanges et d’avertissements ; placer le focus sur le titre, sans aria-live sur tout le contenu.</div><div class="finding-fix"><strong>État :</strong> résolu dans la spécification</div></article><article class="finding"><header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Confirmation du remplacement</h3><span class="finding-location">Accessibilité</span></header><div class="finding-note">Dialogue distinct avec focus initial sur conserver, Échap, fond inerte et restitution du focus.</div><div class="finding-fix"><strong>État :</strong> résolu dans la spécification</div></article><article class="finding"><header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Composants et états manquants</h3><span class="finding-location">Couverture</span></header><div class="finding-note">Import, modèle, paramètres, total incomplet et recalcul ont été définis.</div><div class="finding-fix"><strong>État :</strong> résolu</div></article><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Rendu des unités</h3><span class="finding-location">Couverture et accessibilité</span></header><div class="finding-note">Séries d’unités, seuils, noms vocaux et cas extrêmes ont été précisés ; la précision reste à vérifier sur données réelles.</div><div class="finding-fix"><strong>État :</strong> hypothèse de précision ouverte</div></article><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Maquettes des états secondaires</h3><span class="finding-location">Références visuelles</span></header><div class="finding-note">Choix du modèle, réglages et péremption restent sans maquette dédiée. Felix a validé une construction depuis les spines.</div><div class="finding-fix"><strong>État :</strong> accepté</div></article><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Focus et annonces groupées</h3><span class="finding-location">Accessibilité</span></header><div class="finding-note">Transitions entre étapes, import confirmé et péremption multiple ont maintenant un contrat de focus et d’annonce.</div><div class="finding-fix"><strong>État :</strong> résolu dans la spécification</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Vocabulaire grand public</h3><span class="finding-location">Accessibilité</span></header><div class="finding-note">Le parcours emploie « Document ou code généré » et explique les unités et termes techniques.</div><div class="finding-fix"><strong>État :</strong> résolu</div></article></div></details></section><div class="mechanical"><h3>Vérifications</h3><ul><li>Chemins des quatre sources et des quatre maquettes résolus.</li><li>Contraste du contour interactif sur blanc : 4,85:1.</li><li>Choix du modèle, paramètres avancés et états périmés restent couverts par les spines seules, selon le choix de Felix.</li></ul></div><footer class="report-footer"><div class="meta"><span>DESIGN.md · EXPERIENCE.md</span><span>Généré : 2026-09-23 18:30 UTC</span></div></footer></div></body></html>
