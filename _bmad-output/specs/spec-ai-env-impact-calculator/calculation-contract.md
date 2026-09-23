@@ -15,7 +15,7 @@ history(i) = S_tokens + Σ[j<i](T(message_j) + T(raisonnement_j) + T(réponse_j)
 output(i) = T(raisonnement_i) + T(réponse_i) + T(diff_artifact_i)
 ```
 
-Tout l’historique est traité comme cache. Le raisonnement absent vaut zéro. Les règles précises de segmentation, diff et arrondi sont à décider avant les tests.
+Tout l’historique est traité comme cache. Le raisonnement absent vaut zéro. Le repli segmente les mots aux caractères non alphanumériques ; la granularité du diff d’artifact reste libre si les invariants de comptage sont respectés.
 
 ## Énergie IT
 
@@ -57,3 +57,7 @@ durée_secondes = 60 × C / carbone_douche_min
 ```
 
 Le facteur vient du pays utilisateur, indépendamment du pays d’hébergement. Les paramètres sont ajustables, mais la relation températures/énergie par litre doit être définie avant développement pour éviter des valeurs contradictoires.
+
+## Projection des unités
+
+Les résultats par échange et les totaux restent non arrondis en Wh, gCO₂e et L avant présentation. Seul l’affichage applique au plus trois chiffres significatifs et les séries de `EXPERIENCE.md` : carbone µgCO₂e à tCO₂e, eau µL à ML, électricité mWh à GWh, durée de douche ms à j. Il utilise la virgule française et un nom accessible complet pour chaque unité abrégée ; zéro, sous-seuil, bascule d’unité après arrondi et dépassement de l’unité maximale suivent ce contrat UX. Les seuils et extrêmes sont validés sur des données représentatives avant livraison.
