@@ -2,13 +2,18 @@
 title: Epics et stories — Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-18
-updated: 2026-09-20
+updated: 2026-09-23
 stepsCompleted: [1, 2, 3, 4]
+previousWorkflowCompleted: [1, 2, 3, 4]
 targetedValidations:
   - epic: 5
     source: sprint-change-proposal-2026-09-20.md
     status: confirmed-with-dispatch-order
     date: 2026-09-20
+  - epic: 6
+    source: sprint-change-proposal-2026-09-23.md
+    status: validated
+    date: 2026-09-23
 inputDocuments:
   - prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - architecture/architecture-ai-env-impact-calculator-2026-09-18/ARCHITECTURE-SPINE.md
@@ -22,21 +27,24 @@ inputDocuments:
   - ../specs/spec-import-chatgpt-share/stories/4-consentement-informe-avant-import-distant.md
   - ../specs/spec-import-chatgpt-share/stories/5-passerelle-proxy-tiers-bornee-et-allowlistee.md
   - ../specs/spec-import-chatgpt-share/stories/6-documenter-et-verifier-la-frontiere-d-import-distant.md
+  - sprint-change-proposal-2026-09-23.md
+  - ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
+  - ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
 ---
 
 # Calculateur d’empreinte environnementale des LLM — Epic Breakdown
 
 ## Overview
 
-Ce document décompose les exigences validées du calculateur d’impact environnemental des conversations avec LLM. Il sera complété avec la couverture et les stories après validation de cet inventaire.
+Ce document conserve les epics 1 à 5 comme trace des versions livrées et prépare l’epic 6 issu de la proposition de changement approuvée le 23 septembre 2026. Pour l’epic 6, le PRD, l’architecture, la SPEC du calculateur et les spines UX mis à jour priment sur les anciens critères d’affichage et d’import des stories terminées. La SPEC d’import multi-fournisseur reste une trace historique de l’epic 5.
 
 ## Requirements Inventory
 
 ### Functional Requirements
 
-FR-1: Résoudre pour toute conversation ChatGPT le modèle de référence `gpt-5.6-luna` sans abonnement et `gpt-5.6-terra` avec abonnement.
+FR-1: Proposer pour ChatGPT `gpt-5.6-luna` sans abonnement ou `gpt-5.6-terra` avec abonnement comme estimation initiale, modifiable directement par tout modèle ChatGPT valide du catalogue.
 
-FR-2: Permettre, pour les autres fournisseurs, de choisir un modèle du catalogue local applicable à toute la conversation.
+FR-2: Permettre pour tout chatbot de choisir un modèle valide du catalogue pour toute la conversation ; proposer pour Mistral `mistral-small` en mode rapide ou `mistral-large` en mode réflexion, sans inférer un mode inconnu du texte importé ; un changement rend les résultats dépendants périmés sans calcul automatique.
 
 FR-3: Ne compter que les textes fournis, sans reconstituer de raisonnement invisible, hormis les tokens de prompt système catalogués.
 
@@ -50,19 +58,19 @@ FR-7: Rendre le calculateur accessible publiquement sans compte ni connexion.
 
 FR-8: Compter les tokens localement avec Tiktoken par défaut, et appliquer le fallback local mots / 0,75 en cas d’échec.
 
-FR-10: Calculer un bloc uniquement sur action explicite, sans déclencher les calculs des autres blocs.
+FR-10: Calculer un bloc uniquement sur action explicite, sans déclencher les autres blocs ; afficher près de ses textes le carbone et l’eau estimés, avec unité et incertitude, en réservant électricité et équivalence douche au bilan.
 
 FR-11: Calculer tous les blocs renseignés puis le total par une action unique, en ignorant les blocs vides.
 
 FR-12: Recalculer les agrégats et l’équivalence du total à partir de résultats valides existants, sans recalculer les blocs.
 
-FR-13: Masquer un total devenu périmé, indiquer les blocs à recalculer et n’afficher le total que lorsque tous les blocs renseignés sont à jour.
+FR-13: Masquer un total devenu périmé ou incomplet, indiquer les blocs à recalculer avec un accès à leurs cartes et n’afficher le total que lorsque tous les blocs renseignés sont à jour.
 
 FR-14: Ajouter, modifier et supprimer des blocs contenant message, réponse, raisonnement visible et artifact, avec invalidation des dépendances affectées.
 
 FR-15: Préremplir le pays d’hébergement par fournisseur et autoriser sa modification dans les paramètres avancés.
 
-FR-16: Garder chatbot, modèle et conversation visibles dans le parcours courant; réserver les autres réglages aux paramètres avancés.
+FR-16: Ouvrir sur un accueil à deux voies, puis garder chatbot et modèle directement modifiables dans le fil chronologique ; replier les anciens échanges, ouvrir l’éditeur courant et préserver les textes lors d’un retour d’étape ; réserver les autres réglages aux paramètres avancés.
 
 FR-17: Autoriser les surcharges de session des paramètres mathématiques, géographiques et de douche, sauf les tokens système catalogués et masqués.
 
@@ -74,19 +82,21 @@ FR-20: Utiliser exclusivement le volume de prompt système fourni par le catalog
 
 FR-21: Exclure entièrement un bloc dont les quatre champs sont vides ou ne contiennent que des espaces.
 
-FR-22: Présenter chaque impact comme une estimation unique, avec une mention visible d’incertitude et de périmètre d’usage hors Scope 3.
+FR-22: Présenter chaque impact comme une estimation unique avec incertitude et périmètre d’usage hors Scope 3 ; afficher carbone et eau par échange, puis carbone, eau, électricité, risque de sécheresse, équivalence douche et conseils dans le bilan valide ; adapter les unités à trois chiffres significatifs au plus sans arrondir les valeurs internes.
 
 FR-23: Utiliser et signaler la valeur « Monde » pour le seul facteur environnemental manquant; bloquer le résultat si ce repli est absent.
 
 FR-24: Calculer énergie, eau, carbone et risque de sécheresse selon les formules et unités définies, avec risque uniquement au total.
 
+FR-25: Proposer et accepter uniquement un partage public Mistral dans le parcours publié ; refuser localement toute autre URL sans requête, demander un consentement ponctuel avant réseau, prévisualiser avant ajout et confirmer séparément le remplacement d’une conversation contenant du texte ; préserver la session sur refus ou échec.
+
 ### NonFunctional Requirements
 
-NFR-1: Permettre la saisie, les résultats, les conseils et la correction du pays sur ordinateur comme sur mobile.
+NFR-1: Permettre les deux voies d’accueil, la saisie, l’import Mistral, les résultats, les conseils et la correction du pays sur ordinateur comme sur mobile, selon les spines UX finaux.
 
-NFR-2: Produire une application publiable sur GitHub Pages et intégrable à `felixmortas.com`.
+NFR-2: Produire une application statique publiable sur GitHub Pages et intégrable à `felixmortas.com` ; réserver la récupération distante au Worker HTML configuré du projet.
 
-NFR-3: Conserver par défaut messages, calculs, tokenisation et diff dans le navigateur, sans analytics ni journal distant ; l’import d’un partage public est une exception consentie par requête qui transmet uniquement son URL canonique à `corsproxy.io`, sans données locales.
+NFR-3: Conserver par défaut messages, calculs, tokenisation et diff dans le navigateur, sans analytics ni journal distant ; après validation locale et consentement ponctuel, transmettre uniquement l’URL canonique Mistral par `POST` borné au Worker allowlisté, sans contenu ni paramètre local.
 
 NFR-4: Ne conserver durablement ni textes, ni résultats, ni choix après la fermeture de la page.
 
@@ -94,7 +104,7 @@ NFR-5: Livrer l’interface française en séparant les messages et formats des 
 
 NFR-6: Bloquer les résultats invalides et garantir les domaines numériques, unités, replis et divisions définis.
 
-NFR-7: Fournir libellés, clavier, focus visible, erreurs associées et états accessibles sans couleur seule ni survol, y compris sur petit écran.
+NFR-7: Fournir libellés, clavier, focus visible, erreurs associées et états textuels ; assurer reflow à 320 px et zooms 200 %/400 %, cibles d’au moins 44 × 44 px, dialogues modaux accessibles, restitution du focus et annonces concises.
 
 ### Additional Requirements
 
@@ -108,51 +118,82 @@ NFR-7: Fournir libellés, clavier, focus visible, erreurs associées et états a
 - Adresser tout texte utilisateur par clé de messages typés, distribuer `fr-FR` au lancement et formater via `Intl`.
 - Conserver les calculs non arrondis en Wh, gCO2e et L; ne laisser franchir aucune valeur `NaN` ou infinie à la frontière du domaine.
 - Prévoir tests de domaine et Worker, incluant les scénarios de référence: premier échange, artifact modifié, suppression, bloc vide, péremption, total, modèle/pays, restauration, repli Monde et fermeture de session.
-- Appliquer les décisions SPEC: séparation des mots par caractères non alphanumériques pour le fallback, quatre chiffres significatifs à l’affichage, granularité du diff à définir lors de l’implémentation, absence de bornes numériques additionnelles pour le moment.
-- Isoler l’import distant exceptionnel dans `application/import/remoteGateway` : seule une URL ChatGPT validée et consentie peut être transmise à l’origine allowlistée `https://corsproxy.io/`; délai et taille sont bornés, les erreurs sont typées, atomiques et le HTML reste traité localement comme texte non exécutable.
+- Appliquer la segmentation des mots et le diff définis par les contrats fonctionnels ; utiliser pour l’epic 6 un formateur partagé à trois chiffres significatifs au plus et aux séries d’unités de `EXPERIENCE.md`, sans arrondir les valeurs internes. Valider seuils et cas extrêmes sur des données représentatives.
+- Normaliser la clé fournisseur entre `models_params` et `provider_country.csv` ; vérifier pour `mistral-small` et `mistral-large` le pays et les facteurs résolus ; centraliser les correspondances ChatGPT abonnement et Mistral rapide/réflexion dans une table locale modifiable.
+- Isoler l’import distant dans `application/import/remoteGateway` : seul un `ResolvedShare` Mistral attesté, validé et consenti peut atteindre l’endpoint Worker HTML configuré et allowlisté ; le registre et la passerelle refusent les autres fournisseurs dans le parcours publié. Les adaptateurs historiques restent isolés.
+- Envoyer au Worker un `POST` JSON contenant seulement `shareUrl`, avec `credentials: omit`, `redirect: error`, `cache: no-store`, `referrerPolicy: no-referrer` ; borner requête et lecture à 10 s, 2 Mio et 1 000 événements, sous réserve de limites d’adaptateur plus strictes.
 - Ne jamais transmettre au tiers les blocs, fichiers locaux, résultats, catalogues, paramètres de calcul, cookies applicatifs, jetons de session ou secrets ; ne suivre ni liens, artifacts ou ressources citées.
 - Afficher avant chaque requête un dialogue accessible, non pré-coché et distinct de la confirmation de remplacement : fournisseur, finalité, URL envoyée, métadonnées possibles, exclusions de données locales, annulation, `Escape` et parcours manuel sans requête.
-- Documenter les faits et incertitudes de traitement de `corsproxy.io`, revoir ses documents à chaque publication selon D-4, et conserver l’import manuel si le fournisseur est indisponible ou ne convient plus.
+- Documenter les faits et incertitudes de traitement du Worker actif, ses métadonnées et sa rétention déclarée, revoir sa politique à chaque publication selon D-4 et conserver la saisie manuelle si l’import est indisponible.
+- Conserver l’état dans un reducer unique ; les vues accueil, fil, import et bilan partagent la même session éphémère. L’UI orchestre et affiche, le domaine calcule sans React, les catalogues demeurent immuables et aucun nouveau service réseau de calcul n’est ajouté.
 
 ### UX Design Requirements
 
-Aucun contrat UX n’a été fourni. Les exigences de responsive, d’accessibilité, de parcours principal et de présentation sont couvertes par FR-16, FR-22, NFR-1 et NFR-7; la rédaction éditoriale et la disposition responsive définitives restent à valider avant publication.
+UX-DR1: Appliquer les couleurs, typographies, espacements, rayons et styles des composants de `DESIGN.md` ; utiliser une colonne de lecture de 760 px maximum et une marge mobile de 16 px, avec contrastes texte 4,5:1 et grands caractères/indicateurs 3:1 au minimum.
+
+UX-DR2: Construire le guide d’accueil et deux cartes d’entrée entièrement visibles, import Mistral en premier, saisie manuelle en second ; après choix, guider vers l’étape correspondante sans effacer l’autre possibilité ni les textes déjà saisis.
+
+UX-DR3: Construire le sélecteur visible chatbot/modèle : valeur de référence présentée comme estimation modifiable, choix direct d’un modèle catalogue valide, puis accès permanent depuis l’en-tête du fil sans ouvrir les paramètres avancés.
+
+UX-DR4: Afficher les échanges dans l’ordre chronologique ; rendre les anciens sous forme de cartes compactes avec numéro, aperçu, état, carbone/eau actuels et commande de dépliage à nom et état explicites ; garder l’éditeur courant ouvert.
+
+UX-DR5: Organiser l’éditeur courant avec question puis réponse et un groupe facultatif pour raisonnement visible, document/code généré et fichiers source texte UTF-8 ; calculer un échange dès qu’au moins un texte utile existe et expliquer pourquoi un échange vide ne se calcule pas.
+
+UX-DR6: Afficher après calcul explicite une paire carbone/eau près des textes de l’échange, avec unité et mention d’estimation ; présenter les erreurs, péremptions, replis Monde et indisponibilités par des messages locaux et des actions de suite.
+
+UX-DR7: Construire un bilan après « Calculer toute la conversation » : carbone, eau, électricité, risque de sécheresse qualitatif, équivalence douche et recommandations ; sur « Recalculer le total », nommer les échanges non calculés ou périmés et fournir un accès à leurs cartes sans montrer un total ancien comme actuel.
+
+UX-DR8: Fournir un panneau de paramètres avancés secondaire avec pays d’hébergement, pays utilisateur, hypothèses mathématiques, unités, erreurs liées aux champs et restauration ; appliquer ou restaurer annonce une fois les résultats à recalculer sans déclencher de calcul.
+
+UX-DR9: Pour l’import Mistral, afficher un état de validation locale, puis un dialogue de consentement séparé montrant en entier l’URL canonique et l’endpoint Worker actif, sa finalité, les données transmises et non transmises ; un refus garde la session et la saisie manuelle accessible.
+
+UX-DR10: Après récupération, montrer une prévisualisation titrée avec échanges et avertissements navigables ; annoncer seulement leurs nombres puis placer le focus sur le titre ; exiger un dialogue distinct avant remplacement d’une conversation contenant du texte et n’ajouter aucun import partiel.
+
+UX-DR11: Gérer les dialogues avec fond inerte, focus initial sur l’action conservatrice, focus retenu, fermeture par Échap et restitution au déclencheur ; ne jamais superposer consentement et remplacement.
+
+UX-DR12: Après ajout d’un échange, placer le focus sur sa question ; après suppression, sur une carte voisine ou l’action d’ajout ; après changement d’étape, sur le nouveau titre. Les annonces de calcul et de péremption restent concises et ne relisent pas tout le fil.
+
+UX-DR13: Formater toutes les quantités affichées avec au plus trois chiffres significatifs et unités adaptées : carbone µgCO₂e à tCO₂e, eau µL à ML, électricité mWh à GWh et durée de douche ms à j ; couvrir zéro, valeur sous 0,001 de l’unité minimale, bascule après arrondi et dépassement de l’unité maximale, avec virgule française et nom accessible complet.
+
+UX-DR14: Assurer 44 × 44 px minimum pour les cibles, reflow à 320 px et zooms 200 %/400 % sans perte d’action ni troncature ; éviter les commandes réservées au survol, respecter `prefers-reduced-motion` et ne transmettre aucun statut par couleur seule.
+
+UX-DR15: Employer des libellés et textes français compréhensibles pour une personne non technique ; expliquer à la demande « artifact », « PUE », « WUE » et « tokens », et présenter l’incertitude, l’usage hors Scope 3 et les conseils sans promettre une mesure exacte ou un gain chiffré.
 
 ### FR Coverage Map
 
-FR-1: Epic 1 — Convention de modèle ChatGPT selon abonnement.
+FR-1: Epic 1 (historique), Epic 6 — Référence ChatGPT selon abonnement, directement modifiable dans le parcours actuel.
 
-FR-2: Epic 1 — Sélection du modèle catalogue pour les autres fournisseurs.
+FR-2: Epic 1 (historique), Epic 6 — Modèle catalogue modifiable pour tous les chatbots et mode Mistral rapide/réflexion.
 
 FR-3: Epic 2 — Comptage limité aux textes fournis et prompt système catalogué.
 
 FR-4: Epic 2 — Diff des versions d’artifact.
 
-FR-5: Epic 4 — Équivalence carbone en douche locale.
+FR-5: Epic 4, Epic 6 — Équivalence carbone en douche locale réservée au bilan actuel.
 
-FR-6: Epic 4 — Conseils de sobriété non personnalisés.
+FR-6: Epic 4, Epic 6 — Conseils de sobriété non personnalisés dans le bilan actuel.
 
 FR-7: Epic 1 — Accès public sans compte.
 
 FR-8: Epic 2 — Tokenisation locale et fallback.
 
-FR-10: Epic 2 — Calcul explicite d’un bloc.
+FR-10: Epic 2, Epic 6 — Calcul explicite d’un bloc et affichage actuel carbone/eau seulement.
 
-FR-11: Epic 3 — Calcul de tous les blocs et du total.
+FR-11: Epic 3, Epic 6 — Calcul de tous les blocs et accès au bilan dans le nouveau parcours.
 
-FR-12: Epic 3 — Recalcul du total seul.
+FR-12: Epic 3, Epic 6 — Recalcul du total seul depuis le bilan actuel.
 
-FR-13: Epic 3 — Fraîcheur et refus d’un total incomplet.
+FR-13: Epic 3, Epic 6 — Fraîcheur, état « total incomplet » et accès aux échanges à recalculer.
 
-FR-14: Epic 1 — Gestion des blocs de conversation.
+FR-14: Epic 1, Epic 6 — Gestion des blocs dans le fil compact et conservation de la session.
 
-FR-15: Epic 4 — Pays d’hébergement modifiable.
+FR-15: Epic 4, Epic 6 — Pays d’hébergement modifiable dans le panneau avancé du nouveau parcours.
 
-FR-16: Epic 1 — Informations de conversation visibles.
+FR-16: Epic 1 (historique), Epic 6 — Accueil à deux voies, fil compact et modèle directement modifiable.
 
-FR-17: Epic 4 — Paramètres avancés de session.
+FR-17: Epic 4, Epic 6 — Paramètres avancés de session accessibles depuis le fil et le bilan.
 
-FR-18: Epic 4 — Restauration des paramètres de référence.
+FR-18: Epic 4, Epic 6 — Restauration sans calcul automatique dans le nouveau parcours.
 
 FR-19: Epic 2 — Historique en cache reconstruit.
 
@@ -160,13 +201,17 @@ FR-20: Epic 2 — Prompt système exclusivement catalogué.
 
 FR-21: Epic 1 — Blocs entièrement vides ignorés.
 
-FR-22: Epic 2 — Résultats estimés et incertitude visible.
+FR-22: Epic 2 (historique), Epic 6 — Répartition actuelle des métriques, incertitude et unités adaptées.
 
-FR-23: Epic 4 — Repli environnemental « Monde » signalé.
+FR-23: Epic 4, Epic 6 — Repli environnemental « Monde » signalé près du résultat concerné.
 
-FR-24: Epic 3 — Impacts complets, total et risque de sécheresse.
+FR-24: Epic 3, Epic 6 — Impacts complets sans changement de formule ; risque de sécheresse visible au bilan seulement.
+
+FR-25: Epic 6 — Import publié Mistral uniquement, consenti, prévisualisé et ajouté atomiquement.
 
 NFR-2, NFR-3, NFR-4, NFR-7: Epic 5 — Import distant consentant, limité et accessible, conservant la confidentialité locale par défaut.
+
+NFR-1 à NFR-7 et UX-DR1 à UX-DR15: Epic 6 — Parcours Canopée claire, Worker configuré, confidentialité, affichage, clavier et petit écran. Les exigences déjà livrées sont maintenues ou adaptées dans les quatre stories de migration.
 
 ## Epic List
 
@@ -199,6 +244,12 @@ La personne adapte les références de sa session, restaure les valeurs par déf
 La personne peut importer une conversation publique ChatGPT, Claude, Mistral ou Gemini depuis son lien de partage, après un consentement éclairé pour transmettre uniquement son URL canonique validée à `corsproxy.io`, ou poursuivre l’import manuel sans transmission.
 
 **Requirements covered:** CAP-1, CAP-5, CAP-6; NFR-2, NFR-3, NFR-4, NFR-7
+
+### Epic 6: Aligner le calculateur sur l’expérience Canopée claire
+
+La personne choisit dès l’accueil la saisie ou l’import d’un lien Mistral, corrige le modèle proposé, suit sa conversation dans un fil compact et comprend des estimations par échange et un bilan lisibles et accessibles. L’epic adapte les capacités déjà livrées sans changer les formules ni réécrire l’historique des epics 1 à 5.
+
+**FRs covered:** FR-1, FR-2, FR-5, FR-6, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-16, FR-17, FR-18, FR-22, FR-23, FR-24, FR-25. **Quality and UX:** NFR-1 à NFR-7, UX-DR1 à UX-DR15.
 
 ## Epic 1: Configurer et saisir une conversation
 
@@ -778,3 +829,151 @@ So that mes échanges textuels deviennent des blocs calculables sans recopie.
 | Adaptateurs isolés et régression par fournisseur | 5.4 : registre à quatre adaptateurs, politiques propres, fixtures HTML minimisées, deux rôles, non-texte, état absent, limites, révocation, redirections refusées et isolement d’une dérive de structure. |
 
 La couverture de test est donc répartie volontairement : 5.3 exerce le parcours intégré des quatre fournisseurs, tandis que 5.4 fixe les fixtures et tests de contrat propres à chaque adaptateur. Les limites de redirection — y compris le chemin Gemini lorsqu’il est admis — relèvent de la politique du registre vérifiée par 5.2 et des tests de régression de 5.4. L’ordre de livraison 5.4 → 5.1 → 5.2 → 5.3 est la seule correction de planification relevée ; les critères eux-mêmes restent la source de vérité.
+
+## Epic 6: Aligner le calculateur sur l’expérience Canopée claire
+
+La personne choisit dès l’accueil la saisie ou l’import d’un lien Mistral, corrige le modèle proposé, suit sa conversation dans un fil compact et comprend des estimations par échange et un bilan lisibles et accessibles. Les stories 1.1 à 5.4 restent la trace des versions livrées ; lorsque leurs critères d’affichage ou d’import divergent, les critères de l’epic 6 définissent le parcours publié.
+
+### Story 6.1: Choisir son parcours et son modèle de référence
+
+En tant que personne qui veut estimer une conversation déjà tenue,
+je veux choisir dès l’accueil l’import Mistral ou la saisie manuelle, puis vérifier et modifier le modèle proposé,
+afin de commencer avec des hypothèses adaptées à ma conversation.
+
+**Critères d’acceptation :**
+
+**Étant donné** une nouvelle session,
+**quand** la page s’ouvre,
+**alors** l’accueil présente l’import Mistral en premier et la saisie manuelle en second ; les deux choix sont visibles et utilisables au clavier. (FR-16, UX-DR1, UX-DR2)
+
+**Étant donné** la saisie manuelle,
+**quand** la personne choisit un chatbot,
+**alors** le parcours propose un modèle de référence de ce chatbot et permet de choisir directement tout autre modèle valide de son catalogue ; la référence est présentée comme une estimation modifiable. (FR-2, UX-DR3)
+
+**Étant donné** ChatGPT,
+**quand** la personne précise si elle dispose d’un abonnement payant,
+**alors** le modèle de référence proposé est respectivement `gpt-5.6-terra` ou `gpt-5.6-luna` ; elle peut ensuite le remplacer. (FR-1)
+
+**Étant donné** Mistral,
+**quand** la personne précise si sa conversation était en mode « rapide » ou « réflexion »,
+**alors** le modèle de référence proposé est respectivement `mistral-small` ou `mistral-large` ; elle peut ensuite le remplacer. Les correspondances sont centralisées et les deux modèles résolvent leur pays et leurs facteurs avant publication. (FR-2, AD-5, D-1)
+
+**Étant donné** des textes déjà saisis,
+**quand** la personne revient à une étape précédente ou change de chatbot, de type d’abonnement, de mode ou de modèle,
+**alors** les textes restent présents, les résultats dépendants deviennent périmés et aucun calcul ne démarre. (FR-13, FR-16, AD-3)
+
+**Étant donné** l’entrée d’import visible,
+**quand** une URL non Mistral est soumise par l’interface ou la passerelle,
+**alors** elle est refusée sans requête distante et la saisie manuelle reste accessible. (FR-25, AD-8)
+
+### Story 6.2: Suivre les échanges et leurs estimations
+
+En tant que personne qui reconstitue une conversation,
+je veux relire mes échanges dans un fil compact et calculer chacun à ma demande,
+afin de voir le carbone et l’eau estimés près des textes concernés.
+
+**Critères d’acceptation :**
+
+**Étant donné** une conversation contenant plusieurs échanges,
+**quand** son fil est affiché,
+**alors** les échanges sont ordonnés ; les anciens se replient en cartes montrant un aperçu, un état textuel et, si le résultat est actuel, le carbone et l’eau. La commande annonce « Déplier » ou « Replier » avec `aria-expanded` et l’éditeur courant reste ouvert. (FR-16, UX-DR4)
+
+**Étant donné** l’éditeur courant,
+**quand** la personne saisit ou consulte un échange,
+**alors** la question précède la réponse et le raisonnement visible, le document ou code généré et les fichiers source texte sont regroupés comme contenus facultatifs avec des libellés compréhensibles. (FR-14, UX-DR5, UX-DR15)
+
+**Étant donné** au moins un texte utile dans un échange,
+**quand** la personne actionne « Calculer cet échange »,
+**alors** seul cet échange est calculé, même si un précédent n’a pas de résultat ; un échange vide est ignoré et l’interface explique pourquoi il ne peut pas être calculé. Aucun calcul ne démarre au collage ou à la modification. (FR-10, FR-21, UX-DR5)
+
+**Étant donné** un échange calculé et actuel,
+**quand** son résultat est affiché,
+**alors** seuls le carbone et l’eau sont présentés près des textes, avec leurs unités et une mention d’estimation ; l’électricité, le risque de sécheresse et l’équivalence douche ne figurent pas sur cette carte. (FR-10, FR-22, UX-DR6)
+
+**Étant donné** le fil actif,
+**quand** la personne ajoute un échange,
+**alors** l’échange précédent se replie et le focus va à la nouvelle question ; après suppression, le focus va à une carte voisine ou à « Ajouter un échange », et les autres textes restent présents. (FR-14, UX-DR12)
+
+**Étant donné** des résultats d’échanges et un bilan existants,
+**quand** la personne modifie ou supprime un échange renseigné,
+**alors** les résultats de cet échange et des suivants qui dépendent de son historique ou de son artifact deviennent périmés ; chaque carte concernée le dit et propose le recalcul, aucun bilan dépendant n’est présenté comme actuel et aucun calcul ne démarre seul. (FR-13, FR-14, UX-DR6)
+
+**Étant donné** une erreur de calcul ou un facteur de repli,
+**quand** l’état est affiché,
+**alors** un message près du résultat concerné l’explique, conserve les textes et ne déplace pas le focus de façon inattendue. (FR-22, FR-23, UX-DR6)
+
+### Story 6.3: Importer un partage Mistral avec consentement
+
+En tant que personne qui possède un lien public Mistral,
+je veux vérifier ce qui sera transmis et prévisualiser les échanges avant leur ajout,
+afin de garder le contrôle de ma conversation.
+
+**Critères d’acceptation :**
+
+**Étant donné** une URL de partage,
+**quand** la personne demande son analyse,
+**alors** seule une URL publique Mistral au format admis est reconnue et canonicalisée localement ; toute autre URL est refusée avant consentement et sans requête. La passerelle et l’endpoint publié refusent aussi un partage non Mistral, et la saisie manuelle reste accessible. (FR-25, AD-8, UX-DR9)
+
+**Étant donné** une URL Mistral admise,
+**quand** le consentement est demandé avant chaque requête,
+**alors** un dialogue distinct affiche en entier l’URL canonique, l’endpoint Worker actif, la finalité, les données transmises et celles qui restent locales ; le consentement est explicite, ponctuel et lié à cette URL et à cet endpoint. (NFR-3, AD-8, UX-DR9)
+
+**Étant donné** le dialogue de consentement,
+**quand** la personne refuse, annule, appuie sur Échap ou modifie l’URL ou la configuration,
+**alors** le consentement est invalidé sans requête. Le fond est inerte, le focus initial va sur « Annuler », reste dans le dialogue et revient au déclencheur à sa fermeture. (FR-25, UX-DR11)
+
+**Étant donné** un consentement encore valide,
+**quand** la récupération commence,
+**alors** seule la passerelle envoie au Worker allowlisté un `POST` borné dont le corps contient uniquement `shareUrl`, sans texte, fichier, résultat ni paramètre local ; erreur, limite dépassée ou format inconnu laissent la session intacte. (NFR-3, AD-8)
+
+**Étant donné** une récupération exploitable,
+**quand** la prévisualisation apparaît avant tout ajout,
+**alors** les échanges et avertissements sont navigables ; seuls leurs nombres sont annoncés, puis le focus va au titre. (FR-25, UX-DR10)
+
+**Étant donné** un partage dont le mode Mistral n’est pas révélé fiablement,
+**quand** la personne prépare l’import,
+**alors** elle choisit « rapide » ou « réflexion » avant calcul ; aucun mode n’est inféré du texte de la conversation. (FR-2, AD-5)
+
+**Étant donné** une prévisualisation vide, un refus ou un échec,
+**quand** le parcours d’import se termine,
+**alors** aucun échange n’est ajouté. Si la conversation actuelle contient du texte, une seconde confirmation place d’abord le focus sur « Conserver ma conversation » ; seul l’accord remplace atomiquement les échanges, sans lancer de calcul. (FR-25, UX-DR10, UX-DR11)
+
+**Étant donné** la préparation de la publication,
+**quand** l’aide et la politique d’import sont vérifiées,
+**alors** elles décrivent le Worker réellement utilisé, les données et métadonnées qu’il peut traiter et les incertitudes de conservation ; ces informations font l’objet de la revue D-4. (NFR-3, D-4)
+
+### Story 6.4: Lire le bilan et ajuster les hypothèses
+
+En tant que personne qui a saisi ou importé une conversation,
+je veux consulter un bilan compréhensible et corriger mes hypothèses,
+afin de savoir ce que les estimations couvrent et quand les recalculer.
+
+**Critères d’acceptation :**
+
+**Étant donné** une conversation avec des échanges renseignés,
+**quand** la personne actionne « Calculer toute la conversation »,
+**alors** ces échanges sont calculés explicitement et un bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche et recommandations. Le risque reste qualitatif et l’équivalence ne compare pas les volumes d’eau. (FR-5, FR-6, FR-11, FR-22, FR-24, UX-DR7)
+
+**Étant donné** des résultats d’échanges actuels, manquants ou périmés,
+**quand** la personne actionne « Recalculer le total »,
+**alors** seuls les résultats actuels sont réutilisés, sans calcul d’échange ; si un résultat manque ou est périmé, le bilan indique « total incomplet », nomme les échanges concernés et donne accès à leurs cartes, sans afficher d’ancien total comme actuel. (FR-12, FR-13, UX-DR7)
+
+**Étant donné** le panneau avancé ouvert depuis le fil ou le bilan,
+**quand** la personne voit, modifie, applique ou restaure les paramètres autorisés, dont les pays distincts,
+**alors** les champs invalides portent une erreur associée ; les textes, le chatbot et le modèle restent présents, une annonce unique indique les résultats à recalculer et aucun calcul ne démarre. Un changement limité à la douche ne périme que l’équivalence. (FR-15, FR-17, FR-18, UX-DR8)
+
+**Étant donné** une valeur d’impact ou de durée à présenter,
+**quand** le formateur partagé choisit une unité selon `EXPERIENCE.md`,
+**alors** le carbone, l’eau, l’électricité et la durée de douche utilisent au plus trois chiffres significatifs, une virgule française et une unité adaptée ; zéro, sous-seuil, bascule d’unité après arrondi et dépassement de l’unité maximale sont traités. Les totaux partent des valeurs internes non arrondies et chaque unité abrégée a un nom accessible complet. (FR-22, AD-9, UX-DR13)
+
+**Étant donné** les résultats ou une donnée indisponible,
+**quand** la personne lit le bilan ou les cartes,
+**alors** l’incertitude, le périmètre d’usage hors Scope 3, les replis « Monde » et les indisponibilités sont expliqués près des résultats concernés ; les conseils restent compréhensibles et ne font pas passer une estimation pour une mesure. (FR-6, FR-22, FR-23, UX-DR15)
+
+**Étant donné** les surfaces accueil, import, fil et bilan,
+**quand** elles sont parcourues au clavier, à 320 px et aux zooms 200 %/400 %,
+**alors** elles suivent `DESIGN.md` et `EXPERIENCE.md` : états lisibles sans couleur seule, focus visible, cibles d’au moins 44 × 44 px, aucun contrôle tronqué ou réservé au survol, et respect de `prefers-reduced-motion`. (NFR-1, NFR-7, UX-DR1, UX-DR2, UX-DR14)
+
+**Étant donné** la validation de l’epic,
+**quand** les parcours manuels et importés sont vérifiés,
+**alors** les scénarios couvrent la péremption, la restauration, les valeurs représentatives et extrêmes du formatage, ainsi que le focus et les annonces aux transitions. (NFR-7, UX-DR12, UX-DR13)
