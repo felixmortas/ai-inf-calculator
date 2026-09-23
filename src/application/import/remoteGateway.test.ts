@@ -146,7 +146,7 @@ describe('passerelle distante bornée', () => {
   });
 
   it('lie le consentement et la requête au même hôte preview fourni', async () => {
-    const preview = 'https://branch-42-proxy-felix.felix-mortas.workers.dev/v1/import-html';
+    const preview = 'https://branch-42-ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html';
     expect(isAllowedWorkerEndpoint(preview)).toBe(true);
     expect(isAllowedWorkerEndpoint('https://evil.test/v1/import-html')).toBe(false);
     const fetcher = vi.fn().mockResolvedValue(response('<html><body>public</body></html>'));

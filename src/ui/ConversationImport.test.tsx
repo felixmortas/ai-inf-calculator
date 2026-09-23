@@ -39,7 +39,7 @@ async function consent(user: ReturnType<typeof userEvent.setup>) {
 
 describe('ConversationImport', () => {
   it('affiche le même endpoint preview que celui utilisé par la requête', async () => {
-    const preview = 'https://branch-42-proxy-felix.felix-mortas.workers.dev/v1/import-html';
+    const preview = 'https://branch-42-ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html';
     vi.stubEnv('VITE_IMPORT_HTML_WORKER_URL', preview);
     const fetcher = vi.fn().mockResolvedValue(new Response('<html><body>page</body></html>', { headers: { 'content-type': 'text/html' } }));
     const gateway = createRemoteGateway(fetcher, { endpoint: () => preview });

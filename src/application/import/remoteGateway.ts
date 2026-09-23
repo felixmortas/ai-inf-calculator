@@ -1,7 +1,7 @@
 import type { ImportError, ImportErrorCode, ImportLimits, ImportProvider, ResolvedShare } from './types';
 import { registeredProviderForResolvedShare } from './shareAttestation';
 
-export const PRODUCTION_IMPORT_ENDPOINT = 'https://proxy-felix.felix-mortas.workers.dev/v1/import-html' as const;
+export const PRODUCTION_IMPORT_ENDPOINT = 'https://ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html' as const;
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -78,7 +78,7 @@ function hasBoundedLimits(limits: ImportLimits, redirectPolicy: NonNullable<Impo
 
 export function isAllowedWorkerEndpoint(value: string): boolean {
   return value === PRODUCTION_IMPORT_ENDPOINT
-    || /^https:\/\/[a-z0-9-]+-proxy-felix\.felix-mortas\.workers\.dev\/v1\/import-html$/.test(value);
+    || /^https:\/\/[a-z0-9-]+-ai-inf-calculator-proxy\.felix-mortas\.workers\.dev\/v1\/import-html$/.test(value);
 }
 
 export function workerImportEndpoint(): string | undefined {

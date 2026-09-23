@@ -6,7 +6,7 @@ import { createRemoteGateway, createRemoteGatewayConsent } from './remoteGateway
 import { isResolvedShare, providerForResolvedShare, resolveShare } from './registry';
 import { importResolvedProviderShare } from './resolvedShareImport';
 
-const configured = { endpoint: () => 'https://proxy-felix.felix-mortas.workers.dev/v1/import-html' };
+const configured = { endpoint: () => 'https://ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html' };
 const cases = [
   [claudeShareProvider, 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000', '<script data-claude-share type="application/json">{"turns":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],
   [mistralShareProvider, 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000', '<script data-mistral-share type="application/json">{"messages":[{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Réponse"}]}</script>'],

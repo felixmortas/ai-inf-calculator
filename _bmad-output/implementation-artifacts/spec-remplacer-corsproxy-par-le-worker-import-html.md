@@ -19,7 +19,7 @@ context: []
 
 ## Boundaries & Constraints
 
-**Toujours :** consentement ponctuel avant réseau ; une seule URL de partage initiale validée ; corps JSON `{ "shareUrl": string }` ; aucune donnée de session ni cookie ; HTML complet seulement ; limites locales de 10 secondes et 2 Mio ; échec sans mutation et import manuel disponible. Production : `https://proxy-felix.felix-mortas.workers.dev/v1/import-html`. Une preview utilise un hôte concret correspondant à `*-proxy-felix.felix-mortas.workers.dev`, fourni au build ; aucune URL preview n’est inventée.
+**Toujours :** consentement ponctuel avant réseau ; une seule URL de partage initiale validée ; corps JSON `{ "shareUrl": string }` ; aucune donnée de session ni cookie ; HTML complet seulement ; limites locales de 10 secondes et 2 Mio ; échec sans mutation et import manuel disponible. Production : `https://ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html`. Une preview utilise un hôte concret correspondant à `*-ai-inf-calculator-proxy.felix-mortas.workers.dev`, fourni au build ; aucune URL preview n’est inventée.
 
 **Jamais :** clé API CorsProxy, récupération directe du fournisseur par le navigateur, affirmation que les redirections sont contrôlées par le calculateur, déploiement du Worker ou modification de son code.
 
