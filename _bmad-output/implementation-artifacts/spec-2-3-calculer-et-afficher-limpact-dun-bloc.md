@@ -98,4 +98,4 @@ Les constantes et ratios sont passés au domaine sous forme de paramètres réso
 
 - `npm test -- --run` -- expected: les domaines, reducer, Worker et UI passent, y compris les résultats bloqués et les réponses périmées.
 - `npm run lint` -- expected: TypeScript et ESLint ne signalent aucune erreur.
-- `npm run build` -- expected: Vite produit le calculateur avec la base `/calculator/`.
+- `npm run build` -- expected: Vite produit le calculateur avec la base `/ai-inf-calculator/`.

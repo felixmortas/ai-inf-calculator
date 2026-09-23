@@ -35,7 +35,7 @@ AD-6 dit d’où vient le pays proposé, mais pas comment traiter un fuseau mult
 ## Mineurs / qualité de spine
 
 - Les versions de stack paraissent inutilement précises pour une spine et sont coûteuses à garder vraies ; si elles restent, elles doivent être vérifiées et verrouillées dans le manifeste/lockfile du sous-projet, sinon les remplacer par des contraintes de compatibilité.
-- AD-1 décrit un « build d’intégration » tout en différant son workflow. C’est acceptable, mais il manque le contrat minimal de sortie : dossier produit attendu, non-écrasement du site racine et traitement des assets sous `/calculator/`. Sans cela, l’intégrateur peut copier `dist` de façons incompatibles.
+- AD-1 décrit un « build d’intégration » tout en différant son workflow. C’est acceptable, mais il manque le contrat minimal de sortie : dossier produit attendu, non-écrasement du site racine et traitement des assets sous `/ai-inf-calculator/`. Sans cela, l’intégrateur peut copier `dist` de façons incompatibles.
 - La frontière `data/` est présentée comme locale et validée avant build, sans nommer le responsable ni l’outil de validation. Un validateur de build distinct est un choix d’implémentation possible ; le point à conserver dans la spine est seulement qu’une publication échoue sur un catalogue invalide.
 
 ## Rubrique « bonne spine »

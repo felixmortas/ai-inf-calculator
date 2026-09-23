@@ -88,4 +88,4 @@ Le booléen « ignoré » reste dérivé plutôt que mémorisé : il ne peut don
 
 - `npm test -- --run` -- expected: les tests reducer et interface couvrent les blocs comme la sélection existante.
 - `npm run lint` -- expected: TypeScript valide les contrats d’état, d’actions et de composants.
-- `npm run build` -- expected: Vite produit toujours le build statique avec la base `/calculator/`.
+- `npm run build` -- expected: Vite produit toujours le build statique avec la base `/ai-inf-calculator/`.

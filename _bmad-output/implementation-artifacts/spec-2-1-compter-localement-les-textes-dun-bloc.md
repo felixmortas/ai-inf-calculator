@@ -22,7 +22,7 @@ context:
 
 **Always:** Compter seulement les quatre textes saisis d’un bloc ; un texte vide produit exactement zéro token et aucun raisonnement caché n’est déduit. Emballer Tiktoken et ses rangs localement, sans API, CDN, clé, télémetrie, journalisation, URL ou stockage durable. Chaque message du protocole porte un `requestId`, l’encodage et une empreinte texte+encodage. Une erreur structurée du Worker utilise le fallback `nombre de mots / 0,75`, où les séparateurs sont les caractères non alphanumériques. Le domaine reste pur, synchrone et indépendant de React et de Worker.
 
-**Never:** Ne pas ajouter d’action ni de résultat de calcul visible dans l’UI (réservés à la story 2.3), ne pas recalculer automatiquement après une saisie, ne pas modifier le catalogue de modèles, les champs ou l’ordre des blocs, ni la configuration de base Vite `/calculator/`.
+**Never:** Ne pas ajouter d’action ni de résultat de calcul visible dans l’UI (réservés à la story 2.3), ne pas recalculer automatiquement après une saisie, ne pas modifier le catalogue de modèles, les champs ou l’ordre des blocs, ni la configuration de base Vite `/ai-inf-calculator/`.
 
 ## I/O & Edge-Case Matrix
 
@@ -94,4 +94,4 @@ Le Worker expose son traitement séparément de son branchement `message`, ce qu
 
 - `npm test -- --run` -- expected: les suites existantes et nouvelles passent.
 - `npm run lint` -- expected: TypeScript ne signale aucune erreur.
-- `npm run build` -- expected: la production compile le Worker et ses rangs localement sous `/calculator/`.
+- `npm run build` -- expected: la production compile le Worker et ses rangs localement sous `/ai-inf-calculator/`.

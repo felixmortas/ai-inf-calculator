@@ -13,7 +13,7 @@ Rendre le calculateur publiquement accessible et permettre à une personne de d�
 
 ## Requirements & Constraints
 
-- Publier un sous-projet accessible à `/calculator/` sur GitHub Pages, sans compte, connexion ni écran d’authentification, sans écraser le site racine.
+- Publier un sous-projet accessible à `/ai-inf-calculator/` sur GitHub Pages, sans compte, connexion ni écran d’authentification, sans écraser le site racine.
 - Afficher dans le parcours principal le chatbot sélectionné, le modèle applicable à toute la conversation et la conversation elle-même. Les autres réglages restent dans les paramètres avancés.
 - Pour ChatGPT, proposer le choix « sans abonnement payant » ou « avec abonnement payant » et résoudre respectivement le modèle de référence `gpt-5.6-luna` ou `gpt-5.6-terra` pour tous les blocs.
 - Pour un autre fournisseur, ne pas afficher le choix d’abonnement ChatGPT et n’autoriser que les modèles appartenant à ce fournisseur dans le catalogue local. Aucun modèle absent du catalogue ne peut être proposé.
@@ -25,7 +25,7 @@ Rendre le calculateur publiquement accessible et permettre à une personne de d�
 
 ## Technical Decisions
 
-- Le calculateur est un projet Vite portable dans `calculator/`, avec une base `/calculator/` et une sortie statique intégrée par le dépôt hôte à son artefact GitHub Pages.
+- Le calculateur est un projet Vite portable dans `ai-inf-calculator/`, avec une base `/ai-inf-calculator/` et une sortie statique intégrée par le dépôt hôte à son artefact GitHub Pages.
 - Respecter les couches `ui`, `application`, `domain`, `data`, `i18n` et `workers`. L’UI React affiche et transmet des intentions ; l’application orchestre ; le domaine reste pur, synchrone et déterministe, sans dépendance React, navigateur, Worker, `Intl` ou catalogue concret.
 - Un unique reducer React est propriétaire de l’état de session : textes, sélections et futures surcharges. Les actions du reducer sont les seules mutations et aucune mutation ne calcule sans intention utilisateur explicite.
 - Les modèles et leurs données de référence sont des catalogues locaux immuables, versionnés et validés avant build. Les paramètres résolus sont déterminés par une fonction de domaine ; les réglages de session ne mutent jamais les catalogues. Le prompt système, lorsqu’il sera utilisé pour le calcul, provient exclusivement du catalogue et n’est pas surchargeable.

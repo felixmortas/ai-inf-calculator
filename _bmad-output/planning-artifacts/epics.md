@@ -108,7 +108,7 @@ NFR-7: Fournir libellés, clavier, focus visible, erreurs associées et états t
 
 ### Additional Requirements
 
-- Créer un sous-projet Vite portable dans `calculator/`, avec base `/calculator/`, build statique et intégration sans écraser le site racine.
+- Créer un sous-projet Vite portable dans `ai-inf-calculator/`, avec base `/ai-inf-calculator/`, build statique et intégration sans écraser le site racine.
 - Structurer l’application en `ui`, `application`, `domain`, `data`, `i18n` et `workers`; le domaine est pur, synchrone et déterministe, et l’UI ne calcule pas.
 - Centraliser l’état de session dans un reducer React et dériver la fraîcheur à partir d’empreintes canoniques `impactFingerprint` et `showerFingerprint`.
 - Implémenter la tokenisation dans un Worker local typé utilisant `js-tiktoken/lite` et `o200k_base`, avec `requestId` et empreinte de demande pour ignorer les réponses périmées.
@@ -264,7 +264,7 @@ So that la conversation utilise une référence cohérente dès le départ.
 **Acceptance Criteria:**
 
 **Given** la publication du sous-projet sur GitHub Pages
-**When** je visite `/calculator/`
+**When** je visite `/ai-inf-calculator/`
 **Then** l’application est servie sous cette base sans écraser le site racine et aucun compte ni écran de connexion n’est requis.
 
 **Given** une nouvelle session

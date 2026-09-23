@@ -4,7 +4,7 @@ type: architecture-spine
 purpose: build-substrate
 altitude: initiative
 paradigm: application monopage client-side, en couches et noyau fonctionnel pur
-scope: Sous-projet portable `calculator/`, intégré au chemin `/calculator/` de felixmortas.com
+scope: Sous-projet portable `ai-inf-calculator/`, intégré au chemin `/ai-inf-calculator/` de felixmortas.com
 status: final
 created: 2026-09-18
 updated: 2026-09-23
@@ -41,7 +41,7 @@ flowchart LR
 
 - **Binds:** NFR-2, intégration dans le dépôt hôte
 - **Prevents:** une dépendance au framework ou au mode de publication du site parent.
-- **Rule:** `calculator/` contient son propre projet Vite et produit `dist/` avec une base `/calculator/`. Le dépôt hôte monte le contenu de ce dossier à `/calculator/` dans son artefact GitHub Pages, sans écraser les fichiers du site racine ; le sous-projet n’écrit pas dans les sources du site parent.
+- **Rule:** `ai-inf-calculator/` contient son propre projet Vite et produit `dist/` avec une base `/ai-inf-calculator/`. Le dépôt hôte monte le contenu de ce dossier à `/ai-inf-calculator/` dans son artefact GitHub Pages, sans écraser les fichiers du site racine ; le sous-projet n’écrit pas dans les sources du site parent.
 
 ### AD-2 — Dépendances dirigées vers le noyau [ADOPTED]
 
@@ -117,7 +117,7 @@ flowchart LR
 ## Structural Seed
 
 ```text
-calculator/
+ai-inf-calculator/
   src/
     ui/                 # composants React, accessibilité, présentation
     application/        # reducer, cas d’usage, orchestration du Worker
@@ -128,16 +128,16 @@ calculator/
     workers/            # protocole et implémentation de tokenisation
   tests/                # jeux de référence et tests de domaine/Worker
   public/               # actifs statiques propres au calculateur
-  vite.config.ts        # base /calculator/ et sortie statique
+  vite.config.ts        # base /ai-inf-calculator/ et sortie statique
 ```
 
 ```mermaid
 flowchart TB
   REPO[Repo hôte felixmortas.com] --> BUILD[Build d’intégration]
-  CALC[calculator/: Vite build] --> BUILD
+  CALC[ai-inf-calculator/: Vite build] --> BUILD
   ROOT[Site racine existant] --> BUILD
   BUILD --> PAGES[GitHub Pages]
-  PAGES --> URL[felixmortas.com/calculator/]
+  PAGES --> URL[felixmortas.com/ai-inf-calculator/]
 ```
 
 ```mermaid
@@ -173,7 +173,7 @@ sequenceDiagram
 | Pays, eau, carbone, sécheresse, douche et affichage | `data/`, `domain/`, `ui/`, `i18n/` | AD-5, AD-6, AD-9 |
 | Français et extensions de langues | `i18n/`, `ui/` | AD-7 |
 | Consentement et import de partage distant | `ui/`, `application/import/` | AD-8 |
-| Publication GitHub Pages | `calculator/` et workflow du repo hôte | AD-1 |
+| Publication GitHub Pages | `ai-inf-calculator/` et workflow du repo hôte | AD-1 |
 
 ## Deferred
 

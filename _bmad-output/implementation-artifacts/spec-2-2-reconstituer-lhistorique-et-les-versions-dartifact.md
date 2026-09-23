@@ -96,4 +96,4 @@ Le domaine retournera des textes bruts, sans les concaténer ni les tokeniser : 
 
 - `npm test -- --run` -- expected: toutes les suites Vitest, dont l’historique, passent.
 - `npm run lint` -- expected: TypeScript et ESLint ne signalent aucune erreur.
-- `npm run build` -- expected: la production Vite compile sans changer sa base `/calculator/`.
+- `npm run build` -- expected: la production Vite compile sans changer sa base `/ai-inf-calculator/`.

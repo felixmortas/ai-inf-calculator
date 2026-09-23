@@ -52,7 +52,7 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
 
 ## Constraints
 
-- Application monopage française, accessible au clavier et sur mobile, publiée statiquement à `/calculator/` sur GitHub Pages, sans compte ni serveur applicatif de calcul.
+- Application monopage française, accessible au clavier et sur mobile, publiée statiquement à `/ai-inf-calculator/` sur GitHub Pages, sans compte ni serveur applicatif de calcul.
 - Les textes, résultats et choix restent dans la session navigateur : aucun stockage durable, analytics, contenu dans URL ou API de tokenisation. Seule l’URL canonique d’un partage Mistral admis est envoyée à l’endpoint d’import HTML du Worker configuré, après consentement explicite ; aucun contenu local ni paramètre de calcul n’est transmis.
 - La politique publiée refuse les liens ChatGPT, Claude et Gemini avant le consentement, à la passerelle et lors d’un appel direct au Worker, sans récupération du partage. L’endpoint reste soumis à l’allowlist ; la récupération est bornée et tout échec préserve la session. Le contrat réseau détaillé suit l’architecture adoptée.
 - Les références de modèles sont centralisées ; les clés fournisseur Mistral et les facteurs de `mistral-small` et `mistral-large` doivent se résoudre avant publication. Si un import ne révèle pas fiablement le mode Mistral, la personne le choisit.
