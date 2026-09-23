@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { claudeShareProvider, extractClaudeShareEvents, validateClaudeShareUrl } from './claudeShare';
 import { extractGeminiShareEvents, geminiShareProvider, GEMINI_REDIRECT_POLICY, validateGeminiShareUrl } from './geminiShare';
 import { extractMistralShareEvents, mistralShareProvider, validateMistralShareUrl } from './mistralShare';
+import { previewConversationImport } from './conversationPreview';
 import claudeFixture from './fixtures/claude-share-minimal.html?raw';
 import mistralFixture from './fixtures/mistral-share-minimal.html?raw';
+import mistralRenderedFixture from './fixtures/mistral-share-rendered.html?raw';
 import geminiFixture from './fixtures/gemini-share-minimal.html?raw';
 
 const html = (attribute: string, state: unknown) => `<script ${attribute}>${JSON.stringify(state)}</script>`;
@@ -47,6 +49,23 @@ describe('adaptateurs locaux Claude, Mistral et Gemini', () => {
     expect(GEMINI_REDIRECT_POLICY).toEqual({ maxRedirects: 1, allowedOrigins: ['https://share.gemini.google', 'https://gemini.google.com'] });
   });
 
+  it('lit les messages Mistral rendus sans importer les contrôles de la page', () => {
+    const result = extractMistralShareEvents(mistralRenderedFixture);
+    expect(result).toMatchObject({ ok: true });
+    if (result.ok) {
+      expect(result.events).toMatchObject([
+        { id: 'u1', role: 'user', text: 'Comment lancer Codex ?', order: 1 },
+        { id: 'a1', role: 'assistant', text: 'Lancez la commande suivante :\n\ncodex --help\n\nPuis vérifiez la sortie.', order: 2 },
+      ]);
+      expect(previewConversationImport(result.events).blocks).toMatchObject([{
+        message: 'Comment lancer Codex ?', visibleReasoning: '',
+        finalResponse: 'Lancez la commande suivante :\n\ncodex --help\n\nPuis vérifiez la sortie.', artifact: '',
+      }]);
+    }
+    expect(extractMistralShareEvents(mistralRenderedFixture, { maxBytes: 10_000, maxEvents: 1 }))
+      .toMatchObject({ ok: false, events: [], error: { code: 'too-many-events' } });
+  });
+
   it('refuse les identifiants hors contrat avant toute attestation', () => {
     expect(validateClaudeShareUrl('https://claude.ai/share/123e4567-e89b-12d3-a456-42661417400g')).toBeUndefined();
     expect(validateMistralShareUrl('https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-42661417400')).toBeUndefined();
@@ -58,6 +77,13 @@ describe('adaptateurs locaux Claude, Mistral et Gemini', () => {
     ['Claude', extractClaudeShareEvents], ['Mistral', extractMistralShareEvents], ['Gemini', extractGeminiShareEvents],
   ])('%s refuse une structure inconnue sans événement', (_name, extract) => {
     expect(extract('<html>aucun état public</html>')).toMatchObject({ ok: false, events: [], error: { code: 'format-unknown' } });
+  });
+
+  it('ne prend pas la coquille Claude ou Gemini pour une conversation', () => {
+    const claudeShell = '<!doctype html><html><body><script>window.__PUBLIC_VIEWER_PRELOAD__={responses:{}}</script><footer>Claude</footer></body></html>';
+    const geminiShell = '<!doctype html><html><body><script>window.WIZ_global_data={}</script><nav>Sign in</nav></body></html>';
+    expect(extractClaudeShareEvents(claudeShell)).toMatchObject({ ok: false, events: [], error: { code: 'format-unknown', message: expect.stringContaining('ne contient pas les échanges') } });
+    expect(extractGeminiShareEvents(geminiShell)).toMatchObject({ ok: false, events: [], error: { code: 'format-unknown', message: expect.stringContaining('ne contient pas les échanges') } });
   });
 
   it('ne partage pas les heuristiques HTML entre adaptateurs', () => {

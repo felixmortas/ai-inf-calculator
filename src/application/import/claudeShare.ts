@@ -17,7 +17,7 @@ export function extractClaudeShareEvents(html: string, limits: Pick<ImportLimits
   if (new TextEncoder().encode(html).byteLength > limits.maxBytes) return errorResult('claude', 'response-too-large', 'La réponse dépasse la taille autorisée.');
   const state = asRecord(jsonScript(html, 'data-claude-share'));
   const turns = Array.isArray(state?.turns) ? state.turns : undefined;
-  if (!turns) return errorResult('claude', 'format-unknown', 'La structure publique Claude est inconnue.');
+  if (!turns) return errorResult('claude', 'format-unknown', 'La page Claude reçue ne contient pas les échanges. Utilisez l’import manuel pour cette conversation.');
   const events: NormalizedImportEvent[] = [];
   for (const turn of turns) {
     const item = asRecord(turn); const role = item?.role;

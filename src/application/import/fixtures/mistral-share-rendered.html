@@ -1,0 +1,19 @@
+<!doctype html><html><body>
+<nav>Conversation récente sans rapport</nav>
+<div data-testid="conversation-layout">
+  <div data-message-author-role="user" data-message-id="u1">
+    <div class="select-text"><span class="whitespace-pre-wrap">Comment lancer Codex ?</span></div>
+    <button>Copier le message</button>
+  </div>
+  <div data-message-author-role="assistant" data-message-id="a1">
+    <div data-message-part-type="answer" data-testid="text-message-part">
+      <div class="markdown-container-style">
+        <p>Lancez la commande suivante :</p>
+        <div data-testid="code-block"><span>bash</span><button>Copy</button><pre>codex --help</pre></div>
+        <p>Puis vérifiez la sortie.</p>
+      </div>
+    </div>
+    <button>Partager la réponse</button>
+  </div>
+</div>
+</body></html>

@@ -19,7 +19,7 @@ Le Worker récupère la page publique et gère automatiquement les éventuelles 
 
 Le navigateur lit seulement une page HTML complète, avec une limite de 2 Mio et un délai de 10 secondes, puis extrait les échanges localement comme des données non exécutables. Une prévisualisation est affichée avant tout remplacement. Si la session contient déjà des échanges, le remplacement demande une confirmation supplémentaire.
 
-Les pages Mistral actuellement observées contiennent les messages dans ce HTML. Pour les liens Claude et Gemini testés, la réponse du Worker contient seulement la page de démarrage de l’application, sans échanges. L’import de ces liens renvoie donc une erreur de format et ne remplit aucun bloc. Leur prise en charge demande un contrat de récupération des données de conversation distinct du relais HTML actuel.
+Les pages Mistral actuellement observées contiennent les messages dans ce HTML. Pour les liens Claude et Gemini testés, le Worker peut renvoyer une page HTML complète (HTTP 200) qui ne contient pas les échanges. La page Claude prépare explicitement une requête API séparée. Le Worker a aussi répondu `network` (HTTP 502) ou `timeout` (HTTP 504) pour le lien Gemini lors d’autres essais. Aucun de ces cas ne remplit de bloc ; utilisez l’import manuel pour ces conversations.
 
 Une URL invalide, un refus, une annulation, une erreur réseau, un dépassement de limite ou un format inconnu ne modifient jamais la session. Vous pouvez toujours saisir les échanges manuellement.
 
