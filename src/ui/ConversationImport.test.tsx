@@ -139,7 +139,7 @@ describe('ConversationImport', () => {
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
     await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
     expect(await screen.findByRole('heading', { name: 'Prévisualisation de l’import' })).toBeVisible();
-    expect(screen.getByText('Message').parentElement).toHaveTextContent('Bonjour public');
+    expect(screen.getByText('Question de la personne').parentElement).toHaveTextContent('Bonjour public');
     expect(dispatch).not.toHaveBeenCalled();
   });
 

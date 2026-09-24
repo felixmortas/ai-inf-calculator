@@ -31,3 +31,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-6-1-choisir-son-parcours-et-son-modele-de-reference.md`
   summary: Limiter l’annonce de la prévisualisation d’import aux nombres d’échanges et d’avertissements.
   evidence: Le conteneur `aria-live` préexistant comprend les messages entiers ; la story 6.3 prévoit un résumé annoncé et un focus sur le titre.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-suivre-les-echanges-et-leurs-estimations.md`
+  summary: Réserver les recommandations au bilan valide.
+  evidence: Leur affichage dès qu’un échange possède un impact actuel précédait la story 6.2 ; le bilan de 6.4 doit décider de leur emplacement.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-suivre-les-echanges-et-leurs-estimations.md`
+  summary: Adapter les unités et la précision des trois métriques du bilan.
+  evidence: Le bilan préexistant utilise des unités fixes et quatre chiffres significatifs, alors que les décisions UX demandent les séries adaptées et trois chiffres.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-suivre-les-echanges-et-leurs-estimations.md`
+  summary: Adapter la durée de douche du bilan aux unités milliseconde, seconde, minute, heure et jour.
+  evidence: Le composant de bilan préexistant affiche toujours des secondes ; la décision UX demande une unité choisie selon la valeur.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-suivre-les-echanges-et-leurs-estimations.md`
+  summary: Lier chaque numéro d’échange bloquant le recalcul du total à sa carte.
+  evidence: La liste préexistante nomme les échanges sans offrir le chemin de récupération prévu par EXPERIENCE.md.

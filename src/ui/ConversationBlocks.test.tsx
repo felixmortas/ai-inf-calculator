@@ -1,10 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { impactTexts } from './App';
 import { prepareConversationHistory } from '../domain/conversationHistory';
-import { acceptsLocalSource, ConversationBlocks, formatImpact, localSourceMaxBytes, readLocalSource } from './ConversationBlocks';
+import { acceptsLocalSource, ConversationBlocks, formatExchangeQuantity, formatImpact, localSourceMaxBytes, readLocalSource } from './ConversationBlocks';
 import {
   conversationReducer,
   impactFingerprint,
@@ -44,6 +44,7 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup({ applyAccept: false });
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.click(screen.getByText('Ajouter des contenus facultatifs'));
     const input = screen.getByLabelText('Fichiers source locaux');
     await user.upload(input, [
       new File(['contenu'], 'note.md', { type: 'text/markdown' }),
@@ -53,15 +54,19 @@ describe('composition de la conversation', () => {
     expect(await screen.findByText(/Fichier refusé \(image.png\)/)).toHaveAttribute('role', 'status');
     await user.click(screen.getByRole('button', { name: 'Retirer le fichier note.md' }));
     expect(screen.queryByText(/note.md \(7 octets\) — compté/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    expect(screen.getByText(/Fichier refusé \(image.png\)/)).toBeVisible();
   });
   it('ajoute un bloc avec quatre champs libellés accessibles', async () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    expect(screen.getByLabelText('Message')).toBeVisible();
-    expect(screen.getByLabelText('Réponse finale')).toBeVisible();
+    expect(screen.getByLabelText('Question de la personne')).toBeVisible();
+    expect(screen.getByLabelText('Réponse du chatbot')).toBeVisible();
+    expect(screen.getByLabelText('Raisonnement visible')).not.toBeVisible();
+    await user.click(screen.getByText('Ajouter des contenus facultatifs'));
     expect(screen.getByLabelText('Raisonnement visible')).toBeVisible();
-    expect(screen.getByLabelText('Artifact optionnel')).toBeVisible();
+    expect(screen.getByLabelText('Document ou code généré (facultatif)')).toBeVisible();
   });
 
   it('importe via le registre, conserve les avis de contenus inaccessibles, puis ajoute un échange manuel', async () => {
@@ -80,9 +85,9 @@ describe('composition de la conversation', () => {
       await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
       expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
       await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
-      expect(screen.getByLabelText('Message')).toHaveValue('Question');
+      expect(screen.getByLabelText('Question de la personne')).toHaveValue('Question');
       await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-      expect(screen.getAllByLabelText('Message')).toHaveLength(2);
+      expect(screen.getAllByLabelText('Question de la personne')).toHaveLength(2);
       expect(fetch).toHaveBeenCalledTimes(1);
     } finally { vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
   });
@@ -92,26 +97,41 @@ describe('composition de la conversation', () => {
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     expect(screen.getByText('Ce bloc sera ignoré pour les calculs futurs.')).toBeVisible();
-    await user.type(screen.getByLabelText('Message'), ' Bonjour ');
+    expect(screen.getByRole('button', { name: 'Calculer cet échange' })).toBeDisabled();
+    expect(screen.getByText('Saisissez un échange avant de lancer un calcul.')).toBeVisible();
+    await user.type(screen.getByLabelText('Question de la personne'), ' Bonjour ');
     expect(screen.queryByText('Ce bloc sera ignoré pour les calculs futurs.')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Message')).toHaveValue(' Bonjour ');
+    expect(screen.getByLabelText('Question de la personne')).toHaveValue(' Bonjour ');
   });
 
   it('isole deux blocs, génère des identifiants distincts et déplace le focus après une suppression ciblée', async () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Question de la personne'), 'à supprimer');
+    const firstId = screen.getByLabelText('Question de la personne').id;
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    const messages = screen.getAllByLabelText('Message');
-    expect(messages[0].id).not.toBe(messages[1].id);
-    await user.type(messages[0], 'à supprimer');
-    await user.type(messages[1], 'à conserver');
-    const removeFirst = screen.getByRole('button', { name: 'Supprimer l’échange 1' });
-    removeFirst.focus();
-    await user.keyboard('{Enter}');
-    expect(screen.getAllByLabelText('Message')).toHaveLength(1);
-    expect(screen.getByLabelText('Message')).toHaveValue('à conserver');
+    const currentQuestion = screen.getByRole('textbox', { name: 'Question de la personne' });
+    expect(currentQuestion).toHaveFocus();
+    expect(currentQuestion.id).not.toBe(firstId);
+    await user.type(currentQuestion, 'à conserver');
+    const toggle = screen.getByRole('button', { name: 'Déplier l’échange 1' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Question : à supprimer');
+    expect(screen.queryByRole('button', { name: 'Supprimer l’échange 1' })).not.toBeInTheDocument();
+    await user.click(toggle);
+    expect(toggle).toHaveFocus();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(screen.getByRole('button', { name: 'Supprimer l’échange 1' }));
+    expect(screen.getByText('Supprimer l’échange 1 et ses textes ?')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(screen.getByRole('button', { name: 'Supprimer l’échange 1' })).toHaveFocus();
+    expect(screen.getByRole('region', { name: 'Échange 1' }).querySelector('.conversation-preview')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Supprimer l’échange 1' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmer la suppression' }));
+    expect(screen.getAllByLabelText('Question de la personne')).toHaveLength(1);
+    expect(screen.getByLabelText('Question de la personne')).toHaveValue('à conserver');
+    expect(screen.getByRole('button', { name: 'Ajouter un échange' })).toHaveFocus();
   });
 
   it('reste utilisable au clavier et ne persiste pas les blocs au nouveau montage', async () => {
@@ -126,7 +146,7 @@ describe('composition de la conversation', () => {
     addExchange.focus();
     expect(addExchange).toHaveFocus();
     await user.keyboard('{Enter}');
-    await user.type(screen.getByLabelText('Message'), 'éphémère');
+    await user.type(screen.getByLabelText('Question de la personne'), 'éphémère');
     expect(storageSet).not.toHaveBeenCalled();
     expect(storageRemove).not.toHaveBeenCalled();
     expect(storageClear).not.toHaveBeenCalled();
@@ -134,27 +154,30 @@ describe('composition de la conversation', () => {
     expect(historyReplace).not.toHaveBeenCalled();
     first.unmount();
     await startThread(user);
-    expect(screen.queryByLabelText('Message')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Question de la personne')).not.toBeInTheDocument();
   });
 
   it('calcule explicitement un seul échange et affiche ses impacts avec leurs limites', async () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect(await screen.findByText(/Énergie:/)).toBeVisible();
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    expect(await screen.findByText('Estimation pour cet échange')).toBeVisible();
+    expect(screen.getByText(/Carbone :/)).toBeVisible();
+    expect(screen.getByText(/Eau :/)).toBeVisible();
+    expect(screen.queryByText(/Énergie:/)).not.toBeInTheDocument();
     expect(screen.getByText(/Estimation incertaine/)).toBeVisible();
-    expect(screen.getAllByRole('button', { name: 'Calculer' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Calculer cet échange' })).toHaveLength(1);
   });
 
   it('applique une constante avancée validée au calcul suivant', async () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const initialEnergy = (await screen.findByText(/Énergie:/)).textContent;
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    const initialCarbon = (await screen.findByText(/Carbone :/)).textContent;
 
     await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
@@ -163,8 +186,8 @@ describe('composition de la conversation', () => {
     await user.type(alpha, '0.00001');
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     await returnToThread(user);
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect((await screen.findByText(/Énergie:/)).textContent).not.toBe(initialEnergy);
+    await user.click(screen.getByRole('button', { name: 'Recalculer cet échange' }));
+    expect((await screen.findByText(/Carbone :/)).textContent).not.toBe(initialCarbon);
   });
 
   it('applique le pays d’hébergement choisi aux calculs et au risque du bilan', async () => {
@@ -175,20 +198,20 @@ describe('composition de la conversation', () => {
     await user.selectOptions(screen.getByLabelText('Pays d’hébergement'), 'FR');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const frenchCarbon = (await screen.findByText(/Carbone:/)).textContent;
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    const frenchCarbon = (await screen.findByText(/Carbone :/)).textContent;
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     expect(summary.parentElement).toHaveTextContent('Medium - High (0.6-0.8)');
-    expect(summary.parentElement).toHaveTextContent(frenchCarbon!);
+    expect(summary.parentElement).toHaveTextContent('Carbone:');
     french.unmount();
 
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect((await screen.findByText(/Carbone:/)).textContent).not.toBe(frenchCarbon);
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    expect((await screen.findByText(/Carbone :/)).textContent).not.toBe(frenchCarbon);
   });
 
   it('calcule les seuls échanges renseignés puis affiche leur bilan et le risque pays', async () => {
@@ -196,17 +219,15 @@ describe('composition de la conversation', () => {
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getAllByLabelText('Message')[0], 'Premier échange');
-    await user.type(screen.getAllByLabelText('Message')[1], 'Deuxième échange plus long');
+    await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
+    await user.type(screen.getAllByLabelText('Question de la personne')[0], 'Premier échange');
+    await user.type(screen.getAllByLabelText('Question de la personne')[1], 'Deuxième échange plus long');
     await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
     const summaryHeading = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
-    const individualEnergies = [...document.querySelectorAll('.impact-result')].map((element) => (
-      Number(element.textContent!.match(/[\d,]+/)![0].replace(',', '.'))
-    ));
     const summaryEnergy = Number(summaryHeading.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1].replace(',', '.'));
-    expect(screen.getAllByText(/Énergie:/)).toHaveLength(3);
-    expect(summaryEnergy).toBeGreaterThan(Math.max(...individualEnergies));
-    expect(summaryEnergy).toBeCloseTo(individualEnergies[0] + individualEnergies[1], 4);
+    expect(document.querySelectorAll('.impact-result')).toHaveLength(2);
+    expect(screen.getAllByText(/Énergie:/)).toHaveLength(1);
+    expect(summaryEnergy).toBeGreaterThan(0);
     expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toBeVisible();
   });
 
@@ -263,6 +284,15 @@ describe('composition de la conversation', () => {
     expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
   });
 
+  it('adapte les unités sans modifier les valeurs calculées et développe leur nom accessible', () => {
+    expect(formatExchangeQuantity(0, 'carbon')).toEqual({ display: '0 gCO₂e', accessible: '0 grammes de dioxyde de carbone équivalent' });
+    expect(formatExchangeQuantity(0.0000000001, 'carbon').display).toBe('< 0,001 µgCO₂e');
+    expect(formatExchangeQuantity(0.0012, 'carbon')).toEqual({ display: '1,2 mgCO₂e', accessible: '1,2 milligrammes de dioxyde de carbone équivalent' });
+    expect(formatExchangeQuantity(1, 'carbon').display).toBe('1 gCO₂e');
+    expect(formatExchangeQuantity(999.9, 'carbon').display).toBe('1 kgCO₂e');
+    expect(formatExchangeQuantity(0.002, 'water')).toEqual({ display: '2 mL', accessible: '2 millilitres d’eau' });
+  });
+
   it('annonce explicitement le repli Monde auprès du résultat concerné', () => {
     const fingerprint = impactFingerprint(initialConversationState);
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
@@ -278,7 +308,41 @@ describe('composition de la conversation', () => {
     expect(fingerprint).toBeTypeOf('string');
   });
 
-  it('rend une estimation de douche, annonce le repli Monde et masque seulement cette estimation quand le pays change', () => {
+  it('montre carbone et eau sur une carte calculée repliée avec les unités développées accessibles', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'blockAdded', blockId: 'two' });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+
+    const first = within(screen.getByRole('region', { name: 'Échange 1' }));
+    expect(first.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
+    expect(first.getByText('2 gCO₂e')).toBeVisible();
+    expect(first.getByText('3 L')).toBeVisible();
+    expect(first.getByText('2 grammes de dioxyde de carbone équivalent')).toHaveClass('visually-hidden');
+    expect(first.getByText('3 litres d’eau')).toHaveClass('visually-hidden');
+    expect(first.getByText('2 gCO₂e')).toHaveAttribute('aria-hidden', 'true');
+    expect(first.getByText('3 L')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('garde les deux aperçus et les avis d’import visibles sur une ancienne carte repliée', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Pourquoi ?' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'finalResponse', value: 'Voir sandbox:/mnt/data/rapport.csv et fileciteturn0file0' });
+    state = conversationReducer(state, { type: 'blockAdded', blockId: 'two' });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
+    const first = screen.getByRole('region', { name: 'Échange 1' });
+    expect(first).toHaveTextContent('Question : Pourquoi ?');
+    expect(first).toHaveTextContent('Réponse : Voir sandbox:/mnt/data/rapport.csv');
+    expect(first).toHaveTextContent('Artifact détecté');
+    expect(first).toHaveTextContent('Fichier source détecté');
+    expect(screen.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
+    expect(first.querySelector('.block-actions')).not.toBeVisible();
+  });
+
+  it('réserve la durée de douche au bilan même si une équivalence individuelle existe en mémoire', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
     const fingerprint = impactFingerprint(state, 'one');
@@ -287,15 +351,10 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'userCountrySelected', country: 'ID' });
     const shower = showerFingerprint(state, 2);
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'world' } });
-    const rendered = render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
-    expect(screen.getByText(/Estimation : environ/)).toBeVisible();
-    expect(screen.getByText(/facteur carbone de repli « Monde »/)).toBeVisible();
-    rendered.unmount();
-
-    state = conversationReducer(state, { type: 'userCountrySelected', country: 'FR' });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
-    expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
-    expect(screen.getByText('Énergie: 1 Wh')).toBeVisible();
+    expect(screen.queryByText(/Estimation : environ/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/facteur carbone de repli « Monde »/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Énergie:/)).not.toBeInTheDocument();
   });
 
   it('masque un impact périmé, explique le recalcul et liste les échanges bloquants', () => {
@@ -392,13 +451,13 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Un échange déjà calculé');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const impact = await screen.findByText(/Énergie:/);
-    const individualEnergy = impact.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1];
+    await user.type(screen.getByLabelText('Question de la personne'), 'Un échange déjà calculé');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    await screen.findByText('Estimation pour cet échange');
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
-    expect(summary.parentElement).toHaveTextContent(`Énergie: ${individualEnergy}`);
+    expect(summary.parentElement).toHaveTextContent('Énergie:');
   });
 
   it('actualise l’équivalence du bilan après un changement de pays sans recalculer le bloc', async () => {
@@ -409,23 +468,24 @@ describe('composition de la conversation', () => {
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'US');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bilan conservé');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const individualEnergy = (await screen.findByText(/Énergie:/)).parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1];
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bilan conservé');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    await screen.findByText('Estimation pour cet échange');
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    const summaryEnergy = screen.getByText(/Énergie:/).textContent;
 
     await editReference(user);
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'FR');
     await returnToThread(user);
-    expect(screen.getAllByText(/estimation de durée de douche est périmée/)).toHaveLength(2);
+    expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
 
     expect(await screen.findByText(/Estimation : environ/)).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Bilan de la conversation' }).parentElement).toHaveTextContent(`Énergie: ${individualEnergy}`);
+    expect(screen.getByText(/Énergie:/).textContent).toBe(summaryEnergy);
   });
 
-  it('rend le repli Monde pour l’équivalence du bloc et du bilan calculés', async () => {
+  it('réserve le repli de la douche au bilan calculé', async () => {
     const user = userEvent.setup();
     await startThread(user);
     await editReference(user);
@@ -433,12 +493,13 @@ describe('composition de la conversation', () => {
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'ID');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Repli mondial');
-    await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByText(/Estimation : environ/);
+    await user.type(screen.getByLabelText('Question de la personne'), 'Repli mondial');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    await screen.findByText('Estimation pour cet échange');
+    expect(screen.queryByText(/Estimation : environ/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
 
-    expect(screen.getAllByText(/facteur carbone de repli « Monde »/)).toHaveLength(2);
+    expect(screen.getByText(/facteur carbone de repli « Monde »/)).toBeVisible();
   });
 });

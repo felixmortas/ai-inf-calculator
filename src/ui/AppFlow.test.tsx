@@ -47,7 +47,7 @@ describe('parcours de départ', () => {
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
     await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
-    expect(screen.queryByLabelText('Message')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Question de la personne')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByRole('button', { name: 'Retour au fil' }));
     expect(screen.getByRole('heading', { name: 'Fil de conversation' })).toHaveFocus();
@@ -86,12 +86,59 @@ describe('parcours de départ', () => {
       expect(screen.getByLabelText('Chatbot')).toHaveValue('Mistral AI');
       expect(screen.getByLabelText('Mode Mistral')).toHaveValue('fast');
       expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-small');
-      expect(screen.queryByRole('button', { name: 'Calculer' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Calculer cet échange' })).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
       expect(screen.getByRole('heading', { name: 'Fil de conversation' })).toHaveFocus();
       expect(screen.getByText(/Référence actuelle : Mistral AI — mistral-small/)).toBeVisible();
       expect(screen.getByDisplayValue('Question importée')).toBeVisible();
       expect(fetcher).toHaveBeenCalledOnce();
     } finally { vi.unstubAllGlobals(); }
+  });
+});
+
+describe('fil et estimations', () => {
+  async function openThread(user: ReturnType<typeof userEvent.setup>) {
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+  }
+
+  it('calcule seulement l’échange demandé et laisse le bilan à son action explicite', async () => {
+    const user = userEvent.setup();
+    await openThread(user);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Première question');
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByRole('textbox', { name: 'Réponse du chatbot' }), 'Seconde réponse');
+    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Première question');
+    expect(screen.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    expect(await screen.findByText('Estimation pour cet échange')).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Estimation à calculer');
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
+  });
+
+  it('annonce la péremption en chaîne après édition sans remplacer les textes ni recalculer', async () => {
+    const user = userEvent.setup();
+    await openThread(user);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Question initiale');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    await screen.findByText('Estimation pour cet échange');
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Suite');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    expect(await screen.findAllByText('Estimation pour cet échange')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
+    await user.type(screen.getAllByRole('textbox', { name: 'Question de la personne' })[0], ' modifiée');
+    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Question initiale modifiée');
+    expect(screen.getByRole('region', { name: 'Échange 2' })).toHaveTextContent('Suite');
+    expect(screen.getAllByText(/Ce résultat est périmé/)).toHaveLength(2);
+    expect(screen.getByText(/Le bilan précédent est périmé/)).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Échange 1' }).querySelector('button')).toHaveTextContent('Replier l’échange 1');
+    expect(screen.getAllByRole('button', { name: 'Recalculer cet échange' })).toHaveLength(2);
   });
 });

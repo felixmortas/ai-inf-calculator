@@ -3,7 +3,6 @@ import {
   isIgnoredConversationBlock,
   isImpactCurrent,
   isImpactFresh,
-  isShowerEquivalenceCurrent,
   isSummaryCurrent,
   isSummaryShowerEquivalenceCurrent,
   isSummaryFresh,
@@ -42,9 +41,50 @@ interface ConversationBlocksProps {
 const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
   { name: 'message', label: fr.messageLabel },
   { name: 'finalResponse', label: fr.finalResponseLabel },
+];
+const optionalFields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
   { name: 'visibleReasoning', label: fr.visibleReasoningLabel },
   { name: 'artifact', label: fr.artifactLabel },
 ];
+
+type QuantityKind = 'carbon' | 'water';
+const quantityUnits = {
+  carbon: [
+    { scale: 1e-6, symbol: 'µgCO₂e', name: 'microgrammes de dioxyde de carbone équivalent' },
+    { scale: 1e-3, symbol: 'mgCO₂e', name: 'milligrammes de dioxyde de carbone équivalent' },
+    { scale: 1, symbol: 'gCO₂e', name: 'grammes de dioxyde de carbone équivalent' },
+    { scale: 1e3, symbol: 'kgCO₂e', name: 'kilogrammes de dioxyde de carbone équivalent' },
+    { scale: 1e6, symbol: 'tCO₂e', name: 'tonnes de dioxyde de carbone équivalent' },
+  ],
+  water: [
+    { scale: 1e-6, symbol: 'µL', name: 'microlitres d’eau' },
+    { scale: 1e-3, symbol: 'mL', name: 'millilitres d’eau' },
+    { scale: 1, symbol: 'L', name: 'litres d’eau' },
+    { scale: 1e3, symbol: 'kL', name: 'kilolitres d’eau' },
+    { scale: 1e6, symbol: 'ML', name: 'mégalitres d’eau' },
+  ],
+} as const;
+
+export function formatExchangeQuantity(value: number, kind: QuantityKind): { display: string; accessible: string } {
+  const units = quantityUnits[kind];
+  if (value === 0) return { display: `0 ${units[2].symbol}`, accessible: `0 ${units[2].name}` };
+  const magnitude = Math.abs(value);
+  let unitIndex = 0;
+  for (let index = 1; index < units.length; index++) {
+    if (magnitude >= units[index].scale) unitIndex = index;
+  }
+  while (unitIndex < units.length - 1 && magnitude / units[unitIndex].scale >= 1000) unitIndex++;
+  let amount = magnitude / units[unitIndex].scale;
+  if (amount < 0.001) return { display: `< 0,001 ${units[unitIndex].symbol}`, accessible: `moins de 0,001 ${units[unitIndex].name}` };
+  let rounded = Number(amount.toPrecision(3));
+  if (rounded >= 1000 && unitIndex < units.length - 1) {
+    unitIndex++;
+    amount = magnitude / units[unitIndex].scale;
+    rounded = Number(amount.toPrecision(3));
+  }
+  const number = new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 3, useGrouping: true }).format(rounded * Math.sign(value));
+  return { display: `${number} ${units[unitIndex].symbol}`, accessible: `${number} ${units[unitIndex].name}` };
+}
 
 export function formatImpact(value: number): string {
   return new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(value);
@@ -53,8 +93,13 @@ export function formatImpact(value: number): string {
 export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll, onRecalculateSummary = () => undefined }: ConversationBlocksProps) {
   const nextBlockNumber = useRef(1);
   const addButtonRef = useRef<HTMLButtonElement>(null);
+  const toggleButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
-  const pendingFocusBlockId = useRef<string | null | undefined>(undefined);
+  const questionRefs = useRef(new Map<string, HTMLTextAreaElement>());
+  const pendingFocus = useRef<{ kind: 'question' | 'toggle' | 'add'; blockId?: string } | null>(null);
+  const pendingCancelFocus = useRef<string | null>(null);
+  const [expandedBlocks, setExpandedBlocks] = useState<ReadonlySet<string>>(() => new Set());
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const sourceImports = useRef(new Map<string, Promise<void>>());
   const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
   const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
@@ -69,13 +114,19 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   ) : stale ? <p role="status" className="impact-stale">{fr.staleShower}</p> : null;
 
   useEffect(() => {
-    if (pendingFocusBlockId.current === undefined) return;
-    const target = pendingFocusBlockId.current === null
-      ? addButtonRef.current
-      : removeButtonRefs.current.get(pendingFocusBlockId.current);
+    if (!pendingFocus.current) return;
+    const { kind, blockId } = pendingFocus.current;
+    const target = kind === 'add' ? addButtonRef.current : kind === 'question'
+      ? questionRefs.current.get(blockId ?? '') : toggleButtonRefs.current.get(blockId ?? '');
     target?.focus();
-    pendingFocusBlockId.current = undefined;
+    pendingFocus.current = null;
   }, [state.blocks]);
+
+  useEffect(() => {
+    if (confirmRemoveId !== null || pendingCancelFocus.current === null) return;
+    removeButtonRefs.current.get(pendingCancelFocus.current)?.focus();
+    pendingCancelFocus.current = null;
+  }, [confirmRemoveId]);
 
   useEffect(() => {
     const importedHighest = state.blocks.reduce((highest, block) => {
@@ -86,7 +137,11 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   }, [state.blocks]);
 
   function addBlock() {
-    dispatch({ type: 'blockAdded', blockId: `block-${nextBlockNumber.current++}` });
+    const blockId = `block-${nextBlockNumber.current++}`;
+    pendingFocus.current = { kind: 'question', blockId };
+    setExpandedBlocks(new Set());
+    setConfirmRemoveId(null);
+    dispatch({ type: 'blockAdded', blockId });
   }
 
   function updateBlock(blockId: string, field: ConversationBlockField, event: ChangeEvent<HTMLTextAreaElement>) {
@@ -95,9 +150,25 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
 
   function removeBlock(blockId: string) {
     const index = state.blocks.findIndex((block) => block.blockId === blockId);
-    const nextFocusBlock = state.blocks[index + 1] ?? state.blocks[index - 1];
-    pendingFocusBlockId.current = nextFocusBlock?.blockId ?? null;
+    const remaining = state.blocks.filter((block) => block.blockId !== blockId);
+    const neighbor = remaining[Math.min(index, remaining.length - 1)];
+    pendingFocus.current = neighbor && neighbor !== remaining[remaining.length - 1]
+      ? { kind: 'toggle', blockId: neighbor.blockId } : { kind: 'add' };
+    setConfirmRemoveId(null);
     dispatch({ type: 'blockRemoved', blockId });
+  }
+
+  function requestRemove(blockId: string) {
+    const block = state.blocks.find((item) => item.blockId === blockId);
+    if (!block) return;
+    if ([block.message, block.finalResponse, block.visibleReasoning, block.artifact].some((value) => value.trim()) || block.sources?.length) {
+      setConfirmRemoveId(blockId);
+    } else removeBlock(blockId);
+  }
+
+  function cancelRemove(blockId: string) {
+    pendingCancelFocus.current = blockId;
+    setConfirmRemoveId(null);
   }
 
   function addSources(blockId: string, event: ChangeEvent<HTMLInputElement>) {
@@ -160,61 +231,106 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         const impactState = state.impacts[block.blockId];
         const impactIsCurrent = isImpactCurrent(state, block.blockId);
         const impactIsStale = !ignored && impactState?.status === 'result' && !impactIsCurrent;
-        const shower = state.showerEquivalences[block.blockId];
-        const showerCurrent = isShowerEquivalenceCurrent(state, block.blockId);
+        const isLatest = index === state.blocks.length - 1;
+        const expanded = isLatest || expandedBlocks.has(block.blockId);
+        const editorId = `conversation-${block.blockId}-editor`;
+        const question = block.message.trim();
+        const response = block.finalResponse.trim();
+        const importArtifact = /sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse);
+        const importSource = /filecite[^]+/u.test(block.finalResponse);
+        const status = ignored ? fr.ignoredBlockStatus : impactIsStale ? fr.staleImpactStatus
+          : impactState?.status === 'pending' && isImpactFresh(state, block.blockId) ? fr.pendingEstimate
+          : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? fr.failedEstimate
+          : impactIsCurrent ? fr.currentEstimate : fr.awaitingEstimate;
         return (
-          <fieldset key={block.blockId} className="conversation-block">
-            <legend>{fr.blockTitle(index + 1)}</legend>
+          <section key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockTitle(index + 1)}>
             <div className="conversation-block-heading">
-              <button
+              <h3>{fr.blockTitle(index + 1)}</h3>
+              {!isLatest ? <button
                 ref={(element) => {
-                  if (element) removeButtonRefs.current.set(block.blockId, element);
-                  else removeButtonRefs.current.delete(block.blockId);
+                  if (element) toggleButtonRefs.current.set(block.blockId, element);
+                  else toggleButtonRefs.current.delete(block.blockId);
                 }}
                 type="button"
-                onClick={() => removeBlock(block.blockId)}
-              >
-                {fr.removeBlockAction(index + 1)}
-              </button>
+                aria-expanded={expanded}
+                aria-controls={editorId}
+                onClick={() => {
+                  if (confirmRemoveId === block.blockId) setConfirmRemoveId(null);
+                  setExpandedBlocks((current) => {
+                  const next = new Set(current);
+                  if (next.has(block.blockId)) next.delete(block.blockId);
+                  else next.add(block.blockId);
+                  return next;
+                  });
+                }}
+              >{expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}</button> : null}
             </div>
-            {ignored ? <p className="ignored-status" role="status">{fr.ignoredBlockStatus}</p> : null}
-            {/sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
-            {/filecite[^]+/u.test(block.finalResponse) ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
-            <div className="field local-sources">
-              <label htmlFor={`conversation-${block.blockId}-sources`}>{fr.sourcesLabel}</label>
-              <input id={`conversation-${block.blockId}-sources`} type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.py,.js,.ts,.html,.xml,.yaml,.yml,text/*,application/json" onChange={(event) => addSources(block.blockId, event)} />
-              <p className="field-help">{fr.sourcesHelp}</p>
-              {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
-              {(block.sources ?? []).length ? <ul className="source-list">{(block.sources ?? []).map((source) => <li key={source.id}>
-                <span>{fr.sourceCounted(source.name, source.size)}</span>
-                <button type="button" onClick={() => dispatch({ type: 'sourceRemoved', blockId: block.blockId, sourceId: source.id })}>{fr.removeSourceAction(source.name)}</button>
-              </li>)}</ul> : null}
-            </div>
-            {fields.map(({ name, label }) => {
-              const id = `conversation-${block.blockId}-${name}`;
-              return (
-                <div className="field" key={name}>
-                  <label htmlFor={id}>{label}</label>
-                  <textarea id={id} value={block[name]} onChange={(event) => updateBlock(block.blockId, name, event)} />
-                </div>
-              );
-            })}
-            {!ignored ? <div className="impact-panel">
-              <button type="button" onClick={() => onCalculate(block.blockId)} disabled={state.parameterValidationInvalid || (impactState?.status === 'pending' && isImpactFresh(state, block.blockId)) || state.summary?.status === 'pending'}>
-                {impactState?.status === 'pending' ? fr.calculatingAction : fr.calculateAction}
-              </button>
-              {impactIsStale ? <p role="status" className="impact-stale">{fr.staleImpactStatus}</p> : null}
-              {impactIsCurrent && impactState?.status === 'result' ? <div role="status" className="impact-result">
-                <p>{fr.energyLabel}: {formatImpact(impactState.impact.energyWh)} Wh</p>
-                <p>{fr.carbonLabel}: {formatImpact(impactState.impact.carbonGco2e)} gCO2e</p>
-                <p>{fr.waterLabel}: {formatImpact(impactState.impact.waterL)} L</p>
-                <Shower value={showerCurrent ? shower : undefined} stale={!!shower && !showerCurrent} />
-                {Object.values(impactState.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.worldFallbackNotice}</p> : null}
-                <p className="impact-note">{fr.impactLimits}</p>
-              </div> : null}
-              {impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}
+            {!expanded ? <div className="conversation-preview">
+              <p><strong>{fr.questionPreview} :</strong> {question || fr.noPreview}</p>
+              <p><strong>{fr.responsePreview} :</strong> {response || fr.noPreview}</p>
             </div> : null}
-          </fieldset>
+            <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`} role="status">{status}</p>
+            {importArtifact ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
+            {importSource ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
+            {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
+            {impactIsCurrent && impactState?.status === 'result' ? <div role="status" className="impact-result">
+              <p className="impact-result-title">{fr.estimatedImpact}</p>
+              {(['carbon', 'water'] as const).map((kind) => {
+                const quantity = formatExchangeQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
+                return <p key={kind}>{kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>;
+              })}
+              <p className="impact-note">{fr.adaptiveUnitHelp}</p>
+              {Object.values(impactState.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.worldFallbackNotice}</p> : null}
+              <p className="impact-note">{fr.impactLimits}</p>
+            </div> : null}
+            {impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}
+            <div id={editorId} hidden={!expanded} className="block-editor">
+              {fields.map(({ name, label }) => {
+                const id = `conversation-${block.blockId}-${name}`;
+                return <div className="field" key={name}>
+                  <label htmlFor={id}>{label}</label>
+                  <textarea id={id} ref={name === 'message' ? (element) => {
+                    if (element) questionRefs.current.set(block.blockId, element);
+                    else questionRefs.current.delete(block.blockId);
+                  } : undefined} value={block[name]} onChange={(event) => updateBlock(block.blockId, name, event)} />
+                </div>;
+              })}
+              <details className="optional-contents">
+                <summary>{fr.optionalContents}</summary>
+                {optionalFields.map(({ name, label }) => {
+                  const id = `conversation-${block.blockId}-${name}`;
+                  return <div className="field" key={name}>
+                    <label htmlFor={id}>{label}</label>
+                    <textarea id={id} value={block[name]} onChange={(event) => updateBlock(block.blockId, name, event)} />
+                  </div>;
+                })}
+                <div className="field local-sources">
+                  <label htmlFor={`conversation-${block.blockId}-sources`}>{fr.sourcesLabel}</label>
+                  <input id={`conversation-${block.blockId}-sources`} type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.py,.js,.ts,.html,.xml,.yaml,.yml,text/*,application/json" onChange={(event) => addSources(block.blockId, event)} />
+                  <p className="field-help">{fr.sourcesHelp}</p>
+                  {(block.sources ?? []).length ? <ul className="source-list">{(block.sources ?? []).map((source) => <li key={source.id}>
+                    <span>{fr.sourceCounted(source.name, source.size)}</span>
+                    <button type="button" onClick={() => dispatch({ type: 'sourceRemoved', blockId: block.blockId, sourceId: source.id })}>{fr.removeSourceAction(source.name)}</button>
+                  </li>)}</ul> : null}
+                </div>
+              </details>
+              <div className="block-actions">
+                <button type="button" onClick={() => onCalculate(block.blockId)} disabled={ignored || state.parameterValidationInvalid || (impactState?.status === 'pending' && isImpactFresh(state, block.blockId)) || state.summary?.status === 'pending'}>
+                  {impactState?.status === 'pending' ? fr.calculatingAction : impactIsStale ? fr.recalculateAction : fr.calculateAction}
+                </button>
+                <button ref={(element) => {
+                  if (element) removeButtonRefs.current.set(block.blockId, element);
+                  else removeButtonRefs.current.delete(block.blockId);
+                }} type="button" onClick={() => requestRemove(block.blockId)}>{fr.removeBlockAction(index + 1)}</button>
+              </div>
+              {ignored ? <p className="field-help">{fr.emptyBlockError}</p> : null}
+              {confirmRemoveId === block.blockId ? <div className="remove-confirmation" role="group" aria-label={fr.confirmRemove(index + 1)}>
+                <p>{fr.confirmRemove(index + 1)}</p>
+                <button type="button" onClick={() => cancelRemove(block.blockId)}>{fr.cancelRemoveAction}</button>
+                <button type="button" onClick={() => removeBlock(block.blockId)}>{fr.confirmRemoveAction}</button>
+              </div> : null}
+            </div>
+          </section>
         );
       })}
       {currentSummary || hasCurrentImpact ? <section className="good-practices" aria-labelledby="good-practices-title">

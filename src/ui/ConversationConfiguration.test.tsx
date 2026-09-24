@@ -114,7 +114,7 @@ describe('configuration de conversation', () => {
     await startSelection(user);
     await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Message'), 'Bonjour');
+    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Paramètres avancés'));
     await user.clear(screen.getByLabelText('PUE (ratio)'));
@@ -123,7 +123,7 @@ describe('configuration de conversation', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
     await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
-    expect(screen.getByRole('button', { name: 'Calculer' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Calculer cet échange' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Tout calculer' })).toBeDisabled();
   });
 });

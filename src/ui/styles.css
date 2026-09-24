@@ -111,10 +111,25 @@ button {
 .conversation-block {
   margin-top: 1rem;
   padding: 1rem;
-  border: 1px solid #b5c8ba;
-  border-radius: .5rem;
+  border: 1px solid #c7d7c7;
+  border-radius: .875rem;
+  background: #fff;
 }
-.conversation-block legend { padding: 0 .25rem; font-weight: 700; }
+.conversation-block.is-expanded { border-color: #5c7866; border-radius: 1.25rem; }
+.conversation-block-heading h3 { margin: 0; font-size: 1.1rem; }
+.conversation-preview { margin-top: .75rem; }
+.conversation-preview p { margin: .35rem 0; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.4; max-height: 4.2em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.conversation-preview p + p { color: #405349; }
+.exchange-status { margin: .75rem 0; color: #405349; font-weight: 700; }
+.block-editor[hidden] { display: none; }
+.optional-contents { margin-top: 1rem; padding: .75rem; border: 1px solid #c7d7c7; border-radius: .5rem; background: #f5f8f0; }
+.optional-contents summary { cursor: pointer; font-weight: 700; padding: .35rem; }
+.optional-contents summary:focus-visible { outline: 3px solid #184bb2; outline-offset: 2px; }
+.block-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
+.block-actions button:first-child { background: #245a40; color: #fff; }
+.remove-confirmation { margin-top: 1rem; padding: .8rem; border: 2px solid #704900; border-radius: .5rem; background: #fff7df; }
+.remove-confirmation p { margin-top: 0; }
+.remove-confirmation button + button { margin-left: .65rem; }
 .field-help, .source-rejected { margin: .35rem 0; font-size: .9rem; }
 .source-rejected { color: #8a2f2f; }
 .source-list { margin: .5rem 0 0; padding-left: 1.25rem; }
@@ -124,6 +139,9 @@ button {
 .impact-result, .impact-error, .impact-stale { padding: .8rem; border-radius: .35rem; }
 .impact-result { background: #edf5ee; }
 .impact-result p { margin: .3rem 0; }
+.impact-result-title { font-weight: 700; }
+.impact-result span { font-size: 1.3rem; font-weight: 700; overflow-wrap: anywhere; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .shower-equivalence { padding: .65rem .8rem; border-left: 4px solid #245535; background: #f3f8f3; }
 .shower-equivalence p { margin: .3rem 0; }
 .impact-note { color: #405349; font-size: .9rem; }
@@ -143,6 +161,9 @@ button {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
   .configuration, .conversation-import, .conversation-blocks { padding: 1rem; }
   .conversation-blocks-header, .conversation-block-heading, .conversation-actions { align-items: stretch; flex-direction: column; }
+  .block-actions, .remove-confirmation { display: grid; gap: .65rem; }
+  .remove-confirmation button + button { margin-left: 0; }
+  .source-list li { align-items: stretch; flex-direction: column; }
   .import-consent { padding: 1rem; }
   .import-consent-actions { align-items: stretch; flex-direction: column; }
 }
