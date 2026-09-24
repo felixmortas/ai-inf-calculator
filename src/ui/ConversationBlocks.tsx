@@ -52,7 +52,10 @@ const optionalFields: readonly { readonly name: ConversationBlockField; readonly
 
 export const formatExchangeQuantity = formatQuantity;
 
-export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll, onRecalculateSummary = () => undefined, onEditParameters }: ConversationBlocksProps) {
+export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll, onRecalculateSummary, onEditParameters }: ConversationBlocksProps) {
+  // Kept available for restoring the summary and parameter actions later.
+  void onRecalculateSummary;
+  void onEditParameters;
   const nextBlockNumber = useRef(1);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const toggleButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -136,6 +139,9 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
       setConfirmRemoveId(blockId);
     } else removeBlock(blockId);
   }
+
+  // Retain the confirmation flow for a future restore of guarded removal.
+  void requestRemove;
 
   function cancelRemove(blockId: string) {
     pendingCancelFocus.current = blockId;
