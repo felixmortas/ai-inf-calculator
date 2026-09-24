@@ -210,7 +210,7 @@ export function App() {
       </section> : null}
       {step === 'import' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.importPathTitle}</h2>
-        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>⌂</Icon></button>
+        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>←</Icon></button>
         <ConversationImport state={state} dispatch={dispatch} onImported={() => {
           dispatch({ type: 'providerSelected', provider: 'Mistral AI' });
           setAwaitingImportedMistralMode(true);
