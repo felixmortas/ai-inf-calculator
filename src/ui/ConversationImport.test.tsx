@@ -262,7 +262,10 @@ describe('ConversationImport', () => {
     await consent(user);
     const title = await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
     expect(title).toHaveFocus();
-    expect(screen.getByText('1 échange extrait, 0 avertissements.')).toHaveAttribute('role', 'status');
+    expect(screen.getAllByText('1 échange extrait, 0 avertissements.')).toHaveLength(2);
+    expect(title.parentElement?.querySelector('[role="status"]')).toHaveTextContent('1 échange extrait, 0 avertissements.');
+    expect(title.previousElementSibling).toHaveClass('import-preview-repeat');
+    expect(title.previousElementSibling?.previousElementSibling).toHaveAttribute('role', 'status');
     expect(screen.getByText('Bonjour', { exact: false })).not.toHaveAttribute('role', 'status');
     await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
     expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();

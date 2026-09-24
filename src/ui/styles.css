@@ -23,7 +23,8 @@ header > p { color: #4e665a; }
 .start-choice h3 { margin-top: 0; }
 .start-choice p { color: #4e665a; }
 .thread-reference { margin-top: 1rem; padding: 1rem; border: 1px solid #c7d7c7; border-radius: .875rem; background: #fff; }
-.thread-reference p { margin-top: 0; }
+.thread-reference { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.thread-reference p { margin: 0; }
 [tabindex="-1"]:focus { outline: 3px solid #184bb2; outline-offset: .25rem; }
 
 .configuration, .conversation-import, .conversation-blocks {
@@ -102,7 +103,16 @@ button {
   font-weight: 700;
   overflow-wrap: anywhere;
 }
-.advanced-settings > summary, .optional-contents > summary { display: flex; align-items: center; min-height: 2.75rem; cursor: pointer; }
+.icon-button { display: inline-grid; place-items: center; width: 2.75rem; min-width: 2.75rem; padding: .35rem; font-size: 1.25rem; }
+.below-title { margin: 0 0 1rem; }
+.icon-glyph { line-height: 1; }
+.advanced-settings > summary, .optional-contents > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.75rem; cursor: pointer; font-weight: 700; list-style: none; }
+.advanced-settings > summary { padding: .35rem .5rem; border: 1px solid #577160; border-radius: .35rem; background: #f5f8f0; }
+.advanced-settings > summary::-webkit-details-marker, .optional-contents > summary::-webkit-details-marker { display: none; }
+.optional-contents > summary::after { content: '⌄'; display: inline-block; transition: transform .16s ease; }
+.optional-contents[open] > summary::after { transform: rotate(180deg); }
+.chevron { display: inline-block; transition: transform .16s ease; }
+.advanced-settings[open] > summary .chevron, .conversation-block.is-expanded .conversation-block-heading .chevron { transform: rotate(180deg); }
 .summary-message a { display: inline-flex; align-items: center; min-height: 2.75rem; overflow-wrap: anywhere; }
 .conversation-actions > *, .conversation-block-heading > * { min-width: 0; }
 .conversation-blocks-header, .conversation-block-heading {
@@ -115,6 +125,7 @@ button {
 .conversation-blocks-header { margin-bottom: 1rem; }
 .conversation-blocks-header h2 { margin: 0; }
 .conversation-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.conversation-actions-after-thread { margin: 1rem 0; }
 .conversation-block {
   margin-top: 1rem;
   padding: 1rem;
@@ -124,9 +135,11 @@ button {
 }
 .conversation-block.is-expanded { border-color: #5c7866; border-radius: 1.25rem; }
 .conversation-block-heading h3 { margin: 0; font-size: 1.1rem; }
+.conversation-block-heading h3 { flex: 1; }
 .conversation-preview { margin-top: .75rem; }
 .conversation-preview p { margin: .35rem 0; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.4; max-height: 4.2em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .conversation-preview p + p { color: #405349; }
+.compact-impact { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .7rem; font-weight: 700; }
 .exchange-status { margin: .75rem 0; color: #405349; font-weight: 700; }
 .block-editor[hidden] { display: none; }
 .optional-contents { margin-top: 1rem; padding: .75rem; border: 1px solid #c7d7c7; border-radius: .5rem; background: #f5f8f0; }
@@ -155,6 +168,7 @@ button {
 .impact-error { border: 1px solid #9d3030; background: #fff1f1; }
 .impact-stale { border: 2px solid #8a5a00; background: #fff7df; color: #513600; font-weight: 700; }
 .summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
+.import-separator { margin: 1.25rem 0; border: 0; border-top: 1px solid #c7d7c7; }
 .summary-panel h3 { margin: 0 0 .5rem; }
 .summary-panel p { margin: .3rem 0; }
 .summary-panel { background: #fff; }
@@ -172,7 +186,9 @@ button {
 @media (max-width: 30rem) {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
   .configuration, .conversation-import, .conversation-blocks { padding: 1rem; }
-  .conversation-blocks-header, .conversation-block-heading, .conversation-actions { align-items: stretch; flex-direction: column; }
+  .conversation-blocks-header, .conversation-actions { align-items: stretch; flex-direction: column; }
+  .conversation-block-heading { align-items: center; flex-direction: row; gap: .5rem; }
+  .conversation-actions-after-thread { align-items: center; flex-direction: row; }
   .summary-panel button, .thread-reference button { max-width: 100%; white-space: normal; }
   .block-actions, .remove-confirmation { display: grid; gap: .65rem; }
   .remove-confirmation button + button { margin-left: 0; }

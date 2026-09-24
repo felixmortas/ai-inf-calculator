@@ -4,11 +4,27 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
 describe('parcours de départ', () => {
+  it('fait défiler jusqu’au bas quand le fil dépasse la fenêtre', async () => {
+    const heightDescriptor = Object.getOwnPropertyDescriptor(document.documentElement, 'scrollHeight');
+    const viewportDescriptor = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+    Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 1200 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 700 });
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+    expect(scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: 'auto' });
+    scrollTo.mockRestore();
+    if (heightDescriptor) Object.defineProperty(document.documentElement, 'scrollHeight', heightDescriptor);
+    if (viewportDescriptor) Object.defineProperty(window, 'innerHeight', viewportDescriptor);
+  });
+
   it('propose les deux voies dans l’ordre et place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
     const actions = screen.getAllByRole('button');
-    expect(actions.map((action) => action.textContent)).toEqual(['Importer un lien Mistral', 'Saisir un échange']);
+    expect(actions.map((action) => action.getAttribute('aria-label'))).toEqual(['Importer un lien Mistral', 'Saisir un échange']);
     expect(screen.getByRole('heading', { name: 'Comment souhaitez-vous commencer ?' })).toHaveFocus();
     await user.click(actions[1]);
     expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
@@ -171,7 +187,7 @@ describe('fil et estimations', () => {
     expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Première question');
     expect(screen.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    expect(await screen.findByText('Estimation pour cet échange')).toBeVisible();
+    expect(await screen.findByLabelText('Estimation pour cet échange')).toBeVisible();
     expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Estimation à calculer');
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
   });
@@ -182,13 +198,21 @@ describe('fil et estimations', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Question initiale');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    await screen.findByText('Estimation pour cet échange');
+    await screen.findByLabelText('Estimation pour cet échange');
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Suite');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    expect(await screen.findAllByText('Estimation pour cet échange')).toHaveLength(2);
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+    const exchanges = document.querySelectorAll('.conversation-blocks .conversation-block');
+    const lastExchange = exchanges[exchanges.length - 1];
+    const actions = document.querySelector('.conversation-actions-after-thread')!;
+    const summary = document.querySelector('.summary-panel')!;
+    const reference = document.querySelector('.thread-reference')!;
+    expect(lastExchange.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(actions.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(summary.compareDocumentPosition(reference) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
     await user.type(screen.getAllByRole('textbox', { name: 'Question de la personne' })[0], ' modifiée');
     expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Question initiale modifiée');
@@ -196,7 +220,7 @@ describe('fil et estimations', () => {
     expect(screen.getAllByText(/Ce résultat est périmé/)).toHaveLength(2);
     expect(screen.getByText(/Le bilan précédent est périmé/)).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Échange 1' }).querySelector('button')).toHaveTextContent('Replier l’échange 1');
+    expect(screen.getByRole('button', { name: 'Replier l’échange 1' })).toBeVisible();
     expect(screen.getAllByRole('button', { name: 'Recalculer cet échange' })).toHaveLength(2);
   });
 });

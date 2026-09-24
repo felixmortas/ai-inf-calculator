@@ -42,7 +42,13 @@ describe('configuration de conversation', () => {
   it('permet de choisir au clavier le pays d’hébergement dans les paramètres avancés', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByText('Paramètres avancés'));
+    const summary = screen.getByText('Paramètres avancés');
+    const details = summary.closest('details')!;
+    expect(details).not.toHaveAttribute('open');
+    expect(summary.querySelector('.chevron')).toBeInTheDocument();
+    await user.click(summary);
+    expect(details).toHaveAttribute('open');
+    expect(details.querySelector('summary')).toHaveAttribute('aria-expanded', 'true');
     const country = screen.getByLabelText('Pays d’hébergement');
     expect(country).toHaveValue('US');
     await user.selectOptions(country, 'FR');

@@ -158,48 +158,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
     <section aria-labelledby="conversation-title" className="conversation-blocks">
       <div className="conversation-blocks-header">
         <h2 id="conversation-title">{fr.conversationLabel}</h2>
-        <div className="conversation-actions">
-          <button ref={addButtonRef} type="button" onClick={addBlock}>{fr.addBlockAction}</button>
-          <button type="button" onClick={onCalculateAll} disabled={state.summary?.status === 'pending' || state.parameterValidationInvalid}>
-            {state.summary?.status === 'pending' ? fr.calculatingAllAction : fr.calculateAllAction}
-          </button>
-          <button type="button" onClick={onRecalculateSummary} disabled={state.summary?.status === 'pending' || state.parameterValidationInvalid}>
-            {fr.recalculateSummaryAction}
-          </button>
-        </div>
       </div>
-      {!currentSummary && onEditParameters ? <button className="edit-stale-parameters" type="button" onClick={(event) => onEditParameters(event.currentTarget)}>{fr.editParametersAction}</button> : null}
-      {state.summary?.status === 'unavailable' && isSummaryFresh(state) ? <div role="status" className="summary-message">
-        <p>{state.summary.code === 'no-exchanges' ? fr.noExchangesForSummary : fr.summaryUnavailable}</p>
-        {state.summary.blockingBlockIds?.length ? <ul>{state.summary.blockingBlockIds.map((blockId) => {
-          const number = state.blocks.findIndex((block) => block.blockId === blockId) + 1;
-          return <li key={blockId}><a href={`#conversation-${blockId}`} onClick={() => {
-            setExpandedBlocks((current) => new Set([...current, blockId]));
-            document.getElementById(`conversation-${blockId}`)?.focus();
-          }}>{fr.summaryBlockingBlock(number)}</a></li>;
-        })}</ul> : null}
-      </div> : null}
-      {state.summary && !isSummaryFresh(state) ? <p role="status" className="summary-message">{fr.staleSummaryStatus}</p> : null}
-      {currentSummary ? <section className="summary-panel" aria-labelledby="summary-title">
-        <h3 id="summary-title">{fr.summaryTitle}</h3>
-        <p role="status" className="visually-hidden">{fr.summaryCurrentStatus}</p>
-        {([['energy', fr.energyLabel, currentSummary.total.energyWh], ['carbon', fr.carbonLabel, currentSummary.total.carbonGco2e], ['water', fr.waterLabel, currentSummary.total.waterL]] as const).map(([kind, label, value]) => {
-          const quantity = formatQuantity(value, kind);
-          return <p key={kind}>{label}: <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>;
-        })}
-        <p className="impact-note">{fr.userCountryLabel} : {userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry}</p>
-        <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
-        <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available'
-          ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable} ({hostingCountryOptions.find((country) => country.code === state.hostingCountry)?.label ?? state.hostingCountry})</p>
-        {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
-        <p className="impact-note">{fr.summaryLimits}</p>
-        <p className="impact-note">{fr.adaptiveUnitHelp}</p>
-        {onEditParameters ? <button type="button" onClick={(event) => onEditParameters(event.currentTarget)}>{fr.editParametersAction}</button> : null}
-        <section className="good-practices" aria-labelledby="good-practices-title">
-          <h4 id="good-practices-title">{fr.goodPracticesTitle}</h4>
-          <ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul>
-        </section>
-      </section> : null}
       {state.blocks.map((block, index) => {
         const ignored = isIgnoredConversationBlock(block);
         const impactState = state.impacts[block.blockId];
@@ -219,6 +178,10 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         return (
           <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockTitle(index + 1)} tabIndex={-1}>
             <div className="conversation-block-heading">
+              <button ref={(element) => {
+                if (element) removeButtonRefs.current.set(block.blockId, element);
+                else removeButtonRefs.current.delete(block.blockId);
+              }} className="icon-button remove-block" type="button" aria-label={fr.removeBlockAction(index + 1)} onClick={() => removeBlock(block.blockId)}><span aria-hidden="true">×</span></button>
               <h3>{fr.blockTitle(index + 1)}</h3>
               {!isLatest ? <button
                 ref={(element) => {
@@ -237,8 +200,14 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                   return next;
                   });
                 }}
-              >{expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}</button> : null}
+              ><span aria-hidden="true" className="chevron">⌄</span><span className="visually-hidden">{expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}</span></button> : null}
             </div>
+            {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={fr.estimatedImpact}>
+              {(['carbon', 'water'] as const).map((kind) => {
+                const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
+                return <span key={kind} aria-label={`${kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
+              })}
+            </div> : null}
             {!expanded ? <div className="conversation-preview">
               <p><strong>{fr.questionPreview} :</strong> {question || fr.noPreview}</p>
               <p><strong>{fr.responsePreview} :</strong> {response || fr.noPreview}</p>
@@ -247,16 +216,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
             {importArtifact ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
             {importSource ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
             {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
-            {impactIsCurrent && impactState?.status === 'result' ? <div role="status" className="impact-result">
-              <p className="impact-result-title">{fr.estimatedImpact}</p>
-              {(['carbon', 'water'] as const).map((kind) => {
-                const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
-                return <p key={kind}>{kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>;
-              })}
-              <p className="impact-note">{fr.adaptiveUnitHelp}</p>
-              {Object.values(impactState.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.worldFallbackNotice}</p> : null}
-              <p className="impact-note">{fr.impactLimits}</p>
-            </div> : null}
             {impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}
             <div id={editorId} hidden={!expanded} className="block-editor">
               {fields.map(({ name, label }) => {
@@ -292,10 +251,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                 <button type="button" onClick={() => onCalculate(block.blockId)} disabled={ignored || state.parameterValidationInvalid || (impactState?.status === 'pending' && isImpactFresh(state, block.blockId)) || state.summary?.status === 'pending'}>
                   {impactState?.status === 'pending' ? fr.calculatingAction : impactIsStale ? fr.recalculateAction : fr.calculateAction}
                 </button>
-                <button ref={(element) => {
-                  if (element) removeButtonRefs.current.set(block.blockId, element);
-                  else removeButtonRefs.current.delete(block.blockId);
-                }} type="button" onClick={() => requestRemove(block.blockId)}>{fr.removeBlockAction(index + 1)}</button>
               </div>
               {ignored ? <p className="field-help">{fr.emptyBlockError}</p> : null}
               {confirmRemoveId === block.blockId ? <div className="remove-confirmation" role="group" aria-label={fr.confirmRemove(index + 1)}>
@@ -307,6 +262,30 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
           </section>
         );
       })}
+      <div className="conversation-actions conversation-actions-after-thread">
+        <button ref={addButtonRef} className="icon-button" type="button" aria-label={fr.addBlockAction} onClick={addBlock}><span aria-hidden="true">+</span></button>
+        <button type="button" onClick={onCalculateAll} disabled={state.summary?.status === 'pending' || state.parameterValidationInvalid}>
+          {state.summary?.status === 'pending' ? fr.calculatingAllAction : fr.calculateAllAction}
+        </button>
+      </div>
+      {state.summary?.status === 'unavailable' && isSummaryFresh(state) ? <div role="status" className="summary-message">
+        <p>{state.summary.code === 'no-exchanges' ? fr.noExchangesForSummary : fr.summaryUnavailable}</p>
+        {state.summary.blockingBlockIds?.length ? <ul>{state.summary.blockingBlockIds.map((blockId) => {
+          const number = state.blocks.findIndex((block) => block.blockId === blockId) + 1;
+          return <li key={blockId}><a href={`#conversation-${blockId}`} onClick={() => { setExpandedBlocks((current) => new Set([...current, blockId])); document.getElementById(`conversation-${blockId}`)?.focus(); }}>{fr.summaryBlockingBlock(number)}</a></li>;
+        })}</ul> : null}
+      </div> : null}
+      {state.summary && !isSummaryFresh(state) ? <p role="status" className="summary-message">{fr.staleSummaryStatus}</p> : null}
+      {currentSummary ? <section className="summary-panel" aria-labelledby="summary-title">
+        <h3 id="summary-title">{fr.summaryTitle}</h3><p role="status" className="visually-hidden">{fr.summaryCurrentStatus}</p>
+        {([['energy', fr.energyLabel, currentSummary.total.energyWh], ['carbon', fr.carbonLabel, currentSummary.total.carbonGco2e], ['water', fr.waterLabel, currentSummary.total.waterL]] as const).map(([kind, label, value]) => { const quantity = formatQuantity(value, kind); return <p key={kind}>{label}: <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>; })}
+        <p className="impact-note">{fr.userCountryLabel} : {userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry}</p>
+        <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
+        <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available' ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable} ({hostingCountryOptions.find((country) => country.code === state.hostingCountry)?.label ?? state.hostingCountry})</p>
+        {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
+        <p className="impact-note">{fr.summaryLimits}</p><p className="impact-note">{fr.adaptiveUnitHelp}</p>
+        <section className="good-practices" aria-labelledby="good-practices-title"><h4 id="good-practices-title">{fr.goodPracticesTitle}</h4><ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul></section>
+      </section> : null}
     </section>
   );
 }

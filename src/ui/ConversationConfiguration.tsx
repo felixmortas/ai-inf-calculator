@@ -111,7 +111,8 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
         </select>
       </div>
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
-        <summary>{fr.advancedSettingsTitle}</summary>
+        <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{fr.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+        <div id="advanced-settings-content">
         <div className="field">
           <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
           <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
@@ -144,6 +145,7 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
           {invalidFields.length > 0 ? <p id="parameter-error" role="alert">{fr.invalidParameters}</p> : null}
           <div className="conversation-actions"><button type="submit">{fr.applyParametersAction}</button><button type="button" onClick={() => { setInvalidFields([]); setResetVersion((version) => version + 1); dispatch({ type: 'parametersRestored' }); }}>{fr.restoreParametersAction}</button></div>
         </form> : null}
+        </div>
       </details>
     </section>
   );

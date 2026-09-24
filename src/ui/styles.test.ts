@@ -10,4 +10,16 @@ describe('styles d’accessibilité et responsive', () => {
     expect(styleSource).toContain('.good-practices');
     expect(styleSource).toContain('prefers-reduced-motion');
   });
+
+  it('fait tourner les chevrons des menus et des échanges selon leur état', () => {
+    expect(styleSource).toContain('.advanced-settings[open] > summary .chevron');
+    expect(styleSource).toContain('.conversation-block.is-expanded .conversation-block-heading .chevron');
+    expect(styleSource).toContain('.optional-contents[open] > summary::after');
+    expect(styleSource).toContain('transform: rotate(180deg)');
+  });
+
+  it('garde les actions d’échange sur leur ligne aux petits écrans', () => {
+    expect(styleSource).toContain('.conversation-block-heading { align-items: center; flex-direction: row;');
+    expect(styleSource).toContain('.conversation-actions-after-thread { align-items: center; flex-direction: row;');
+  });
 });

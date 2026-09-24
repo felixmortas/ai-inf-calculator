@@ -91,7 +91,8 @@ describe('composition de la conversation', () => {
       expect(screen.getAllByLabelText('Question de la personne')).toHaveLength(2);
       await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
       expect(await screen.findByRole('heading', { name: 'Bilan de la conversation' })).toBeVisible();
-      await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+      await editReference(user);
+      await user.click(screen.getByText('Paramètres avancés'));
       expect(screen.getByLabelText('PUE (ratio)')).toBeVisible();
       await returnToThread(user);
       expect(screen.getAllByLabelText('Question de la personne')[0]).toHaveValue('Question');
@@ -125,17 +126,11 @@ describe('composition de la conversation', () => {
     const toggle = screen.getByRole('button', { name: 'Déplier l’échange 1' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Question : à supprimer');
-    expect(screen.queryByRole('button', { name: 'Supprimer l’échange 1' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Supprimer l’échange 1' })).toBeVisible();
     await user.click(toggle);
     expect(toggle).toHaveFocus();
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await user.click(screen.getByRole('button', { name: 'Supprimer l’échange 1' }));
-    expect(screen.getByText('Supprimer l’échange 1 et ses textes ?')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(screen.getByRole('button', { name: 'Supprimer l’échange 1' })).toHaveFocus();
-    expect(screen.getByRole('region', { name: 'Échange 1' }).querySelector('.conversation-preview')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Supprimer l’échange 1' }));
-    await user.click(screen.getByRole('button', { name: 'Confirmer la suppression' }));
     expect(screen.getAllByLabelText('Question de la personne')).toHaveLength(1);
     expect(screen.getByLabelText('Question de la personne')).toHaveValue('à conserver');
     expect(screen.getByRole('button', { name: 'Ajouter un échange' })).toHaveFocus();
@@ -170,11 +165,11 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    expect(await screen.findByText('Estimation pour cet échange')).toBeVisible();
-    expect(screen.getByText(/Carbone :/)).toBeVisible();
-    expect(screen.getByText(/Eau :/)).toBeVisible();
+    expect(await screen.findByLabelText('Estimation pour cet échange')).toBeVisible();
+    expect(screen.getByLabelText(/Carbone :/)).toBeVisible();
+    expect(screen.getByLabelText(/Eau :/)).toBeVisible();
     expect(screen.queryByText(/Énergie:/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Estimation incertaine/)).toBeVisible();
+    expect(screen.queryByText(/Estimation incertaine/)).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Calculer cet échange' })).toHaveLength(1);
   });
 
@@ -184,7 +179,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    const initialCarbon = (await screen.findByText(/Carbone :/)).textContent;
+    const initialCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
 
     await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
@@ -194,7 +189,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Recalculer cet échange' }));
-    expect((await screen.findByText(/Carbone :/)).textContent).not.toBe(initialCarbon);
+    expect((await screen.findByLabelText(/Carbone :/)).textContent).not.toBe(initialCarbon);
   });
 
   it('applique le pays d’hébergement choisi aux calculs et au risque du bilan', async () => {
@@ -207,8 +202,8 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    const frenchCarbon = (await screen.findByText(/Carbone :/)).textContent;
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    const frenchCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     expect(summary.parentElement).toHaveTextContent('Medium - High (0.6-0.8)');
     expect(summary.parentElement).toHaveTextContent('Carbone:');
@@ -218,7 +213,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    expect((await screen.findByText(/Carbone :/)).textContent).not.toBe(frenchCarbon);
+    expect((await screen.findByLabelText(/Carbone :/)).textContent).not.toBe(frenchCarbon);
   });
 
   it('calcule les seuls échanges renseignés puis affiche leur bilan et le risque pays', async () => {
@@ -232,7 +227,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     const summaryHeading = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     const summaryEnergy = Number(summaryHeading.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1].replace(',', '.'));
-    expect(document.querySelectorAll('.impact-result')).toHaveLength(2);
+    expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     expect(screen.getAllByText(/Énergie:/)).toHaveLength(1);
     expect(summaryEnergy).toBeGreaterThan(0);
     expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toBeVisible();
@@ -245,16 +240,12 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Premier');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    await screen.findByText('Estimation pour cet échange');
+    await screen.findByLabelText('Estimation pour cet échange');
     expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getAllByLabelText('Question de la personne')[1], 'Second');
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
-    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
-    const link = screen.getByRole('link', { name: /L’échange 2 doit être calculé/ });
-    expect(link).toHaveAttribute('href', '#conversation-block-2');
-    await user.click(link);
-    expect(document.getElementById('conversation-block-2')).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
+    expect(screen.getByRole('heading', { name: 'Bilan de la conversation' })).toBeVisible();
   });
 
   it('invite à saisir un échange sans afficher de bilan si tous les blocs sont vides', async () => {
@@ -318,7 +309,7 @@ describe('composition de la conversation', () => {
     expect(formatExchangeQuantity(0.002, 'water')).toEqual({ display: '2 mL', accessible: '2 millilitres d’eau' });
   });
 
-  it('annonce explicitement le repli Monde auprès du résultat concerné', () => {
+  it('réserve la mention de repli Monde au bilan, pas à la carte compacte', () => {
     const fingerprint = impactFingerprint(initialConversationState);
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
@@ -329,7 +320,8 @@ describe('composition de la conversation', () => {
       factorSources: { pue: 'world', wue: 'country', carbonIntensity: 'country' },
     });
     render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
-    expect(screen.getByText(/donnée de repli « Monde »/)).toBeVisible();
+    expect(screen.getByLabelText('Estimation pour cet échange')).toBeVisible();
+    expect(screen.queryByText(/donnée de repli « Monde »/)).not.toBeInTheDocument();
     expect(fingerprint).toBeTypeOf('string');
   });
 
@@ -344,12 +336,8 @@ describe('composition de la conversation', () => {
 
     const first = within(screen.getByRole('region', { name: 'Échange 1' }));
     expect(first.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
-    expect(first.getByText('2 gCO₂e')).toBeVisible();
-    expect(first.getByText('3 L')).toBeVisible();
-    expect(first.getByText('2 grammes de dioxyde de carbone équivalent')).toHaveClass('visually-hidden');
-    expect(first.getByText('3 litres d’eau')).toHaveClass('visually-hidden');
-    expect(first.getByText('2 gCO₂e')).toHaveAttribute('aria-hidden', 'true');
-    expect(first.getByText('3 L')).toHaveAttribute('aria-hidden', 'true');
+    expect(first.getByLabelText('Carbone : 2 grammes de dioxyde de carbone équivalent')).toHaveTextContent('🪨 2 gCO₂e');
+    expect(first.getByLabelText('Eau : 3 litres d’eau')).toHaveTextContent('💧 3 L');
   });
 
   it('garde les deux aperçus et les avis d’import visibles sur une ancienne carte repliée', () => {
@@ -441,7 +429,7 @@ describe('composition de la conversation', () => {
       'Commencez une nouvelle conversation lorsque l’ancien contexte ne vous est plus utile.',
       'Lorsque cela convient, modifiez un message existant plutôt que d’en envoyer un nouveau.',
     ]);
-    expect([...document.querySelectorAll('.summary-panel, .impact-result')]).toHaveLength(3);
+    expect([...document.querySelectorAll('.summary-panel')]).toHaveLength(1);
     expect(document.querySelector('.summary-panel')).toContainElement(practices);
     current.unmount();
 
@@ -452,8 +440,7 @@ describe('composition de la conversation', () => {
     expect(screen.getByText(/Le bilan précédent est périmé/)).toBeVisible();
   });
 
-  it('déclenche seulement le recalcul du total sans appeler de calcul individuel', async () => {
-    const user = userEvent.setup();
+  it('conserve le rappel interne de recalcul sans bouton dans le parcours', () => {
     const calculate = vi.fn();
     const recalculateSummary = vi.fn();
     render(<ConversationBlocks
@@ -464,9 +451,8 @@ describe('composition de la conversation', () => {
       onRecalculateSummary={recalculateSummary}
     />);
 
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
-
-    expect(recalculateSummary).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Recalculer le total' })).not.toBeInTheDocument();
+    expect(recalculateSummary).not.toHaveBeenCalled();
     expect(calculate).not.toHaveBeenCalled();
   });
 
@@ -476,9 +462,9 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Un échange déjà calculé');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    await screen.findByText('Estimation pour cet échange');
+    await screen.findByLabelText('Estimation pour cet échange');
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     expect(summary.parentElement).toHaveTextContent('Énergie:');
   });
@@ -493,8 +479,8 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Bilan conservé');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    await screen.findByText('Estimation pour cet échange');
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await screen.findByLabelText('Estimation pour cet échange');
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     const summaryEnergy = screen.getByText(/Énergie:/).textContent;
 
@@ -504,9 +490,9 @@ describe('composition de la conversation', () => {
     expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Bilan de la conversation' })).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
 
-    expect((await screen.findAllByText(/Estimation : environ/))[0]).toBeVisible();
+    expect(document.querySelector('.shower-equivalence')).toHaveTextContent(/Estimation : environ/);
     expect(screen.getByText(/Énergie:/).textContent).toBe(summaryEnergy);
   });
 
@@ -518,7 +504,8 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
 
-    await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+    await editReference(user);
+    await user.click(screen.getByText('Paramètres avancés'));
     expect(screen.getByLabelText('PUE (ratio)')).toBeVisible();
     await user.clear(screen.getByLabelText('PUE (ratio)'));
     await user.type(screen.getByLabelText('PUE (ratio)'), '1.2');
@@ -529,7 +516,8 @@ describe('composition de la conversation', () => {
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
 
-    await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+    await editReference(user);
+    await user.click(screen.getByText('Paramètres avancés'));
     expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.2);
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
     expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.15);
@@ -548,9 +536,9 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Question de la personne'), 'Repli mondial');
     await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
-    await screen.findByText('Estimation pour cet échange');
+    await screen.findByLabelText('Estimation pour cet échange');
     expect(screen.queryByText(/Estimation : environ/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
 
     expect(screen.getByText(/facteur carbone de repli « Monde »/)).toBeVisible();

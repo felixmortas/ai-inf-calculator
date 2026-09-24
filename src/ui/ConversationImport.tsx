@@ -192,6 +192,7 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
       <p>{fr.importHelpLocalData}</p>
     </aside>
     <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
+    {preview ? <hr className="import-separator" /> : null}
     {pendingConsent ? createPortal(<div className="import-consent-backdrop">
       <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={(event) => trapDialogFocus(event, closeConsent)}>
         <h3 id="import-consent-title">{fr.importConsentTitle}</h3>
@@ -211,6 +212,7 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
     {error ? <div className="import-error"><p ref={errorRef} role="alert" tabIndex={-1}>{error}</p><button type="button" onClick={onManual}>{fr.importManualAction}</button></div> : null}
     {preview ? <div className="import-preview">
       <p role="status">{fr.importPreviewCount(preview.blocks.length, preview.warnings.length)}</p>
+      <p className="import-preview-repeat">{fr.importPreviewCount(preview.blocks.length, preview.warnings.length)}</p>
       <h3 ref={previewTitleRef} tabIndex={-1}>{fr.importPreviewTitle}</h3>
       {preview.blocks.map((block, index) => <article key={index} className="import-preview-block">
         <h4>{fr.blockTitle(index + 1)}</h4>

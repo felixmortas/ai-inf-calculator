@@ -18,6 +18,8 @@ import { ConversationBlocks } from './ConversationBlocks';
 import { ConversationImport } from './ConversationImport';
 import './styles.css';
 
+function Icon({ children }: { readonly children: string }) { return <span aria-hidden="true" className="icon-glyph">{children}</span>; }
+
 export function impactTexts(
   block: { readonly message: string; readonly sources?: readonly { readonly text: string }[]; readonly finalResponse: string; readonly visibleReasoning: string },
   history: ReturnType<typeof prepareConversationHistory>,
@@ -46,6 +48,9 @@ export function App() {
       (target ?? document.querySelector<HTMLButtonElement>('.thread-reference button'))?.focus();
       returnFocus.current = null;
     } else stepTitle.current?.focus();
+    if (step === 'thread' && document.documentElement.scrollHeight > window.innerHeight) {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+    }
   }, [step]);
 
   useEffect(() => {
@@ -200,12 +205,12 @@ export function App() {
       </header>
       {step === 'home' ? <section className="start-paths" aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.homeTitle}</h2>
-        <div className="start-choice"><h3>{fr.importPathTitle}</h3><p>{fr.importPathHelp}</p><button type="button" onClick={() => setStep('import')}>{fr.importPathAction}</button></div>
-        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button type="button" onClick={() => openManualSelection('home')}>{fr.manualPathAction}</button></div>
+        <div className="start-choice"><h3>{fr.importPathTitle}</h3><p>{fr.importPathHelp}</p><button className="icon-button" type="button" aria-label={fr.importPathAction} onClick={() => setStep('import')}><Icon>→</Icon></button></div>
+        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button className="icon-button" type="button" aria-label={fr.manualPathAction} onClick={() => openManualSelection('home')}><Icon>→</Icon></button></div>
       </section> : null}
       {step === 'import' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.importPathTitle}</h2>
-        <button type="button" onClick={() => setStep('home')}>{fr.backHomeAction}</button>
+        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>⌂</Icon></button>
         <ConversationImport state={state} dispatch={dispatch} onImported={() => {
           dispatch({ type: 'providerSelected', provider: 'Mistral AI' });
           setAwaitingImportedMistralMode(true);
@@ -214,16 +219,16 @@ export function App() {
       </section> : null}
       {step === 'selection' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
-        <button type="button" onClick={() => setStep(selectionOrigin)}>{selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction}</button>
+        <button className="icon-button below-title" type="button" aria-label={selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction} onClick={() => setStep(selectionOrigin)}><Icon>←</Icon></button>
         <ConversationConfiguration state={state} dispatch={configurationDispatch} requireMistralMode={awaitingImportedMistralMode} onMistralModeChosen={() => setAwaitingImportedMistralMode(false)} initialAdvancedOpen={openAdvancedOnSelection} />
         <button type="button" disabled={awaitingImportedMistralMode} onClick={() => { if (!awaitingImportedMistralMode) setStep('thread'); }}>{fr.continueThreadAction}</button>
       </section> : null}
       {step === 'thread' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
+        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>⌂</Icon></button>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}
-        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{fr.editReferenceAction}</button></div>
-        <button type="button" onClick={() => setStep('home')}>{fr.backHomeAction}</button>
         <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} onEditParameters={(trigger) => openSelection('thread', trigger)} />
+        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button className="icon-button" type="button" aria-label={fr.editReferenceAction} onClick={(event) => openSelection('thread', event.currentTarget)}><Icon>✎</Icon></button></div>
       </section> : null}
     </main>
   );
