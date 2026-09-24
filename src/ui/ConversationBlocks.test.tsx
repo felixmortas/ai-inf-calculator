@@ -81,9 +81,10 @@ describe('composition de la conversation', () => {
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
       await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
-      expect(screen.getByText('Événement public non attribué après la réponse finale.').closest('[role="status"]')).toBeInTheDocument();
+      expect(screen.getByText('Événement public non attribué après la réponse finale.')).toBeVisible();
       await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
       expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
+      await user.selectOptions(screen.getByLabelText('Mode Mistral'), 'fast');
       await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
       expect(screen.getByLabelText('Question de la personne')).toHaveValue('Question');
       await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));

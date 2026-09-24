@@ -1,26 +1,19 @@
-# Importer une conversation partagée
+# Importer un partage Mistral
 
-Le calculateur accepte les liens publics aux formats suivants :
+Le calculateur accepte uniquement les liens publics `https://chat.mistral.ai/chat/<UUID>`. L’UUID suit la forme `8-4-4-4-12` en chiffres hexadécimaux. Le navigateur refuse localement les autres fournisseurs, les ports, les paramètres de requête, les fragments et les URL mal formées, avant toute requête réseau. La saisie manuelle reste accessible.
 
-- ChatGPT : `https://chatgpt.com/share/<UUID>`
-- Claude : `https://claude.ai/share/<UUID>`
-- Mistral : `https://chat.mistral.ai/chat/<UUID>`
-- Gemini : `https://share.gemini.google/<ID>` où l’ID comporte exactement 12 caractères alphanumériques.
+## Consentement et prévisualisation
 
-Les URL doivent être exactement sous ces formes, sans port, paramètre de requête ni fragment. Un UUID suit la forme `8-4-4-4-12` en chiffres hexadécimaux. L’analyse locale du lien précède toute requête réseau.
+Le dialogue de consentement affiche l’URL canonique entière et l’endpoint Worker actif. L’accord est ponctuel et lié à ces deux valeurs ; une modification exige un nouvel accord. Après consentement, le navigateur envoie un seul `POST` à l’endpoint affiché, avec pour seul corps JSON `{ "shareUrl": "<URL canonique>" }`. Aucun bloc local, fichier, résultat, catalogue, paramètre de calcul, cookie applicatif ou jeton de session n’est envoyé dans cette requête.
 
-## Import distant via le Worker
+En production, l’endpoint est `https://ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html`. Une build preview peut fournir `VITE_IMPORT_HTML_WORKER_URL` lors du build, sous la forme `https://<préfixe>-ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html`. Une autre destination désactive l’import distant.
 
-Après votre consentement explicite pour ce lien précis, le navigateur envoie un seul `POST` à l’endpoint d’import HTML du Worker du projet. Le corps JSON contient uniquement `{ "shareUrl": "<URL canonique>" }`. En production, l’endpoint est `https://ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html`. Une build preview peut utiliser un hôte Worker preview concret fourni lors du build ; le dialogue affiche toujours l’endpoint effectivement utilisé.
+Le Worker reçoit l’URL et peut recevoir des métadonnées réseau, notamment l’adresse IP et l’agent utilisateur. Il traite la page publique et peut suivre des redirections. Le navigateur borne sa lecture à 10 secondes et 2 Mio, vérifie qu’il reçoit un document HTML complet, puis extrait localement les échanges comme des données non exécutables. Une prévisualisation précède tout ajout au fil. Si le fil contient déjà du texte, un second dialogue demande confirmation avant le remplacement atomique. Aucun calcul ne démarre automatiquement. La personne choisit ensuite explicitement le mode Mistral rapide ou réflexion et peut encore changer de modèle.
 
-Pour une build preview, fournissez l’endpoint réel dans `VITE_IMPORT_HTML_WORKER_URL` lors du build. Il doit suivre la forme `https://<préfixe>-ai-inf-calculator-proxy.felix-mortas.workers.dev/v1/import-html` ; une valeur hors de ce contrat désactive l’import distant.
+Une URL invalide, un refus, une annulation, une erreur réseau, une réponse trop grande ou un format inconnu laissent le fil intact. Si la page ne contient aucun échange exploitable, aucun ajout n’a lieu.
 
-Le Worker récupère la page publique et gère automatiquement les éventuelles redirections du fournisseur. Le calculateur ne contrôle pas ces redirections. Le Worker reçoit l’URL de partage et peut recevoir des métadonnées réseau, notamment votre adresse IP et votre agent utilisateur. Il traite le contenu de la page pour fournir le service. Aucun bloc local, fichier, résultat, paramètre de calcul, cookie applicatif ou jeton de session n’est envoyé.
+## Limite de vérification avant publication (D-4)
 
-Le navigateur lit seulement une page HTML complète, avec une limite de 2 Mio et un délai de 10 secondes, puis extrait les échanges localement comme des données non exécutables. Une prévisualisation est affichée avant tout remplacement. Si la session contient déjà des échanges, le remplacement demande une confirmation supplémentaire.
+Le code du Worker externe n’est pas présent dans ce dépôt. Ses garanties internes restent à vérifier avant publication : destinations et redirections réellement admises, délai et volume de récupération, journalisation, conservation de l’URL, de la page et des métadonnées réseau. Les contrôles du navigateur ci-dessus ne permettent pas d’attester ces points.
 
-Les pages Mistral actuellement observées contiennent les messages dans ce HTML. Pour les liens Claude et Gemini testés, le Worker peut renvoyer une page HTML complète (HTTP 200) qui ne contient pas les échanges. La page Claude prépare explicitement une requête API séparée. Le Worker a aussi répondu `network` (HTTP 502) ou `timeout` (HTTP 504) pour le lien Gemini lors d’autres essais. Aucun de ces cas ne remplit de bloc ; utilisez l’import manuel pour ces conversations.
-
-Une URL invalide, un refus, une annulation, une erreur réseau, un dépassement de limite ou un format inconnu ne modifient jamais la session. Vous pouvez toujours saisir les échanges manuellement.
-
-Pour compter un fichier source cité, ajoutez-le au bloc concerné avec le champ « Fichiers source locaux ». Les textes UTF-8 de 5 Mio maximum sont lus uniquement dans la mémoire du navigateur. Pour les formats exclus ou les fichiers illisibles, collez le contenu pertinent dans Message ou Artifact.
+Pour compter un fichier source cité dans une conversation, ajoutez-le au bloc concerné avec « Fichiers source locaux ». Les textes UTF-8 de 5 Mio maximum sont lus uniquement dans la mémoire du navigateur. Pour les formats exclus ou les fichiers illisibles, collez le contenu pertinent dans « Question de la personne » ou « Document ou code généré ».

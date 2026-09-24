@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { previewConversationImport, type ConversationPreview } from '../application/import/conversationPreview';
 import { importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from '../application/import/registry';
 import { createRemoteGatewayConsent, workerImportEndpoint } from '../application/import/remoteGateway';
@@ -36,12 +37,43 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
   const importStarted = useRef(false);
   const analyseButtonRef = useRef<HTMLButtonElement>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelConsentRef = useRef<HTMLButtonElement>(null);
+  const cancelReplaceRef = useRef<HTMLButtonElement>(null);
+  const replaceButtonRef = useRef<HTMLButtonElement>(null);
+  const previewTitleRef = useRef<HTMLHeadingElement>(null);
+  const loadingRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const focusReturnRef = useRef<React.RefObject<HTMLButtonElement | null> | null>(null);
   const provider = detectedProvider ? providers.find((item) => item.id === detectedProvider) ?? (providers.length === 1 ? providers[0] : undefined) : undefined;
   const hasExistingContent = state.blocks.some(hasConversationBlockContent);
 
   useEffect(() => {
-    if (pendingConsent) continueButtonRef.current?.focus();
-  }, [pendingConsent]);
+    if (!pendingConsent && !confirming) {
+      focusReturnRef.current?.current?.focus();
+      focusReturnRef.current = null;
+      return;
+    }
+    const background = document.querySelector<HTMLElement>('.app-shell') ?? sectionRef.current;
+    if (background) background.inert = true;
+    (pendingConsent ? cancelConsentRef : cancelReplaceRef).current?.focus();
+    return () => { if (background) background.inert = false; };
+  }, [pendingConsent, confirming]);
+
+  useEffect(() => () => { analysisVersion.current += 1; }, []);
+
+  useEffect(() => {
+    if (preview) previewTitleRef.current?.focus();
+  }, [preview]);
+
+  useEffect(() => {
+    if (analysing) loadingRef.current?.focus();
+    else if (error) errorRef.current?.focus();
+  }, [analysing, error]);
+
+  function restoreFocus(ref: React.RefObject<HTMLButtonElement | null>) {
+    focusReturnRef.current = ref;
+  }
 
   function invalidateAnalysis() {
     analysisVersion.current += 1;
@@ -54,16 +86,16 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
   }
 
   useEffect(() => {
-    const wasOpen = pendingConsent !== undefined;
+    const wasOpen = pendingConsent !== undefined || confirming;
     invalidateAnalysis();
     setDetectedProvider(undefined);
-    if (wasOpen) analyseButtonRef.current?.focus();
+    if (wasOpen) restoreFocus(analyseButtonRef);
   }, [providers, resolve]);
 
   function closeConsent() {
     importStarted.current = false;
     setPendingConsent(undefined);
-    analyseButtonRef.current?.focus();
+    restoreFocus(analyseButtonRef);
   }
 
   function analyse() {
@@ -108,8 +140,8 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
     }
   }
 
-  function trapConsentFocus(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Escape') { event.preventDefault(); closeConsent(); return; }
+  function trapDialogFocus(event: React.KeyboardEvent<HTMLDivElement>, close: () => void) {
+    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
     if (event.key !== 'Tab') return;
     const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -137,7 +169,12 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
     setPreview(undefined); setConfirming(false); setError(undefined);
   }
 
-  return <section className="conversation-import" aria-labelledby="conversation-import-title">
+  function closeConfirmation() {
+    setConfirming(false);
+    restoreFocus(replaceButtonRef);
+  }
+
+  return <section ref={sectionRef} className="conversation-import" aria-labelledby="conversation-import-title">
     <h2 id="conversation-import-title">{fr.importTitle}</h2>
     {detectedProvider ? <p role="status"><strong>{fr.importProviderLabel}</strong> : {provider?.label}</p> : null}
     <div className="field">
@@ -155,8 +192,8 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
       <p>{fr.importHelpLocalData}</p>
     </aside>
     <button ref={analyseButtonRef} type="button" onClick={analyse} disabled={analysing}>{analysing ? fr.importAnalysingAction : fr.importAnalyseAction}</button>
-    {pendingConsent ? <div className="import-consent-backdrop">
-      <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={trapConsentFocus}>
+    {pendingConsent ? createPortal(<div className="import-consent-backdrop">
+      <div role="dialog" aria-modal="true" aria-labelledby="import-consent-title" className="import-consent" onKeyDown={(event) => trapDialogFocus(event, closeConsent)}>
         <h3 id="import-consent-title">{fr.importConsentTitle}</h3>
         <p>{fr.importConsentPurpose(provider?.label ?? pendingConsent.resolved.providerId)}</p>
         <p><strong>{fr.importConsentWorkerLabel}</strong>: <span className="import-consent-url">{pendingConsent.endpoint}</span></p>
@@ -165,27 +202,29 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
         <p>{fr.importConsentLocalData}</p>
         <div className="import-consent-actions">
           <button ref={continueButtonRef} type="button" onClick={() => void continueImport()}>{fr.importConsentContinueAction}</button>
-          <button type="button" onClick={closeConsent}>{fr.importCancelAction}</button>
+          <button ref={cancelConsentRef} type="button" onClick={closeConsent}>{fr.importCancelAction}</button>
           <button type="button" onClick={() => { closeConsent(); onManual?.(); }}>{fr.importManualAction}</button>
         </div>
       </div>
-    </div> : null}
-    {error ? <div className="import-error"><p role="alert">{error}</p><button type="button" onClick={onManual}>{fr.importManualAction}</button></div> : null}
-    {preview ? <div className="import-preview" aria-live="polite">
-      <h3>{fr.importPreviewTitle}</h3>
+    </div>, document.body) : null}
+    {analysing ? <p ref={loadingRef} role="status" tabIndex={-1}>{fr.importAnalysingAction}</p> : null}
+    {error ? <div className="import-error"><p ref={errorRef} role="alert" tabIndex={-1}>{error}</p><button type="button" onClick={onManual}>{fr.importManualAction}</button></div> : null}
+    {preview ? <div className="import-preview">
+      <p role="status">{fr.importPreviewCount(preview.blocks.length, preview.warnings.length)}</p>
+      <h3 ref={previewTitleRef} tabIndex={-1}>{fr.importPreviewTitle}</h3>
       {preview.blocks.map((block, index) => <article key={index} className="import-preview-block">
         <h4>{fr.blockTitle(index + 1)}</h4>
         <p><strong>{fr.messageLabel}</strong>: {block.message}</p>
         {block.visibleReasoning ? <p><strong>{fr.visibleReasoningLabel}</strong>: {block.visibleReasoning}</p> : null}
         {block.finalResponse ? <p><strong>{fr.finalResponseLabel}</strong>: {block.finalResponse}</p> : null}
-        {block.inaccessible.map((kind) => <p key={kind} role="status">{kind === 'artifact' ? fr.importArtifactDetected : fr.importSourceFileDetected}</p>)}
+        {block.inaccessible.map((kind) => <p key={kind}>{kind === 'artifact' ? fr.importArtifactDetected : fr.importSourceFileDetected}</p>)}
       </article>)}
-      {preview.warnings.length ? <div className="import-warnings" role="status"><h4>{fr.importWarningsTitle}</h4><ul>{preview.warnings.map((warning, index) => <li key={`${warning.code}-${warning.eventOrder}-${index}`}>{warning.message}</li>)}</ul></div> : null}
-      {confirming ? <div role="alertdialog" aria-modal="true" aria-labelledby="import-confirm-title" className="import-confirmation">
+      {preview.warnings.length ? <div className="import-warnings"><h4>{fr.importWarningsTitle}</h4><ul>{preview.warnings.map((warning, index) => <li key={`${warning.code}-${warning.eventOrder}-${index}`}>{warning.message}</li>)}</ul></div> : null}
+      {confirming ? createPortal(<div className="import-consent-backdrop"><div role="alertdialog" aria-modal="true" aria-labelledby="import-confirm-title" className="import-consent import-confirmation" onKeyDown={(event) => trapDialogFocus(event, closeConfirmation)}>
         <p id="import-confirm-title">{fr.importConfirmText}</p>
+        <button ref={cancelReplaceRef} type="button" onClick={closeConfirmation}>{fr.importKeepConversationAction}</button>
         <button type="button" onClick={replace}>{fr.importConfirmAction}</button>
-        <button type="button" onClick={() => setConfirming(false)}>{fr.importCancelAction}</button>
-      </div> : <button type="button" onClick={replace}>{fr.importReplaceAction}</button>}
+      </div></div>, document.body) : <button ref={replaceButtonRef} type="button" onClick={replace}>{fr.importReplaceAction}</button>}
     </div> : null}
   </section>;
 }

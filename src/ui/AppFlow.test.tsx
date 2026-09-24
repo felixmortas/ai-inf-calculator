@@ -84,14 +84,72 @@ describe('parcours de départ', () => {
       await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
       expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
       expect(screen.getByLabelText('Chatbot')).toHaveValue('Mistral AI');
-      expect(screen.getByLabelText('Mode Mistral')).toHaveValue('fast');
-      expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-small');
+      expect(screen.getByLabelText('Mode Mistral')).toHaveValue('');
+      expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('');
+      expect(screen.queryByRole('option', { name: 'mistral-small' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Chatbot')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeDisabled();
       expect(screen.queryByRole('button', { name: 'Calculer cet échange' })).not.toBeInTheDocument();
+      await user.selectOptions(screen.getByLabelText('Mode Mistral'), 'reasoning');
+      expect(screen.getByLabelText('Chatbot')).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeEnabled();
       await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
       expect(screen.getByRole('heading', { name: 'Fil de conversation' })).toHaveFocus();
-      expect(screen.getByText(/Référence actuelle : Mistral AI — mistral-small/)).toBeVisible();
+      expect(screen.getByText(/Référence actuelle : Mistral AI — mistral-large/)).toBeVisible();
       expect(screen.getByDisplayValue('Question importée')).toBeVisible();
       expect(fetcher).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('isole le fond et le bouton Retour pendant les deux dialogues puis les rétablit', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse"}]}</script></html>', { headers: { 'content-type': 'text/html' } })));
+    try {
+      render(<App />);
+      await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+      await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+      await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+      await user.type(screen.getByRole('textbox', { name: 'Question de la personne' }), 'Texte local');
+      await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
+      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
+      const background = document.querySelector('.app-shell');
+      const back = screen.getByRole('button', { name: 'Retour à l’accueil' });
+      await user.type(screen.getByLabelText('Lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
+      await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      expect(await screen.findByRole('dialog')).toBeVisible();
+      expect(background).toHaveProperty('inert', true);
+      expect(back.closest('.app-shell')).toHaveProperty('inert', true);
+      await user.keyboard('{Escape}');
+      expect(background).toHaveProperty('inert', false);
+      await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
+      await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
+      await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      expect(screen.getByRole('alertdialog')).toBeVisible();
+      expect(background).toHaveProperty('inert', true);
+      expect(back.closest('.app-shell')).toHaveProperty('inert', true);
+      await user.keyboard('{Escape}');
+      expect(background).toHaveProperty('inert', false);
+      expect(back.closest('.app-shell')).toHaveProperty('inert', false);
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('libère le choix de mode importé en repartant par la saisie manuelle', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse"}]}</script></html>', { headers: { 'content-type': 'text/html' } })));
+    try {
+      render(<App />);
+      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
+      await user.type(screen.getByLabelText('Lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
+      await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+      await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
+      await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: 'Retour à l’import' }));
+      await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
+      await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+      expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeEnabled();
+      expect(screen.getByLabelText('Mode Mistral')).toHaveValue('fast');
     } finally { vi.unstubAllGlobals(); }
   });
 });

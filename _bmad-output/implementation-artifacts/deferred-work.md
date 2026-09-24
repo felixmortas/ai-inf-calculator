@@ -43,3 +43,12 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-6-2-suivre-les-echanges-et-leurs-estimations.md`
   summary: Lier chaque numéro d’échange bloquant le recalcul du total à sa carte.
   evidence: La liste préexistante nomme les échanges sans offrir le chemin de récupération prévu par EXPERIENCE.md.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-3-importer-un-partage-mistral-avec-consentement.md`
+  summary: Vérifier sur lecteurs d’écran que le décompte de prévisualisation est annoncé avant le focus sur son titre.
+  evidence: Le `role="status"` apparaît rempli avec la prévisualisation ; il faut un essai VoiceOver et NVDA pour établir si le déplacement immédiat du focus interrompt l’annonce.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-3-importer-un-partage-mistral-avec-consentement.md`
+  summary: Aligner les avertissements de contenu importé sur les noms des champs actuels.
+  evidence: Les textes préexistants parlent d’« Artifact » et d’« uploader » alors que le formulaire affiche « Document ou code généré » et « Fichiers source locaux ».
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-3-importer-un-partage-mistral-avec-consentement.md`
+  summary: Réexaminer les détails d’accessibilité omis dans le contexte de l’epic 6.
+  evidence: Une modification déjà présente avant cette story a retiré la mention de `prefers-reduced-motion` et des cibles de focus après transition ; vérifier ces exigences dans la source UX avant toute mise à jour du contexte.

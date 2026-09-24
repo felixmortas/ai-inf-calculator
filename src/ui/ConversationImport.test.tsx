@@ -175,13 +175,28 @@ describe('ConversationImport', () => {
     expect(second.importFromUrl).not.toHaveBeenCalled();
   });
 
+  it('rend le focus au déclencheur si le registre change pendant la confirmation', async () => {
+    const user = userEvent.setup();
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'local', field: 'message', value: 'texte local' });
+    const first = providerWith();
+    const { rerender } = render(<ConversationImport state={state} dispatch={vi.fn()} providers={[first]} />);
+    await consent(user);
+    await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    expect(screen.getByRole('alertdialog')).toBeVisible();
+    rerender(<ConversationImport state={state} dispatch={vi.fn()} providers={[{ ...first }]} />);
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Analyser le lien' })).toHaveFocus();
+  });
+
   it('ouvre le consentement avant tout import, informe en français et restaure le focus après annulation', async () => {
     const user = userEvent.setup();
     const provider = providerWith();
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
     const dialog = await openConsent(user);
     expect(provider.importFromUrl).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Continuer avec le Worker' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Annuler' })).toHaveFocus();
+    expect(document.querySelector('.conversation-import')).toHaveProperty('inert', true);
     expect(dialog).toHaveTextContent('Le Worker d’import HTML récupérera la page publique');
     expect(dialog).toHaveTextContent(PRODUCTION_IMPORT_ENDPOINT);
     expect(dialog).toHaveTextContent(shareUrl);
@@ -195,6 +210,7 @@ describe('ConversationImport', () => {
     expect(manualLink).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.querySelector('.conversation-import')).toHaveProperty('inert', false);
     expect(screen.getByRole('button', { name: 'Analyser le lien' })).toHaveFocus();
     expect(provider.importFromUrl).not.toHaveBeenCalled();
   });
@@ -229,10 +245,35 @@ describe('ConversationImport', () => {
     expect(provider.importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl }), expect.any(Object));
     await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
     expect(screen.getByRole('alertdialog')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
+    expect(document.querySelector('.conversation-import')).toHaveProperty('inert', true);
     expect(dispatch).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }));
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'blocksReplaced' }));
     expect(state.blocks[0].message).toBe('Bonjour');
+  });
+
+  it('annonce le décompte, cible le titre puis ferme la confirmation au clavier sans perdre le fil', async () => {
+    const user = userEvent.setup();
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'old' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'old', field: 'message', value: 'texte local' });
+    const dispatch = vi.fn();
+    render(<ConversationImport state={state} dispatch={dispatch} providers={[providerWith()]} />);
+    await consent(user);
+    const title = await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
+    expect(title).toHaveFocus();
+    expect(screen.getByText('1 échange extrait, 0 avertissements.')).toHaveAttribute('role', 'status');
+    expect(screen.getByText('Bonjour', { exact: false })).not.toHaveAttribute('role', 'status');
+    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
+    await user.keyboard('{Tab}');
+    expect(screen.getByRole('button', { name: 'Confirmer le remplacement' })).toHaveFocus();
+    await user.keyboard('{Tab}');
+    expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' })).toHaveFocus();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it('relie le dialogue à la passerelle injectée puis à l’extraction locale, sans transmettre la session', async () => {
@@ -309,7 +350,7 @@ describe('ConversationImport', () => {
     render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
     await consent(user);
     await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
-    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    await user.click(screen.getByRole('button', { name: 'Conserver ma conversation' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(state.blocks[0].sources).toEqual([{ id: 'source-1', name: 'note.txt', type: 'text/plain', size: 5, text: 'notes' }]);
     expect(dispatch).not.toHaveBeenCalled();
@@ -376,7 +417,20 @@ describe('ConversationImport', () => {
     render(<ConversationImport state={initialConversationState} dispatch={dispatch} providers={[provider]} />);
     await consent(user);
     expect(await screen.findByRole('alert')).toHaveTextContent('Accès refusé par le réseau ou CORS.');
+    expect(screen.getByRole('alert')).toHaveFocus();
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('place le focus sur le statut pendant une récupération en cours', async () => {
+    const user = userEvent.setup();
+    let finish!: (result: unknown) => void;
+    const pending = new Promise((resolve) => { finish = resolve; });
+    const provider: ImportProvider = { ...providerWith(), importResolvedShare: vi.fn().mockReturnValue(pending) };
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
+    await consent(user);
+    expect(screen.getAllByText('Analyse en cours…').find((element) => element.tagName === 'P')).toHaveFocus();
+    finish({ ok: false, providerId: 'mistral', events: [], error: { code: 'network', message: 'Erreur réseau.' } });
+    expect(await screen.findByRole('alert')).toHaveFocus();
   });
 
   it('conserve la session si la passerelle réelle injectée est indisponible', async () => {
@@ -428,7 +482,7 @@ describe('ConversationImport', () => {
     ] });
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
     await consent(user);
-    expect((await screen.findAllByText('Artifact détecté : collez son contenu dans le champ Artifact optionnel pour le compter.')).some((element) => element.getAttribute('role') === 'status')).toBe(true);
-    expect(screen.getAllByText('Fichier source détecté : uploadez-le pour inclure son contenu dans les tokens d’entrée.').some((element) => element.getAttribute('role') === 'status')).toBe(true);
+    expect((await screen.findAllByText('Artifact détecté : collez son contenu dans le champ Artifact optionnel pour le compter.')).every((element) => element.getAttribute('role') !== 'status')).toBe(true);
+    expect(screen.getAllByText('Fichier source détecté : uploadez-le pour inclure son contenu dans les tokens d’entrée.').every((element) => element.getAttribute('role') !== 'status')).toBe(true);
   });
 });

@@ -1,15 +1,17 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
-import { chatGptProvider, mistralProvider, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
+import { chatGptProvider, mistralProvider, resolveMistralModel, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 
 interface ConversationConfigurationProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
+  readonly requireMistralMode?: boolean;
+  readonly onMistralModeChosen?: () => void;
 }
 
-export function ConversationConfiguration({ state, dispatch }: ConversationConfigurationProps) {
+export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen }: ConversationConfigurationProps) {
   const providerModels = modelsForProvider(modelCatalog, state.provider);
   const [invalidFields, setInvalidFields] = useState<readonly string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -27,7 +29,10 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
     dispatch({ type: 'subscriptionSelected', subscription: event.currentTarget.value as ChatGptSubscription });
   }
   function selectMistralMode(event: ChangeEvent<HTMLSelectElement>) {
-    dispatch({ type: 'mistralModeSelected', mode: event.currentTarget.value as MistralMode });
+    const mode = event.currentTarget.value as MistralMode;
+    dispatch({ type: 'mistralModeSelected', mode });
+    if (requireMistralMode) dispatch({ type: 'modelSelected', modelId: resolveMistralModel(mode) });
+    onMistralModeChosen?.();
   }
 
   function selectModel(event: ChangeEvent<HTMLSelectElement>) {
@@ -65,7 +70,7 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
       <div className="field">
         <label htmlFor="provider">{fr.providerLabel}</label>
         <p id="provider-help" className="help">{fr.providerHelp}</p>
-        <select id="provider" aria-describedby="provider-help" value={state.provider} onChange={selectProvider}>
+        <select id="provider" aria-describedby="provider-help" value={state.provider} onChange={selectProvider} disabled={requireMistralMode}>
           {modelCatalog.providers.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
         </select>
       </div>
@@ -82,7 +87,8 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
 
       {state.provider === mistralProvider ? <div className="field">
         <label htmlFor="mistral-mode">{fr.mistralModeLabel}</label>
-        <select id="mistral-mode" value={state.mistralMode} onChange={selectMistralMode}>
+        <select id="mistral-mode" value={requireMistralMode ? '' : state.mistralMode} onChange={selectMistralMode} required>
+          {requireMistralMode ? <option value="" disabled>{fr.mistralModeChoice}</option> : null}
           <option value="fast">{fr.mistralFast}</option>
           <option value="reasoning">{fr.mistralReasoning}</option>
         </select>
@@ -91,8 +97,8 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
       <div className="field">
         <label htmlFor="model">{fr.modelLabel}</label>
         <p id="model-help" className="help">{fr.modelReferenceHelp}</p>
-        <select id="model" aria-describedby="model-help" value={state.modelId} onChange={selectModel}>
-          {providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
+        <select id="model" aria-describedby="model-help" value={requireMistralMode ? '' : state.modelId} onChange={selectModel} disabled={requireMistralMode && state.provider === mistralProvider}>
+          {requireMistralMode ? <option value="">{fr.mistralModeChoice}</option> : providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
         </select>
       </div>
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>

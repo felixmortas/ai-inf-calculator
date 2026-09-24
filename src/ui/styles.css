@@ -83,6 +83,7 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
   background: #fff;
   box-shadow: 0 .75rem 2rem rgb(0 0 0 / 28%);
 }
+.import-consent.import-confirmation { border-color: #8a5a00; background: #fff7df; }
 .import-consent h3 { margin-top: 0; }
 .import-consent-url { overflow-wrap: anywhere; }
 .import-consent-links { line-height: 1.7; }
