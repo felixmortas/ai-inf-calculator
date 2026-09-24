@@ -113,6 +113,7 @@ export const fr = {
   calculatingAction: 'Calcul en cours…',
   calculateAllAction: 'Calculer toute la conversation',
   calculatingAllAction: 'Calcul de tous les échanges en cours…',
+  calculatingOverlayStatus: 'Le calcul de toute la conversation est en cours. Veuillez patienter.',
   recalculateSummaryAction: 'Recalculer le total',
   noExchangesForSummary: 'Saisissez au moins un échange avant de calculer le bilan.',
   summaryUnavailable: 'Le bilan ne peut pas être affiché tant que tous les échanges renseignés ne sont pas calculés et à jour.',

@@ -33,14 +33,44 @@ export function impactTexts(
 
 export function App() {
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
+  const summaryPending = state.summary?.status === 'pending';
   const [step, setStep] = useState<'home' | 'import' | 'selection' | 'thread'>('home');
   const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'import' | 'thread'>('home');
   const [awaitingImportedMistralMode, setAwaitingImportedMistralMode] = useState(false);
   const stepTitle = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<'summary' | 'reference' | null>(null);
+  const calculationStatus = useRef<HTMLDivElement>(null);
+  const calculationReturnFocus = useRef<HTMLElement | null>(null);
+  const calculationWasPending = useRef(false);
   const [openAdvancedOnSelection, setOpenAdvancedOnSelection] = useState(false);
   const [recalculationNotice, setRecalculationNotice] = useState('');
   const client = useRef<TokenizationClient | undefined>(undefined);
+
+  useEffect(() => {
+    if (summaryPending) {
+      calculationWasPending.current = true;
+      calculationStatus.current?.focus();
+      return;
+    }
+    if (calculationWasPending.current) {
+      calculationWasPending.current = false;
+      if (calculationReturnFocus.current?.isConnected) calculationReturnFocus.current.focus();
+      calculationReturnFocus.current = null;
+    }
+  }, [summaryPending]);
+
+  useEffect(() => {
+    if (!summaryPending) return;
+    const root = document.documentElement;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    root.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [summaryPending]);
 
   useEffect(() => {
     if (step === 'thread' && returnFocus.current) {
@@ -132,6 +162,8 @@ export function App() {
   }
 
   async function calculateAll() {
+    const activeElement = document.activeElement;
+    calculationReturnFocus.current = activeElement instanceof HTMLElement ? activeElement : null;
     const snapshot = state;
     const fingerprint = summaryFingerprint(snapshot);
     const blocks = snapshot.blocks.filter((block) => !isIgnoredConversationBlock(block));
@@ -198,7 +230,8 @@ export function App() {
   }
 
   return (
-    <main className="app-shell">
+    <>
+    <main className="app-shell" inert={summaryPending} aria-busy={summaryPending}>
       <header>
         <h1>{fr.title}</h1>
         <p>{fr.introduction}</p>
@@ -231,5 +264,12 @@ export function App() {
         <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button className="icon-button" type="button" aria-label={fr.editReferenceAction} onClick={(event) => openSelection('thread', event.currentTarget)}><Icon>✎</Icon></button></div>
       </section> : null}
     </main>
+    {summaryPending ? <div className="calculation-overlay">
+      <div ref={calculationStatus} className="calculation-progress" role="status" aria-live="polite" tabIndex={-1}>
+        <span className="calculation-spinner" aria-hidden="true" />
+        <p>{fr.calculatingOverlayStatus}</p>
+      </div>
+    </div> : null}
+    </>
   );
 }

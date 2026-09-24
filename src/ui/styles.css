@@ -75,6 +75,41 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
   padding: 1rem;
   background: rgb(23 32 28 / 62%);
 }
+.calculation-overlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(239 244 232 / 76%);
+  backdrop-filter: blur(2px);
+}
+.calculation-progress {
+  display: grid;
+  justify-items: center;
+  gap: .8rem;
+  max-width: min(100%, 28rem);
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #b5c8ba;
+  border-radius: .75rem;
+  background: #fff;
+  box-shadow: 0 .5rem 1.5rem rgb(32 59 50 / 14%);
+  text-align: center;
+}
+.calculation-progress p { margin: 0; font-weight: 700; }
+.calculation-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: .25rem solid #c7d7c7;
+  border-top-color: #245535;
+  border-radius: 50%;
+  animation: calculation-spin .8s linear infinite;
+}
+@keyframes calculation-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .calculation-spinner { animation: none; border-top-color: #245535; }
+}
 .import-consent {
   width: min(100%, 42rem);
   max-height: calc(100vh - 2rem);

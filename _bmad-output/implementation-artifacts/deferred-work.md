@@ -58,3 +58,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-dernier-echange-pliable-import.md`
   summary: Ajouter un test de course où une lecture de fichier locale en attente se termine après le remplacement de la conversation.
   evidence: La revue a confirmé que les tests existants de source locale ne remplacent pas les blocs pendant la lecture et ne vérifient pas l'absence de `sourceAdded` après remplacement.
+- source_spec: `_bmad-output/implementation-artifacts/spec-bloquer-interface-pendant-calcul.md`
+  summary: Ajouter une couverture automatisée des transitions de l’indicateur de calcul global et du verrouillage/restauration du défilement.
+  evidence: La revue a identifié ces comportements comme non vérifiés ; l’exécution et l’ajout de tests ne sont pas autorisés par les consignes de cette session.
