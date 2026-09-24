@@ -37,6 +37,7 @@ export interface ConversationState {
   /** Saisie avancée invalide, non appliquée : bloque les calculs sans perdre la dernière vue valide. */
   readonly parameterValidationInvalid: boolean;
   readonly blocks: readonly ConversationBlock[];
+  readonly blocksReplacementRevision: number;
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
   readonly showerEquivalences: Readonly<Record<string, ShowerEquivalenceState>>;
@@ -137,6 +138,7 @@ export const initialConversationState: ConversationState = Object.freeze({
   hostingCountry: resolveHostingCountry(chatGptProvider)!,
   userCountry: detectUserCountry(),
   blocks: [],
+  blocksReplacementRevision: 0,
   tokenizations: {},
   impacts: {},
   showerEquivalences: {},
@@ -340,7 +342,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
         blockId: block.blockId, message: block.message, finalResponse: block.finalResponse,
         sources: [], visibleReasoning: block.visibleReasoning, artifact: block.artifact,
       }));
-      return { ...state, blocks, tokenizations: {}, impacts: {}, showerEquivalences: {}, summaryShowerEquivalence: undefined, summary: undefined };
+      return { ...state, blocks, blocksReplacementRevision: state.blocksReplacementRevision + 1, tokenizations: {}, impacts: {}, showerEquivalences: {}, summaryShowerEquivalence: undefined, summary: undefined };
     }
     case 'blockUpdated': {
       if (!conversationBlockFields.includes(action.field)) return state;

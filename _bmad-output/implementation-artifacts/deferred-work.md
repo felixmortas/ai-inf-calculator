@@ -52,3 +52,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-6-3-importer-un-partage-mistral-avec-consentement.md`
   summary: Réexaminer les détails d’accessibilité omis dans le contexte de l’epic 6.
   evidence: Une modification déjà présente avant cette story a retiré la mention de `prefers-reduced-motion` et des cibles de focus après transition ; vérifier ces exigences dans la source UX avant toute mise à jour du contexte.
+- source_spec: `_bmad-output/implementation-artifacts/spec-dernier-echange-pliable-import.md`
+  summary: Ajouter des tests UI de régression pour le repli après remplacement, le nettoyage des états transitoires et l'ouverture d'un échange ajouté manuellement.
+  evidence: La revue a confirmé que les tests actuels couvrent le reducer et l'émission de `blocksReplaced`, sans vérifier le comportement rendu du composant après remplacement.
+- source_spec: `_bmad-output/implementation-artifacts/spec-dernier-echange-pliable-import.md`
+  summary: Ajouter un test de course où une lecture de fichier locale en attente se termine après le remplacement de la conversation.
+  evidence: La revue a confirmé que les tests existants de source locale ne remplacent pas les blocs pendant la lecture et ne vérifient pas l'absence de `sourceAdded` après remplacement.

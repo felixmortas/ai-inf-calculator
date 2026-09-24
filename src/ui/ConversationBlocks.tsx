@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   isIgnoredConversationBlock,
   isImpactCurrent,
@@ -61,6 +61,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const pendingFocus = useRef<{ kind: 'question' | 'toggle' | 'add'; blockId?: string } | null>(null);
   const pendingCancelFocus = useRef<string | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ReadonlySet<string>>(() => new Set());
+  const currentReplacementRevision = useRef(state.blocksReplacementRevision);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const sourceImports = useRef(new Map<string, Promise<void>>());
   const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
@@ -73,6 +74,14 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
       {value.equivalence.status === 'available' && value.equivalence.factorSource === 'world' ? <p className="impact-note">{fr.showerWorldFallback}</p> : null}
     </div>
   ) : stale ? <p role="status" className="impact-stale">{fr.staleShower}</p> : null;
+
+  useLayoutEffect(() => {
+    currentReplacementRevision.current = state.blocksReplacementRevision;
+    sourceImports.current.clear();
+    setExpandedBlocks(new Set());
+    setConfirmRemoveId(null);
+    setSourceStatus({});
+  }, [state.blocksReplacementRevision]);
 
   useEffect(() => {
     if (!pendingFocus.current) return;
@@ -100,7 +109,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   function addBlock() {
     const blockId = `block-${nextBlockNumber.current++}`;
     pendingFocus.current = { kind: 'question', blockId };
-    setExpandedBlocks(new Set());
+    setExpandedBlocks(new Set([blockId]));
     setConfirmRemoveId(null);
     dispatch({ type: 'blockAdded', blockId });
   }
@@ -115,6 +124,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
     const neighbor = remaining[Math.min(index, remaining.length - 1)];
     pendingFocus.current = neighbor && neighbor !== remaining[remaining.length - 1]
       ? { kind: 'toggle', blockId: neighbor.blockId } : { kind: 'add' };
+    setExpandedBlocks((current) => new Set([...current].filter((id) => id !== blockId)));
     setConfirmRemoveId(null);
     dispatch({ type: 'blockRemoved', blockId });
   }
@@ -135,17 +145,22 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   function addSources(blockId: string, event: ChangeEvent<HTMLInputElement>) {
     const files = [...(event.currentTarget.files ?? [])];
     event.currentTarget.value = '';
+    const replacementRevision = currentReplacementRevision.current;
     const previous = sourceImports.current.get(blockId) ?? Promise.resolve();
     const batch = previous.then(async () => {
       const rejected: string[] = [];
       for (const file of files) {
+        if (currentReplacementRevision.current !== replacementRevision) return;
         try {
           const source = await readLocalSource(file);
+          if (currentReplacementRevision.current !== replacementRevision) return;
           dispatch({ type: 'sourceAdded', blockId, source: { id: crypto.randomUUID(), ...source } });
         } catch {
+          if (currentReplacementRevision.current !== replacementRevision) return;
           rejected.push(file.name);
         }
       }
+      if (currentReplacementRevision.current !== replacementRevision) return;
       setSourceStatus((current) => ({ ...current, [blockId]: rejected.length ? fr.sourceRejected(rejected.join(', ')) : '' }));
     });
     sourceImports.current.set(blockId, batch);
@@ -164,8 +179,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         const impactState = state.impacts[block.blockId];
         const impactIsCurrent = isImpactCurrent(state, block.blockId);
         const impactIsStale = !ignored && impactState?.status === 'result' && !impactIsCurrent;
-        const isLatest = index === state.blocks.length - 1;
-        const expanded = isLatest || expandedBlocks.has(block.blockId);
+        const expanded = expandedBlocks.has(block.blockId);
         const editorId = `conversation-${block.blockId}-editor`;
         const question = block.message.trim();
         const response = block.finalResponse.trim();
@@ -183,7 +197,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                 else removeButtonRefs.current.delete(block.blockId);
               }} className="icon-button remove-block" type="button" aria-label={fr.removeBlockAction(index + 1)} onClick={() => removeBlock(block.blockId)}><span aria-hidden="true">×</span></button>
               <h3>{fr.blockTitle(index + 1)}</h3>
-              {!isLatest ? <button
+              <button
                 ref={(element) => {
                   if (element) toggleButtonRefs.current.set(block.blockId, element);
                   else toggleButtonRefs.current.delete(block.blockId);
@@ -200,7 +214,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
                   return next;
                   });
                 }}
-              ><span aria-hidden="true" className="chevron">⌄</span><span className="visually-hidden">{expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}</span></button> : null}
+              ><span aria-hidden="true" className="chevron">⌄</span><span className="visually-hidden">{expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}</span></button>
             </div>
             {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={fr.estimatedImpact}>
               {(['carbon', 'water'] as const).map((kind) => {
