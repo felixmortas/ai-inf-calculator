@@ -1,0 +1,36 @@
+Je souhaite effectuer des changements mineurs sur l’UI/UX de mon site web :
+- Page d’accueil :
+  * Boutons "Importer un lien Mistral" et "Saisir un échange" remplacé par une icône de flèche qui va vers la droite.
+
+- Page d’import :
+  * Bouton "Retour à l’accueil" remplacé par un logo maison, tout en haut à gauche de la page, juste sous le titre.
+
+- Page d’import après analyse du lien :
+  * Ajouter un séparateur visuel entre le bouton "Analyser le lien" et la section de Prévisualisation de l’import
+  * Conserver le bouton "Remplacer les échanges par l’import" en bas, et ajouter une réplique entre le résumé de l’import "x échanges extraits, y avertissements" et le titre de la section "Prévisualisation de l’import".
+
+- Page sélection du chatbot :
+  * Bouton "Retour à l’import" remplacé par un icône de flèche qui va vers la gauche, placé en haut à gauche de l’écran, juste en dessous du titre de la page
+  * Mettre en évidence que le texte "Paramètres avancés" est un bouton qui déplie un menu, et ajouter un chevron juste à droite du texte
+
+Page conversation :
+  * Bouton "Retour à l’accueil" remplacé par un logo maison, tout en haut à gauche de la page, juste sous le titre.
+  * Supprimer le bouton "Recalculer le total" (mais conserver le code au cas où je veuille le remettre plus tard)
+  * Dans la section "modèles, fournisseur, paramètres" , remplacer le bouton "Modifier le chatbot ou le modèle" par une icône de crayon placé sur la même ligne que le nom du fournisseur et du modèle, tout à droite.
+  * Déplacer la section "modèles, fournisseur, paramètres" tout en bas de la page
+  * Supprimer le bouton "ajuster hypothèses" car c’est un doublon du bouton pour modifier le chatbot ou le modèle.
+  * Bouton "Ajouter un échange" remplacé par une icône du signe mathématique `plus`.
+  * Déplacer le bouton "Calculer toute la conversation" à côté du bouton pour ajouter un échange.
+  * Déplacer la section avec bouton pour tout calculer et ajouter un échange juste au dessus de la section qui résume le fournisseur et modèle choisi, et en dessous du bloc de dernier échange
+  * Bouton "plier/déplier l’échange" remplacé par un chevron sur la même ligne que le numéro de l’échange, à droite.
+  * Bouton "supprimer l’échange" doit être remplacé par une croix, sur la même ligne que le numéro de l’échange, à gauche.
+  * Supprimer le popup de confirmation de suppression de l’échange (en gardant le code au cas où je souhaite le remettre plus tard).
+  * Ajouter un scroll automatique tout en bas de la page quand on arrive sur la page de conversation (utile si on vient de l’écran d’import, mais à garder peu importe l’écran duquel on vient).
+
+- Page conversation après calcul de l’impact environnemental :
+  * Section "Bilan de la conversation et bonnes pratiques" déplacée sous le bouton pour calculer le total, et au dessus de la section qui affiche le fournisseur et modèle sélectionné.
+  * Bloc "Estimation pour cet échange" déplacer juste en dessous du titre/numéro de l’échange/boutons supprimer et déplier. Visible même quand échange plié. Affiche uniquement :
+    ° un emoji charbon + la valeur et son unité
+    ° un emoji eau + la valeur et son unité
+
+/!\ Tous les chevrons doivent faire une rotation lorsqu’un menu déroulant est déplié ou replié.
