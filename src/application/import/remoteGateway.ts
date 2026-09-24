@@ -60,7 +60,8 @@ export function createRemoteGatewayConsent(
   const provider = registeredProviderForResolvedShare(resolved);
   const limits = provider?.limits;
   const redirectPolicy = provider?.redirectPolicy;
-  if (!provider || !limits || !redirectPolicy || resolved.policyVersion !== provider.policyVersion
+  if (!provider || provider.id !== 'mistral' || provider.canonicalizeUrl?.(resolved.canonicalUrl) !== resolved.canonicalUrl
+    || !limits || !redirectPolicy || resolved.policyVersion !== provider.policyVersion
     || !endpoint || !isAllowedWorkerEndpoint(endpoint) || !hasBoundedLimits(limits, redirectPolicy)) return undefined;
   const consent = Object.freeze({}) as unknown as RemoteGatewayConsent;
   unusedConsents.set(consent, Object.freeze({ resolved, limits, policyVersion: provider.policyVersion!, redirectPolicy, endpoint }));
@@ -134,7 +135,9 @@ export function createRemoteGateway(
   return Object.freeze({
     async fetchHtml(resolved: ResolvedShare, consent?: RemoteGatewayConsent): Promise<RemoteGatewayResult> {
       const record = consent && unusedConsents.get(consent);
-      if (!record || record.resolved !== resolved || !hasBoundedLimits(record.limits, record.redirectPolicy)
+      if (!record || record.resolved !== resolved || resolved.providerId !== 'mistral'
+        || registeredProviderForResolvedShare(resolved)?.id !== 'mistral'
+        || !hasBoundedLimits(record.limits, record.redirectPolicy)
         || resolved.canonicalUrl.length > record.limits.maxUrlLength) {
         return error('consent-required', 'Votre consentement ponctuel est requis pour cette URL.');
       }

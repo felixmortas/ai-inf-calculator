@@ -5,6 +5,7 @@ import providerCountryCsv from '../../data/clean/provider_country.csv?raw';
 import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw';
 import droughtRiskCsv from '../../data/clean/country_drought_risk.csv?raw';
 import { defaultImpactConstants, type ImpactConstants } from '../domain/impact';
+import { chatGptProvider, chatGptSubscriptionModels, mistralModeModels, mistralProvider } from '../domain/modelSelection';
 
 export interface ShowerParameters { readonly flowLitresPerMinute: number; readonly inletTemperatureC: number; readonly outletTemperatureC: number; readonly energyKwhPerLitre: number; }
 export const defaultShowerParameters: Readonly<ShowerParameters> = Object.freeze({ flowLitresPerMinute: 15, inletTemperatureC: 18, outletTemperatureC: 38, energyKwhPerLitre: 0.00116 * 20 });
@@ -40,7 +41,7 @@ function parseCsv(source: string): readonly CatalogModel[] {
 
   const models = rows.map((row, rowIndex) => {
     const values = row.split(',').map((value) => value.trim());
-    const provider = values[indexes[0]];
+    const provider = values[indexes[0]] === 'MistralAI' ? mistralProvider : values[indexes[0]];
     const id = values[indexes[1]];
     if (!provider || !id) {
       throw new Error(`Ligne ${rowIndex + 2} invalide dans le catalogue de modèles.`);
@@ -62,9 +63,9 @@ function parseCsv(source: string): readonly CatalogModel[] {
 const models = parseCsv(modelsParamsCsv);
 const providers = Object.freeze([...new Set(models.map((model) => model.provider))]);
 
-for (const modelId of ['gpt-5.6-luna', 'gpt-5.6-terra']) {
-  if (!models.some((model) => model.provider === 'ChatGPT' && model.id === modelId)) {
-    throw new Error(`Le catalogue ChatGPT ne contient pas le modèle de référence ${modelId}.`);
+for (const [provider, ids] of [[chatGptProvider, Object.values(chatGptSubscriptionModels)], [mistralProvider, Object.values(mistralModeModels)]] as const) {
+  for (const modelId of ids) if (!models.some((model) => model.provider === provider && model.id === modelId)) {
+    throw new Error(`Le catalogue ${provider} ne contient pas le modèle de référence ${modelId}.`);
   }
 }
 
@@ -220,7 +221,7 @@ export type DroughtRisk =
 
 /** Pays d'hébergement localement catalogué pour le fournisseur sélectionné. */
 export function resolveHostingCountry(provider: string): string | undefined {
-  const country = parseRows(providerCountryCsv).find((entry) => entry.provider === provider)?.country;
+  const country = parseRows(providerCountryCsv).find((entry) => (entry.provider === 'MistralAI' ? mistralProvider : entry.provider) === provider)?.country;
   return country ? normalizeCountry(country) : undefined;
 }
 
@@ -275,4 +276,10 @@ export function resolveImpactParameters(provider: string, modelId: string, hosti
   const positiveConstants = [constants.batchSize, constants.gpuInstalledPerServer, constants.serverPowerWithoutGpuW, constants.gpuMemoryGb, constants.quantizationBits, constants.memoryOverhead, constants.energyAlpha, constants.energyGamma, constants.latencyAlpha, constants.latencyBeta, constants.latencyGamma];
   if (!values.every((value) => Number.isFinite(value) && value >= 0) || !Object.values(constants).every(Number.isFinite) || !positiveConstants.every((value) => value > 0) || constants.energyBeta > 0 || resolved.totalParameters <= 0 || resolved.activatedParameters <= 0 || resolved.activatedParameters > resolved.totalParameters || resolved.pue < 1 || resolved.wordsPerToken <= 0 || shower.flowLitresPerMinute <= 0 || shower.outletTemperatureC <= shower.inletTemperatureC) return undefined;
   return Object.freeze(resolved);
+}
+
+for (const modelId of Object.values(mistralModeModels)) {
+  if (!resolveImpactParameters(mistralProvider, modelId)) {
+    throw new Error(`Le modèle de référence Mistral ${modelId} ne résout pas son pays et ses facteurs environnementaux.`);
+  }
 }

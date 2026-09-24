@@ -13,6 +13,21 @@ import {
   summaryFingerprint,
 } from '../application/conversationReducer';
 
+async function startThread(user: ReturnType<typeof userEvent.setup>) {
+  const view = render(<App />);
+  await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+  await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+  return view;
+}
+
+async function editReference(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+}
+
+async function returnToThread(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+}
+
 describe('composition de la conversation', () => {
   it('accepte uniquement les sources texte UTF-8 limitées et refuse les contenus vides ou illisibles', async () => {
     expect(acceptsLocalSource(new File(['texte'], 'note.md', { type: 'text/markdown' }))).toBe(true);
@@ -27,7 +42,7 @@ describe('composition de la conversation', () => {
   });
   it('importe via le champ fichier, annonce les refus et permet le retrait', async () => {
     const user = userEvent.setup({ applyAccept: false });
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     const input = screen.getByLabelText('Fichiers source locaux');
     await user.upload(input, [
@@ -41,7 +56,7 @@ describe('composition de la conversation', () => {
   });
   it('ajoute un bloc avec quatre champs libellés accessibles', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     expect(screen.getByLabelText('Message')).toBeVisible();
     expect(screen.getByLabelText('Réponse finale')).toBeVisible();
@@ -51,19 +66,21 @@ describe('composition de la conversation', () => {
 
   it('importe via le registre, conserve les avis de contenus inaccessibles, puis ajoute un échange manuel', async () => {
     const user = userEvent.setup();
-    const fetch = vi.fn().mockResolvedValue(new Response('<html><script type="application/json">{"messages":[{"author":{"role":"user"},"content":{"parts":["Question"]}},{"author":{"role":"assistant"},"content":{"parts":["[artifact](sandbox:/mnt/data/a.csv) fileciteturn0file0L1"]}}]}</script></html>', { headers: { 'content-type': 'text/html' } }));
+    const fetch = vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse","attachments":[{"name":"a.csv"}]}]}</script></html>', { headers: { 'content-type': 'text/html' } }));
     vi.stubGlobal('fetch', fetch);
 
     try {
       render(<App />);
-      fireEvent.change(screen.getByLabelText('Lien de partage'), { target: { value: 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000' } });
+      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
+      fireEvent.change(screen.getByLabelText('Lien de partage'), { target: { value: 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000' } });
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
       await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
+      expect(screen.getByText('Événement public non attribué après la réponse finale.').closest('[role="status"]')).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
+      await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
       expect(screen.getByLabelText('Message')).toHaveValue('Question');
-      expect(screen.getAllByText('Artifact détecté : collez son contenu dans le champ Artifact optionnel pour le compter.').some((element) => element.getAttribute('role') === 'status')).toBe(true);
-      expect(screen.getAllByText('Fichier source détecté : uploadez-le pour inclure son contenu dans les tokens d’entrée.').some((element) => element.getAttribute('role') === 'status')).toBe(true);
       await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
       expect(screen.getAllByLabelText('Message')).toHaveLength(2);
       expect(fetch).toHaveBeenCalledTimes(1);
@@ -72,7 +89,7 @@ describe('composition de la conversation', () => {
 
   it('signale un bloc vide comme ignoré et conserve le texte renseigné durant la session', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     expect(screen.getByText('Ce bloc sera ignoré pour les calculs futurs.')).toBeVisible();
     await user.type(screen.getByLabelText('Message'), ' Bonjour ');
@@ -82,7 +99,7 @@ describe('composition de la conversation', () => {
 
   it('isole deux blocs, génère des identifiants distincts et déplace le focus après une suppression ciblée', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     const messages = screen.getAllByLabelText('Message');
@@ -104,7 +121,7 @@ describe('composition de la conversation', () => {
     const storageClear = vi.spyOn(Storage.prototype, 'clear');
     const historyPush = vi.spyOn(History.prototype, 'pushState');
     const historyReplace = vi.spyOn(History.prototype, 'replaceState');
-    const first = render(<App />);
+    const first = await startThread(user);
     const addExchange = screen.getByRole('button', { name: 'Ajouter un échange' });
     addExchange.focus();
     expect(addExchange).toHaveFocus();
@@ -116,13 +133,13 @@ describe('composition de la conversation', () => {
     expect(historyPush).not.toHaveBeenCalled();
     expect(historyReplace).not.toHaveBeenCalled();
     first.unmount();
-    render(<App />);
+    await startThread(user);
     expect(screen.queryByLabelText('Message')).not.toBeInTheDocument();
   });
 
   it('calcule explicitement un seul échange et affiche ses impacts avec leurs limites', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
@@ -133,26 +150,30 @@ describe('composition de la conversation', () => {
 
   it('applique une constante avancée validée au calcul suivant', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     const initialEnergy = (await screen.findByText(/Énergie:/)).textContent;
 
+    await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
     const alpha = screen.getByLabelText('Constante énergie alpha (Wh/token)');
     await user.clear(alpha);
     await user.type(alpha, '0.00001');
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+    await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     expect((await screen.findByText(/Énergie:/)).textContent).not.toBe(initialEnergy);
   });
 
   it('applique le pays d’hébergement choisi aux calculs et au risque du bilan', async () => {
     const user = userEvent.setup();
-    const french = render(<App />);
+    const french = await startThread(user);
+    await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
     await user.selectOptions(screen.getByLabelText('Pays d’hébergement'), 'FR');
+    await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
@@ -163,7 +184,7 @@ describe('composition de la conversation', () => {
     expect(summary.parentElement).toHaveTextContent(frenchCarbon!);
     french.unmount();
 
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
@@ -172,7 +193,7 @@ describe('composition de la conversation', () => {
 
   it('calcule les seuls échanges renseignés puis affiche leur bilan et le risque pays', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getAllByLabelText('Message')[0], 'Premier échange');
@@ -191,7 +212,7 @@ describe('composition de la conversation', () => {
 
   it('invite à saisir un échange sans afficher de bilan si tous les blocs sont vides', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
     expect(screen.getByText('Saisissez au moins un échange avant de calculer le bilan.')).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
@@ -369,7 +390,7 @@ describe('composition de la conversation', () => {
 
   it('recalcule le bilan dans l’application depuis un impact individuel existant', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Un échange déjà calculé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
@@ -382,9 +403,11 @@ describe('composition de la conversation', () => {
 
   it('actualise l’équivalence du bilan après un changement de pays sans recalculer le bloc', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
+    await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'US');
+    await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Bilan conservé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
@@ -392,7 +415,9 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
     await screen.findByRole('heading', { name: 'Bilan de la conversation' });
 
+    await editReference(user);
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'FR');
+    await returnToThread(user);
     expect(screen.getAllByText(/estimation de durée de douche est périmée/)).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
 
@@ -402,9 +427,11 @@ describe('composition de la conversation', () => {
 
   it('rend le repli Monde pour l’équivalence du bloc et du bilan calculés', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await startThread(user);
+    await editReference(user);
     await user.click(screen.getByText('Paramètres avancés'));
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'ID');
+    await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Message'), 'Repli mondial');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));

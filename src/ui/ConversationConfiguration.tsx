@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
-import { chatGptProvider, type ChatGptSubscription } from '../domain/modelSelection';
+import { chatGptProvider, mistralProvider, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 
@@ -25,6 +25,9 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
 
   function selectSubscription(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'subscriptionSelected', subscription: event.currentTarget.value as ChatGptSubscription });
+  }
+  function selectMistralMode(event: ChangeEvent<HTMLSelectElement>) {
+    dispatch({ type: 'mistralModeSelected', mode: event.currentTarget.value as MistralMode });
   }
 
   function selectModel(event: ChangeEvent<HTMLSelectElement>) {
@@ -77,15 +80,20 @@ export function ConversationConfiguration({ state, dispatch }: ConversationConfi
         </div>
       ) : null}
 
+      {state.provider === mistralProvider ? <div className="field">
+        <label htmlFor="mistral-mode">{fr.mistralModeLabel}</label>
+        <select id="mistral-mode" value={state.mistralMode} onChange={selectMistralMode}>
+          <option value="fast">{fr.mistralFast}</option>
+          <option value="reasoning">{fr.mistralReasoning}</option>
+        </select>
+      </div> : null}
+
       <div className="field">
         <label htmlFor="model">{fr.modelLabel}</label>
-        {state.provider === chatGptProvider ? (
-          <output id="model" aria-live="polite" className="resolved-model">{state.modelId}</output>
-        ) : (
-          <select id="model" value={state.modelId} onChange={selectModel}>
-            {providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
-          </select>
-        )}
+        <p id="model-help" className="help">{fr.modelReferenceHelp}</p>
+        <select id="model" aria-describedby="model-help" value={state.modelId} onChange={selectModel}>
+          {providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
+        </select>
       </div>
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
         <summary>{fr.advancedSettingsTitle}</summary>

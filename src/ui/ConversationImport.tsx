@@ -10,6 +10,8 @@ import { fr } from '../i18n/fr';
 interface ConversationImportProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
+  readonly onImported?: () => void;
+  readonly onManual?: () => void;
   readonly providers?: readonly ImportProvider[];
   /** Injection de test ; le parcours publié emploie uniquement le registre fermé. */
   readonly resolve?: (value: string) => ResolvedShare | undefined;
@@ -22,7 +24,7 @@ interface PendingConsent {
   readonly endpoint: string;
 }
 
-export function ConversationImport({ state, dispatch, providers = importProviders, resolve = resolveShare }: ConversationImportProps) {
+export function ConversationImport({ state, dispatch, onImported, onManual, providers = importProviders, resolve = resolveShare }: ConversationImportProps) {
   const [detectedProvider, setDetectedProvider] = useState<string>();
   const [url, setUrl] = useState('');
   const [preview, setPreview] = useState<ConversationPreview>();
@@ -69,9 +71,9 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     importStarted.current = false;
     setError(undefined); setPreview(undefined); setConfirming(false); setPendingConsent(undefined);
     const resolved = resolve(url);
-    if (!resolved) { setDetectedProvider(undefined); setError('Ce lien de partage public n’est pas pris en charge.'); return; }
-    const resolvedProvider = providers.find((item) => item.id === resolved.providerId) ?? (providers.length === 1 ? providers[0] : undefined);
-    if (!resolvedProvider) { setDetectedProvider(undefined); setError('Ce fournisseur de partage n’est pas disponible.'); return; }
+    if (!resolved || resolved.providerId !== 'mistral' || !isResolvedShare(resolved)) { setDetectedProvider(undefined); setError(fr.importMistralOnlyError); return; }
+    const resolvedProvider = providers.find((item) => item.id === 'mistral');
+    if (!resolvedProvider) { setDetectedProvider(undefined); setError(fr.importMistralOnlyError); return; }
     setDetectedProvider(resolved.providerId);
     const endpoint = workerImportEndpoint();
     const capability = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare, endpoint);
@@ -83,7 +85,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
     const consent = pendingConsent;
     if (!consent || !provider || importStarted.current
       || consent.resolved.canonicalUrl !== url || consent.endpoint !== workerImportEndpoint()
-      || (providers.length > 1 && consent.resolved.providerId !== provider.id)
+      || consent.resolved.providerId !== 'mistral' || provider.id !== 'mistral'
       || consent.version !== analysisVersion.current) return;
     importStarted.current = true;
     setPendingConsent(undefined);
@@ -131,6 +133,7 @@ export function ConversationImport({ state, dispatch, providers = importProvider
       return { blockId, message: block.message, visibleReasoning: block.visibleReasoning, finalResponse: block.finalResponse, artifact: block.artifact };
     });
     dispatch({ type: 'blocksReplaced', blocks });
+    onImported?.();
     setPreview(undefined); setConfirming(false); setError(undefined);
   }
 
@@ -163,11 +166,11 @@ export function ConversationImport({ state, dispatch, providers = importProvider
         <div className="import-consent-actions">
           <button ref={continueButtonRef} type="button" onClick={() => void continueImport()}>{fr.importConsentContinueAction}</button>
           <button type="button" onClick={closeConsent}>{fr.importCancelAction}</button>
-          <a href="#conversation-title" onClick={closeConsent}>{fr.importManualAction}</a>
+          <button type="button" onClick={() => { closeConsent(); onManual?.(); }}>{fr.importManualAction}</button>
         </div>
       </div>
     </div> : null}
-    {error ? <div className="import-error"><p role="alert">{error}</p><a href="#conversation-title">{fr.importManualAction}</a></div> : null}
+    {error ? <div className="import-error"><p role="alert">{error}</p><button type="button" onClick={onManual}>{fr.importManualAction}</button></div> : null}
     {preview ? <div className="import-preview" aria-live="polite">
       <h3>{fr.importPreviewTitle}</h3>
       {preview.blocks.map((block, index) => <article key={index} className="import-preview-block">

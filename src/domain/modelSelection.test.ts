@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSelectModel, resolveChatGptModel, selectableModels } from './modelSelection';
+import { canSelectModel, resolveChatGptModel, resolveMistralModel, selectableModels } from './modelSelection';
 import { detectUserCountry, hasModel, modelCatalog, resolveDroughtRisk, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
@@ -11,6 +11,14 @@ describe('sélection de modèle', () => {
   it('résout le modèle ChatGPT selon l’abonnement', () => {
     expect(resolveChatGptModel('without-paid-subscription')).toBe('gpt-5.6-luna');
     expect(resolveChatGptModel('with-paid-subscription')).toBe('gpt-5.6-terra');
+  });
+
+  it('résout les deux modes Mistral avec pays et facteurs complets', () => {
+    expect(resolveMistralModel('fast')).toBe('mistral-small');
+    expect(resolveMistralModel('reasoning')).toBe('mistral-large');
+    for (const id of ['mistral-small', 'mistral-large']) {
+      expect(resolveImpactParameters('Mistral AI', id)).toMatchObject({ provider: 'Mistral AI', id, hostingCountry: 'CH' });
+    }
   });
 
   it('ne retourne et n’accepte que les modèles du fournisseur', () => {

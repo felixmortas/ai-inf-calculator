@@ -14,25 +14,25 @@ const cases = [
 ] as const;
 
 describe('import de partage résolu', () => {
-  it.each(cases)('extrait localement %s après une récupération attestée', async (provider, url, html) => {
-    const resolved = resolveShare(url)!;
-    const consent = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare)!;
+  it.each(cases)('extrait localement %s avec une passerelle isolée', async (provider, url, html) => {
+    const resolved = { providerId: provider.id as 'claude' | 'mistral' | 'gemini', canonicalUrl: url, limits: provider.limits!, policyVersion: provider.policyVersion! };
+    const consent = undefined;
     const gateway = { fetchHtml: vi.fn().mockResolvedValue({ ok: true as const, html }) };
     const result = await importResolvedProviderShare(resolved, consent, provider, gateway);
     expect(result).toMatchObject({ ok: true, providerId: provider.id, events: [{ role: 'user', text: 'Bonjour' }, { role: 'assistant', text: 'Réponse' }] });
   });
 
   it('refuse un fournisseur différent sans fetch, et un consentement déjà consommé', async () => {
-    const resolved = resolveShare('https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000')!;
-    const fetcher = vi.fn().mockResolvedValue(new Response('<script data-claude-share type="application/json">{"turns":[]}</script>'));
+    const resolved = resolveShare('https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000')!;
+    const fetcher = vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share type="application/json">{"messages":[]}</script></html>'));
     const gateway = createRemoteGateway(fetcher, configured);
-    const mismatch = await importResolvedProviderShare(resolved, undefined, mistralShareProvider, gateway);
+    const mismatch = await importResolvedProviderShare(resolved, undefined, claudeShareProvider, gateway);
     expect(mismatch).toMatchObject({ ok: false, error: { code: 'invalid-url' } });
     expect(fetcher).not.toHaveBeenCalled();
 
     const consent = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare)!;
-    await importResolvedProviderShare(resolved, consent, claudeShareProvider, gateway);
-    const repeated = await importResolvedProviderShare(resolved, consent, claudeShareProvider, gateway);
+    await importResolvedProviderShare(resolved, consent, mistralShareProvider, gateway);
+    const repeated = await importResolvedProviderShare(resolved, consent, mistralShareProvider, gateway);
     expect(repeated).toMatchObject({ ok: false, error: { code: 'consent-required' } });
     expect(fetcher).toHaveBeenCalledOnce();
   });

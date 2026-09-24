@@ -4,8 +4,12 @@ import {
   canSelectModel,
   chatGptProvider,
   chatGptSubscriptionModels,
+  mistralModeModels,
+  mistralProvider,
   resolveChatGptModel,
+  resolveMistralModel,
   type ChatGptSubscription,
+  type MistralMode,
 } from '../domain/modelSelection';
 import {
   fallbackTokenization,
@@ -25,6 +29,7 @@ import { hasConversationBlockContent } from '../domain/conversationContent';
 export interface ConversationState {
   readonly provider: string;
   readonly subscription: ChatGptSubscription;
+  readonly mistralMode: MistralMode;
   readonly modelId: string;
   readonly hostingCountry: string;
   readonly userCountry: string;
@@ -98,6 +103,7 @@ export interface ShowerEquivalenceState { readonly fingerprint: string; readonly
 export type ConversationAction =
   | { readonly type: 'providerSelected'; readonly provider: string }
   | { readonly type: 'subscriptionSelected'; readonly subscription: ChatGptSubscription }
+  | { readonly type: 'mistralModeSelected'; readonly mode: MistralMode }
   | { readonly type: 'modelSelected'; readonly modelId: string }
   | { readonly type: 'hostingCountrySelected'; readonly country: string }
   | { readonly type: 'userCountrySelected'; readonly country: string }
@@ -126,6 +132,7 @@ const initialSubscription: ChatGptSubscription = 'without-paid-subscription';
 export const initialConversationState: ConversationState = Object.freeze({
   provider: chatGptProvider,
   subscription: initialSubscription,
+  mistralMode: 'fast',
   modelId: resolveChatGptModel(initialSubscription),
   hostingCountry: resolveHostingCountry(chatGptProvider)!,
   userCountry: detectUserCountry(),
@@ -184,7 +191,7 @@ function invalidateCalculationsAndTokenizations(state: ConversationState): Conve
 }
 
 /** A canonical snapshot of exactly the inputs consumed by one impact calculation. */
-export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>, blockId?: string): string {
+export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'> & Partial<Pick<ConversationState, 'subscription' | 'mistralMode'>>, blockId?: string): string {
   if (!blockId) {
     return summaryFingerprint(state);
   }
@@ -195,12 +202,13 @@ export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'm
   const { shower: _shower, ...impactParameters } = parameters;
   return JSON.stringify([
     'impact-v2', 'impact-algorithm-v1', modelCatalog, blockId,
+    state.provider === chatGptProvider ? state.subscription : state.provider === mistralProvider ? state.mistralMode : null,
     block.message, (block.sources ?? []).map((source) => source.text), block.finalResponse, block.visibleReasoning, block.artifact, history, impactParameters,
   ]);
 }
 
 /** Empty blocks deliberately do not participate, so adding/removing one preserves freshness. */
-export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'>): string {
+export function summaryFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'> & Partial<Pick<ConversationState, 'subscription' | 'mistralMode'>>): string {
   return JSON.stringify(['summary-v2', state.blocks
     .filter((block) => !isIgnoredConversationBlock(block))
     .map((block) => [block.blockId, impactFingerprint(state, block.blockId)])]);
@@ -261,29 +269,35 @@ export function conversationReducer(state: ConversationState, action: Conversati
   if (state.parameterValidationInvalid && ['tokenizationRequested', 'tokenizationResponded', 'impactRequested', 'impactResolved', 'impactBlocked', 'summaryRequested', 'summaryRecalculationRequested', 'summaryResolved', 'summaryUnavailable'].includes(action.type)) return state;
   switch (action.type) {
     case 'providerSelected': {
+      if (action.provider === state.provider) return state;
       const modelId = firstModelId(action.provider);
       if (!modelId) return state;
       return invalidateCalculationsAndTokenizations({
         ...state,
         provider: action.provider,
-        modelId: action.provider === chatGptProvider
-          ? resolveChatGptModel(state.subscription)
-          : modelId,
+        modelId: action.provider === chatGptProvider ? resolveChatGptModel(state.subscription)
+          : action.provider === mistralProvider ? resolveMistralModel(state.mistralMode) : modelId,
         hostingCountry: resolveHostingCountry(action.provider)!,
         parameterValidationInvalid: false,
       });
     }
     case 'subscriptionSelected':
       if (state.provider !== chatGptProvider) return state;
-      if (!(action.subscription in chatGptSubscriptionModels)) return state;
+      if (!Object.hasOwn(chatGptSubscriptionModels, action.subscription)) return state;
+      if (action.subscription === state.subscription) return state;
       return invalidateCalculationsAndTokenizations({
         ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription), parameterValidationInvalid: false,
-        hostingCountry: resolveHostingCountry(state.provider)!,
+      });
+    case 'mistralModeSelected':
+      if (state.provider !== mistralProvider || !Object.hasOwn(mistralModeModels, action.mode)) return state;
+      if (action.mode === state.mistralMode) return state;
+      return invalidateCalculationsAndTokenizations({
+        ...state, mistralMode: action.mode, modelId: resolveMistralModel(action.mode), parameterValidationInvalid: false,
       });
     case 'modelSelected':
-      if (state.provider === chatGptProvider) return state;
       if (!canSelectModel(modelCatalog.models, state.provider, action.modelId)) return state;
-      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, hostingCountry: resolveHostingCountry(state.provider)!, parameterValidationInvalid: false });
+      if (action.modelId === state.modelId) return state;
+      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, parameterValidationInvalid: false });
     case 'hostingCountrySelected':
       if (!isHostingCountry(action.country) || action.country === state.hostingCountry) return state;
       return discardTransientCalculations({ ...state, hostingCountry: action.country });

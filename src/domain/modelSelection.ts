@@ -1,4 +1,5 @@
 export type ChatGptSubscription = 'without-paid-subscription' | 'with-paid-subscription';
+export type MistralMode = 'fast' | 'reasoning';
 
 export interface ModelOption {
   readonly provider: string;
@@ -6,6 +7,7 @@ export interface ModelOption {
 }
 
 export const chatGptProvider = 'ChatGPT';
+export const mistralProvider = 'Mistral AI';
 export const chatGptSubscriptionModels: Readonly<Record<ChatGptSubscription, string>> = Object.freeze({
   'without-paid-subscription': 'gpt-5.6-luna',
   'with-paid-subscription': 'gpt-5.6-terra',
@@ -13,6 +15,15 @@ export const chatGptSubscriptionModels: Readonly<Record<ChatGptSubscription, str
 
 export function resolveChatGptModel(subscription: ChatGptSubscription): string {
   return chatGptSubscriptionModels[subscription];
+}
+
+export const mistralModeModels: Readonly<Record<MistralMode, string>> = Object.freeze({
+  fast: 'mistral-small',
+  reasoning: 'mistral-large',
+});
+
+export function resolveMistralModel(mode: MistralMode): string {
+  return mistralModeModels[mode];
 }
 
 export function selectableModels(models: readonly ModelOption[], provider: string): readonly ModelOption[] {

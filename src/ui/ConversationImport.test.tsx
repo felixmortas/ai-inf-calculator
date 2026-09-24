@@ -2,27 +2,28 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { initialConversationState, conversationReducer } from '../application/conversationReducer';
-import { chatGptShareProvider, importResolvedChatGptShare } from '../application/import/chatgptShare';
+import { mistralShareProvider } from '../application/import/mistralShare';
+import { importResolvedProviderShare } from '../application/import/resolvedShareImport';
 import { isResolvedShare, providerForResolvedShare, resolveShare } from '../application/import/registry';
 import { PRODUCTION_IMPORT_ENDPOINT, createRemoteGateway, createRemoteGatewayConsent, type RemoteGatewayConsent } from '../application/import/remoteGateway';
-import type { ImportProvider } from '../application/import/types';
+import type { ImportProvider, ResolvedShare } from '../application/import/types';
 import * as remoteGateway from '../application/import/remoteGateway';
 import { ConversationImport } from './ConversationImport';
 
-const shareUrl = 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000';
+const shareUrl = 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000';
 
-function providerWith(result: unknown = { ok: true, providerId: 'test', events: [
+function providerWith(result: unknown = { ok: true, providerId: 'mistral', events: [
   { role: 'user', text: 'Bonjour', order: 1 }, { role: 'assistant', text: 'Réponse', order: 2 },
 ] }): ImportProvider {
-  return { id: 'test', label: 'ChatGPT', validateUrl: () => undefined, importFromUrl: vi.fn(), importResolvedShare: vi.fn().mockResolvedValue(result) };
+  return { id: 'mistral', label: 'Mistral', validateUrl: () => undefined, importFromUrl: vi.fn(), importResolvedShare: vi.fn().mockResolvedValue(result) };
 }
 
 function providerThroughGateway(fetcher: Parameters<typeof createRemoteGateway>[0], configured = true): ImportProvider {
   const gateway = createRemoteGateway(fetcher, { endpoint: () => configured ? PRODUCTION_IMPORT_ENDPOINT : undefined });
   return {
-    id: 'chatgpt', label: 'ChatGPT', validateUrl: chatGptShareProvider.validateUrl,
-    importFromUrl: async () => ({ ok: false as const, providerId: 'chatgpt', events: [] as const, error: { code: 'consent-required' as const, message: 'Capacité attestée requise.' } }),
-    importResolvedShare: (resolved, consent) => importResolvedChatGptShare(resolved, consent as RemoteGatewayConsent | undefined, gateway),
+    id: 'mistral', label: 'Mistral', validateUrl: mistralShareProvider.validateUrl,
+    importFromUrl: async () => ({ ok: false as const, providerId: 'mistral', events: [] as const, error: { code: 'consent-required' as const, message: 'Capacité attestée requise.' } }),
+    importResolvedShare: (resolved, consent) => importResolvedProviderShare(resolved, consent as RemoteGatewayConsent | undefined, mistralShareProvider, gateway),
   };
 }
 
@@ -44,8 +45,8 @@ describe('ConversationImport', () => {
     const fetcher = vi.fn().mockResolvedValue(new Response('<html><body>page</body></html>', { headers: { 'content-type': 'text/html' } }));
     const gateway = createRemoteGateway(fetcher, { endpoint: () => preview });
     const provider: ImportProvider = {
-      ...chatGptShareProvider,
-      importResolvedShare: (share, consent) => importResolvedChatGptShare(share, consent as RemoteGatewayConsent, gateway),
+      ...mistralShareProvider,
+      importResolvedShare: (share, consent) => importResolvedProviderShare(share, consent as RemoteGatewayConsent, mistralShareProvider, gateway),
     };
     try {
       const user = userEvent.setup();
@@ -61,41 +62,46 @@ describe('ConversationImport', () => {
   it('documente la frontière tierce, les formats admis et le parcours manuel', () => {
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} />);
     const help = screen.getByRole('complementary', { name: 'À savoir avant un import distant' });
-    expect(help).toHaveTextContent('https://chatgpt.com/share/<UUID>');
-    expect(help).toHaveTextContent('https://claude.ai/share/<UUID>');
     expect(help).toHaveTextContent('https://chat.mistral.ai/chat/<UUID>');
-    expect(help).toHaveTextContent('https://share.gemini.google/<ID alphanumérique de 12 caractères>');
+    expect(help).not.toHaveTextContent('chatgpt.com');
     expect(help).toHaveTextContent('Worker d’import HTML');
     expect(help).toHaveTextContent('redirections éventuelles');
     expect(help).toHaveTextContent('recopier ou coller vos échanges manuellement');
   });
 
-  it('invalide le consentement lors d’un changement vers un fournisseur valide distinct', async () => {
+  it('refuse une résolution injectée non Mistral avant consentement ou import', async () => {
     const user = userEvent.setup();
-    const chatgpt = { ...providerWith(), id: 'chatgpt', label: 'ChatGPT' };
-    const claude = { ...providerWith(), id: 'claude', label: 'Claude' };
-    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[chatgpt, claude]} />);
-    const input = screen.getByLabelText('Lien de partage');
-    await user.type(input, 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000');
+    const provider = providerWith();
+    const resolve = vi.fn(() => ({ providerId: 'chatgpt', canonicalUrl: 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000' }) as ResolvedShare);
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} resolve={resolve} />);
+    await user.type(screen.getByLabelText('Lien de partage'), 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000');
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique ChatGPT');
+    expect(resolve).toHaveBeenCalledOnce();
+    expect(screen.getByRole('alert')).toHaveTextContent('Seuls les liens publics Mistral');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(provider.importResolvedShare).not.toHaveBeenCalled();
+  });
+
+  it('invalide le consentement lors d’un changement vers un fournisseur refusé', async () => {
+    const user = userEvent.setup();
+    const mistral = providerWith();
+    render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[mistral]} />);
+    const input = screen.getByLabelText('Lien de partage');
+    await user.type(input, shareUrl);
+    await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique Mistral');
     await user.clear(input);
     await user.type(input, 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(chatgpt.importResolvedShare).not.toHaveBeenCalled();
-    expect(claude.importResolvedShare).not.toHaveBeenCalled();
+    expect(mistral.importResolvedShare).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique Claude');
-    await user.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(chatgpt.importResolvedShare).not.toHaveBeenCalled();
-    expect(claude.importResolvedShare).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Seuls les liens publics Mistral');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mistral.importResolvedShare).not.toHaveBeenCalled();
   });
 
   it.each([
-    ['ChatGPT', 'chatgpt', 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000'],
-    ['Claude', 'claude', 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000'],
     ['Mistral', 'mistral', 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000'],
-    ['Gemini', 'gemini', 'https://share.gemini.google/Ab12Cd34Ef56'],
   ] as const)('couvre consentement, refus, changement, erreur et succès pour %s sans mutation prématurée', async (_label, id, url) => {
     const user = userEvent.setup();
     const importResolvedShare = vi.fn()
@@ -138,10 +144,7 @@ describe('ConversationImport', () => {
   });
 
   it.each([
-    ['ChatGPT', 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000'],
-    ['Claude', 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000'],
     ['Mistral', 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000'],
-    ['Gemini', 'https://share.gemini.google/Ab12Cd34Ef56'],
   ])('détecte %s et demande le consentement avant toute récupération', async (label, url) => {
     const user = userEvent.setup();
     render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} />);
@@ -154,7 +157,7 @@ describe('ConversationImport', () => {
   it('invalide le consentement ouvert si le registre ou le résolveur change', async () => {
     const user = userEvent.setup();
     const first = providerWith();
-    const second = { ...providerWith(), id: 'chatgpt' };
+    const second = { ...providerWith() };
     const { rerender } = render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[first]} />);
     await openConsent(user);
     rerender(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[second]} />);
@@ -184,7 +187,7 @@ describe('ConversationImport', () => {
     expect(dialog).toHaveTextContent(shareUrl);
     expect(dialog).toHaveTextContent('adresse IP et votre agent utilisateur');
     expect(dialog).toHaveTextContent('blocs locaux, ni vos fichiers, ni vos résultats, ni vos paramètres');
-    const manualLink = screen.getByRole('link', { name: 'Importer manuellement' });
+    const manualLink = screen.getByRole('button', { name: 'Importer manuellement' });
     manualLink.focus();
     await user.tab();
     expect(dialog).toContainElement(document.activeElement as HTMLElement);
@@ -207,7 +210,7 @@ describe('ConversationImport', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
-    await user.click(screen.getByRole('link', { name: 'Importer manuellement' }));
+    await user.click(screen.getByRole('button', { name: 'Importer manuellement' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
@@ -234,9 +237,9 @@ describe('ConversationImport', () => {
 
   it('relie le dialogue à la passerelle injectée puis à l’extraction locale, sans transmettre la session', async () => {
     const user = userEvent.setup();
-    const fetcher = vi.fn().mockResolvedValue(new Response(`<html><script type="application/json">${JSON.stringify({ messages: [
-      { author: { role: 'user' }, content: { parts: ['Bonjour public'] } },
-      { author: { role: 'assistant' }, content: { parts: ['Réponse publique'] } },
+    const fetcher = vi.fn().mockResolvedValue(new Response(`<html><script data-mistral-share>${JSON.stringify({ messages: [
+      { role: 'user', content: 'Bonjour public' },
+      { role: 'assistant', content: 'Réponse publique' },
     ] })}</script></html>`, { headers: { 'content-type': 'text/html' } }));
     const provider = providerThroughGateway(fetcher as Parameters<typeof createRemoteGateway>[0]);
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'local' });
@@ -273,7 +276,7 @@ describe('ConversationImport', () => {
     try {
       render(<ConversationImport state={initialConversationState} dispatch={vi.fn()} providers={[provider]} />);
       await consent(user);
-      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'chatgpt', policyVersion: 'chatgpt-v1' }), isResolvedShare, providerForResolvedShare, PRODUCTION_IMPORT_ENDPOINT);
+      expect(createConsent).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl, providerId: 'mistral', policyVersion: 'mistral-v1' }), isResolvedShare, providerForResolvedShare, PRODUCTION_IMPORT_ENDPOINT);
       expect(provider.importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl }), capability);
     } finally {
       createConsent.mockRestore();
@@ -284,7 +287,7 @@ describe('ConversationImport', () => {
     const user = userEvent.setup();
     let resolveImport: (value: unknown) => void = () => undefined;
     const provider: ImportProvider = {
-      id: 'test', label: 'ChatGPT', validateUrl: () => undefined,
+      id: 'mistral', label: 'Mistral', validateUrl: () => undefined,
       importFromUrl: vi.fn(),
       importResolvedShare: vi.fn().mockReturnValue(new Promise((resolve) => { resolveImport = resolve; })),
     };
@@ -294,7 +297,7 @@ describe('ConversationImport', () => {
     fireEvent.click(continueButton);
     fireEvent.click(continueButton);
     expect(provider.importResolvedShare).toHaveBeenCalledTimes(1);
-    resolveImport({ ok: true, providerId: 'test', events: [] });
+    resolveImport({ ok: true, providerId: 'mistral', events: [] });
   });
 
   it('demande toujours confirmation lorsque la session ne contient que des fichiers source', async () => {
@@ -341,9 +344,9 @@ describe('ConversationImport', () => {
     await consent(user);
     await user.type(screen.getByLabelText('Lien de partage'), 'x');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    resolveFetch(new Response(`<html><script type="application/json">${JSON.stringify({ messages: [
-      { author: { role: 'user' }, content: { parts: ['ignoré'] } },
-      { author: { role: 'assistant' }, content: { parts: ['ignoré aussi'] } },
+    resolveFetch(new Response(`<html><script data-mistral-share>${JSON.stringify({ messages: [
+      { role: 'user', content: 'ignoré' },
+      { role: 'assistant', content: 'ignoré aussi' },
     ] })}</script></html>`, { headers: { 'content-type': 'text/html' } }));
     await importSettled;
     await waitFor(() => {
@@ -362,7 +365,8 @@ describe('ConversationImport', () => {
     await user.type(screen.getByLabelText('Lien de partage'), 'https://claude.ai/share/123e4567-e89b-12d3-a456-426614174000');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('page publique Claude');
+    expect(screen.getByRole('alert')).toHaveTextContent('Seuls les liens publics Mistral');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('conserve la session et affiche les erreurs de l’import après consentement', async () => {
@@ -388,7 +392,7 @@ describe('ConversationImport', () => {
     expect(fetcher).toHaveBeenCalledOnce();
     expect(dispatch).not.toHaveBeenCalled();
     expect(state.blocks[0].message).toBe('à conserver');
-    expect(screen.getByRole('link', { name: 'Importer manuellement' })).toHaveAttribute('href', '#conversation-title');
+    expect(screen.getByRole('button', { name: 'Importer manuellement' })).toBeVisible();
   });
 
   it('conserve le parcours manuel et la session si la passerelle n’est pas configurée', async () => {
@@ -404,7 +408,7 @@ describe('ConversationImport', () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
     expect(state.blocks[0].message).toBe('à conserver');
-    expect(screen.getByRole('link', { name: 'Importer manuellement' })).toHaveAttribute('href', '#conversation-title');
+    expect(screen.getByRole('button', { name: 'Importer manuellement' })).toBeVisible();
   });
 
   it('refuse une prévisualisation sans échange après consentement', async () => {

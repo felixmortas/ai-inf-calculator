@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   conversationReducer, currentImpact, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
   showerFingerprint, summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
@@ -30,7 +30,17 @@ export function impactTexts(
 
 export function App() {
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
+  const [step, setStep] = useState<'home' | 'import' | 'selection' | 'thread'>('home');
+  const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'import' | 'thread'>('home');
+  const stepTitle = useRef<HTMLHeadingElement>(null);
   const client = useRef<TokenizationClient | undefined>(undefined);
+
+  useEffect(() => { stepTitle.current?.focus(); }, [step]);
+
+  function openSelection(origin: 'home' | 'import' | 'thread') {
+    setSelectionOrigin(origin);
+    setStep('selection');
+  }
 
   useEffect(() => {
     if (typeof Worker === 'undefined') return undefined;
@@ -150,9 +160,33 @@ export function App() {
         <h1>{fr.title}</h1>
         <p>{fr.introduction}</p>
       </header>
-      <ConversationConfiguration state={state} dispatch={dispatch} />
-      <ConversationImport state={state} dispatch={dispatch} />
-      <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} />
+      {step === 'home' ? <section className="start-paths" aria-labelledby="step-title">
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.homeTitle}</h2>
+        <div className="start-choice"><h3>{fr.importPathTitle}</h3><p>{fr.importPathHelp}</p><button type="button" onClick={() => setStep('import')}>{fr.importPathAction}</button></div>
+        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button type="button" onClick={() => openSelection('home')}>{fr.manualPathAction}</button></div>
+      </section> : null}
+      {step === 'import' ? <section aria-labelledby="step-title">
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.importPathTitle}</h2>
+        <button type="button" onClick={() => setStep('home')}>{fr.backHomeAction}</button>
+        <ConversationImport state={state} dispatch={dispatch} onImported={() => {
+          dispatch({ type: 'providerSelected', provider: 'Mistral AI' });
+          dispatch({ type: 'mistralModeSelected', mode: 'fast' });
+          dispatch({ type: 'modelSelected', modelId: 'mistral-small' });
+          openSelection('import');
+        }} onManual={() => openSelection('import')} />
+      </section> : null}
+      {step === 'selection' ? <section aria-labelledby="step-title">
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
+        <button type="button" onClick={() => setStep(selectionOrigin)}>{selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction}</button>
+        <ConversationConfiguration state={state} dispatch={dispatch} />
+        <button type="button" onClick={() => setStep('thread')}>{fr.continueThreadAction}</button>
+      </section> : null}
+      {step === 'thread' ? <section aria-labelledby="step-title">
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
+        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={() => openSelection('thread')}>{fr.editReferenceAction}</button></div>
+        <button type="button" onClick={() => setStep('home')}>{fr.backHomeAction}</button>
+        <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} />
+      </section> : null}
     </main>
   );
 }

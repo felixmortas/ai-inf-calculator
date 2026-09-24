@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   CHATGPT_SHARE_LIMITS,
   extractChatGptShareEvents,
+  chatGptShareProvider,
   importChatGptShare,
   importResolvedChatGptShare,
   validateChatGptShareUrl,
@@ -11,16 +12,15 @@ import {
   validateChatGptShareUrl as pureValidateChatGptShareUrl,
 } from './chatgptShareUrl';
 import type { RemoteGateway } from './remoteGateway';
-import { createRemoteGatewayConsent } from './remoteGateway';
-import { importProviderById, importProviders, isResolvedShare, providerForResolvedShare, resolveShare } from './registry';
+import { importProviderById, importProviders } from './registry';
 
 const shareUrl = 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000';
 const page = (value: unknown) => `<script type="application/json">${JSON.stringify(value)}</script>`;
 
 describe('registre d’import', () => {
-  it('expose les quatre fournisseurs enregistrés', () => {
-    expect(importProviders.map(({ id }) => id)).toEqual(['chatgpt', 'claude', 'mistral', 'gemini']);
-    expect(importProviderById('claude')?.id).toBe('claude');
+  it('publie Mistral seul tout en conservant l’adaptateur historique isolé', () => {
+    expect(importProviders.map(({ id }) => id)).toEqual(['mistral']);
+    expect(importProviderById('claude')).toBeUndefined();
   });
 });
 
@@ -47,8 +47,8 @@ describe('adaptateur ChatGPT avec passerelle injectée', () => {
     const gateway: RemoteGateway = {
       fetchHtml: vi.fn().mockResolvedValue({ ok: true, html: page({ author: { role: 'user' }, content: { parts: ['bonjour'] } }) }),
     };
-    const resolved = resolveShare(shareUrl)!;
-    const consent = createRemoteGatewayConsent(resolved, isResolvedShare, providerForResolvedShare);
+    const resolved = Object.freeze({ providerId: 'chatgpt' as const, canonicalUrl: shareUrl, limits: chatGptShareProvider.limits!, policyVersion: chatGptShareProvider.policyVersion! });
+    const consent = undefined;
     const result = await importResolvedChatGptShare(resolved, consent, gateway);
     expect(gateway.fetchHtml).toHaveBeenCalledWith(resolved, consent);
     expect(result).toMatchObject({ ok: true, events: [{ role: 'user', text: 'bonjour' }] });

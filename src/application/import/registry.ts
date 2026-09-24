@@ -10,13 +10,13 @@ export const allImportProviders: readonly ImportProvider[] = Object.freeze([
   chatGptShareProvider, claudeShareProvider, mistralShareProvider, geminiShareProvider,
 ]);
 
-/** Le parcours de consentement résout localement les quatre adaptateurs publiés. */
-export const importProviders: readonly ImportProvider[] = allImportProviders;
+/** Seul Mistral est publié ; les autres adaptateurs restent disponibles isolément. */
+export const importProviders: readonly ImportProvider[] = Object.freeze([mistralShareProvider]);
 export const activeImportProviders = importProviders;
 
 /** Résout localement, canonicalise et atteste la seule capacité consommable ensuite. */
 export function resolveShare(value: string): ResolvedShare | undefined {
-  for (const provider of allImportProviders) {
+  for (const provider of importProviders) {
     const canonicalUrl = provider.canonicalizeUrl?.(value);
     if (!canonicalUrl) continue;
     const resolved = Object.freeze({ providerId: provider.id as ImportProviderId, canonicalUrl, limits: provider.limits!, policyVersion: provider.policyVersion! });
