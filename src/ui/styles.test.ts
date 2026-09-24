@@ -8,5 +8,6 @@ describe('styles d’accessibilité et responsive', () => {
     expect(styleSource).toContain(':focus-visible');
     expect(styleSource).toContain('@media (max-width: 30rem)');
     expect(styleSource).toContain('.good-practices');
+    expect(styleSource).toContain('prefers-reduced-motion');
   });
 });

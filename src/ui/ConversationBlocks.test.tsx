@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { impactTexts } from './App';
 import { prepareConversationHistory } from '../domain/conversationHistory';
-import { acceptsLocalSource, ConversationBlocks, formatExchangeQuantity, formatImpact, localSourceMaxBytes, readLocalSource } from './ConversationBlocks';
+import { acceptsLocalSource, ConversationBlocks, formatExchangeQuantity, localSourceMaxBytes, readLocalSource } from './ConversationBlocks';
 import {
   conversationReducer,
   impactFingerprint,
@@ -89,6 +89,12 @@ describe('composition de la conversation', () => {
       expect(screen.getByLabelText('Question de la personne')).toHaveValue('Question');
       await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
       expect(screen.getAllByLabelText('Question de la personne')).toHaveLength(2);
+      await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
+      expect(await screen.findByRole('heading', { name: 'Bilan de la conversation' })).toBeVisible();
+      await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+      expect(screen.getByLabelText('PUE (ratio)')).toBeVisible();
+      await returnToThread(user);
+      expect(screen.getAllByLabelText('Question de la personne')[0]).toHaveValue('Question');
       expect(fetch).toHaveBeenCalledTimes(1);
     } finally { vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
   });
@@ -223,19 +229,38 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
     await user.type(screen.getAllByLabelText('Question de la personne')[0], 'Premier échange');
     await user.type(screen.getAllByLabelText('Question de la personne')[1], 'Deuxième échange plus long');
-    await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     const summaryHeading = await screen.findByRole('heading', { name: 'Bilan de la conversation' });
     const summaryEnergy = Number(summaryHeading.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1].replace(',', '.'));
     expect(document.querySelectorAll('.impact-result')).toHaveLength(2);
     expect(screen.getAllByText(/Énergie:/)).toHaveLength(1);
     expect(summaryEnergy).toBeGreaterThan(0);
     expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Bonnes pratiques de sobriété' })).toBeVisible();
+  });
+
+  it('attend un bilan actuel avant les conseils et relie un total incomplet aux cartes', async () => {
+    const user = userEvent.setup();
+    await startThread(user);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Question de la personne'), 'Premier');
+    await user.click(screen.getByRole('button', { name: 'Calculer cet échange' }));
+    await screen.findByText('Estimation pour cet échange');
+    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques de sobriété' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getAllByLabelText('Question de la personne')[1], 'Second');
+    await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /L’échange 2 doit être calculé/ });
+    expect(link).toHaveAttribute('href', '#conversation-block-2');
+    await user.click(link);
+    expect(document.getElementById('conversation-block-2')).toHaveFocus();
   });
 
   it('invite à saisir un échange sans afficher de bilan si tous les blocs sont vides', async () => {
     const user = userEvent.setup();
     await startThread(user);
-    await user.click(screen.getByRole('button', { name: 'Tout calculer' }));
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
     expect(screen.getByText('Saisissez au moins un échange avant de calculer le bilan.')).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
   });
@@ -275,8 +300,7 @@ describe('composition de la conversation', () => {
     });
   });
 
-  it('formate quatre chiffres significatifs et annonce un blocage de données', () => {
-    expect(formatImpact(0.00123456)).toBe('0,001235');
+  it('annonce un blocage de données sans afficher de conseils', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
     state = conversationReducer(state, { type: 'impactBlocked', blockId: 'one', fingerprint: impactFingerprint(state, 'one'), code: 'invalid-data' });
@@ -376,7 +400,7 @@ describe('composition de la conversation', () => {
     expect(screen.getByText('L’échange 1 doit être calculé ou recalculé.')).toBeVisible();
   });
 
-  it('affiche après tous les résultats actuels une liste sémantique des cinq conseils, mais jamais sans résultat actuel', () => {
+  it('affiche les cinq conseils dans le bilan actuel, jamais avant ce bilan', () => {
     const renderBlocks = (state = initialConversationState) => render(
       <ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />,
     );
@@ -418,9 +442,7 @@ describe('composition de la conversation', () => {
       'Lorsque cela convient, modifiez un message existant plutôt que d’en envoyer un nouveau.',
     ]);
     expect([...document.querySelectorAll('.summary-panel, .impact-result')]).toHaveLength(3);
-    for (const result of document.querySelectorAll('.summary-panel, .impact-result')) {
-      expect(practices.compareDocumentPosition(result)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
-    }
+    expect(document.querySelector('.summary-panel')).toContainElement(practices);
     current.unmount();
 
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'À recalculer' });
@@ -480,10 +502,40 @@ describe('composition de la conversation', () => {
     await user.selectOptions(screen.getByLabelText('Pays de la personne'), 'FR');
     await returnToThread(user);
     expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
+    expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Bilan de la conversation' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Recalculer le total' }));
 
-    expect(await screen.findByText(/Estimation : environ/)).toBeVisible();
+    expect((await screen.findAllByText(/Estimation : environ/))[0]).toBeVisible();
     expect(screen.getByText(/Énergie:/).textContent).toBe(summaryEnergy);
+  });
+
+  it('ouvre les hypothèses depuis le bilan, conserve la session et annonce leur péremption après application puis restauration', async () => {
+    const user = userEvent.setup();
+    await startThread(user);
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Question de la personne'), 'Question conservée');
+    await user.click(screen.getByRole('button', { name: 'Calculer toute la conversation' }));
+    await screen.findByRole('heading', { name: 'Bilan de la conversation' });
+
+    await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+    expect(screen.getByLabelText('PUE (ratio)')).toBeVisible();
+    await user.clear(screen.getByLabelText('PUE (ratio)'));
+    await user.type(screen.getByLabelText('PUE (ratio)'), '1.2');
+    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
+    await returnToThread(user);
+    expect(screen.getByLabelText('Question de la personne')).toHaveValue('Question conservée');
+    expect(screen.getAllByText(/résultats dépendants sont à recalculer/)).toHaveLength(1);
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Ajuster les hypothèses' }));
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.2);
+    await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.15);
+    await returnToThread(user);
+    expect(screen.getByLabelText('Question de la personne')).toHaveValue('Question conservée');
+    expect(screen.queryByRole('heading', { name: 'Bilan de la conversation' })).not.toBeInTheDocument();
   });
 
   it('réserve le repli de la douche au bilan calculé', async () => {

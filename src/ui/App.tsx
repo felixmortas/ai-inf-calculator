@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   conversationReducer, currentImpact, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
   showerFingerprint, summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
+  isImpactCurrent, isShowerEquivalenceCurrent, isSummaryCurrent, isSummaryShowerEquivalenceCurrent, type ConversationAction,
 } from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
@@ -34,13 +35,44 @@ export function App() {
   const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'import' | 'thread'>('home');
   const [awaitingImportedMistralMode, setAwaitingImportedMistralMode] = useState(false);
   const stepTitle = useRef<HTMLHeadingElement>(null);
+  const returnFocus = useRef<'summary' | 'reference' | null>(null);
+  const [openAdvancedOnSelection, setOpenAdvancedOnSelection] = useState(false);
+  const [recalculationNotice, setRecalculationNotice] = useState('');
   const client = useRef<TokenizationClient | undefined>(undefined);
 
-  useEffect(() => { stepTitle.current?.focus(); }, [step]);
+  useEffect(() => {
+    if (step === 'thread' && returnFocus.current) {
+      const target = returnFocus.current === 'summary' ? document.querySelector<HTMLButtonElement>('.summary-panel button') : null;
+      (target ?? document.querySelector<HTMLButtonElement>('.thread-reference button'))?.focus();
+      returnFocus.current = null;
+    } else stepTitle.current?.focus();
+  }, [step]);
 
-  function openSelection(origin: 'home' | 'import' | 'thread') {
+  useEffect(() => {
+    if (recalculationNotice && summaryBlockingBlockIds(state).length === 0
+      && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state)) {
+      setRecalculationNotice('');
+    }
+  }, [state, recalculationNotice]);
+
+  function openSelection(origin: 'home' | 'import' | 'thread', trigger?: HTMLButtonElement) {
+    const fromSummary = !!trigger?.closest('.summary-panel');
+    returnFocus.current = trigger ? (fromSummary ? 'summary' : 'reference') : null;
+    setOpenAdvancedOnSelection(fromSummary || !!trigger?.classList.contains('edit-stale-parameters'));
     setSelectionOrigin(origin);
     setStep('selection');
+  }
+
+  function configurationDispatch(action: ConversationAction) {
+    if (['parametersApplied', 'parametersRestored', 'hostingCountrySelected', 'userCountrySelected', 'providerSelected', 'modelSelected', 'subscriptionSelected', 'mistralModeSelected'].includes(action.type)) {
+      const next = conversationReducer(state, action);
+      const staleCount = next.blocks.filter((block) => next.impacts[block.blockId]?.status === 'result' && !isImpactCurrent(next, block.blockId)).length
+        + next.blocks.filter((block) => next.showerEquivalences[block.blockId] && !isShowerEquivalenceCurrent(next, block.blockId)).length
+        + Number(next.summary?.status === 'result' && !isSummaryCurrent(next))
+        + Number(!!next.summaryShowerEquivalence && !isSummaryShowerEquivalenceCurrent(next));
+      if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
+    }
+    dispatch(action);
   }
 
   function openManualSelection(origin: 'home' | 'import') {
@@ -183,14 +215,15 @@ export function App() {
       {step === 'selection' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
         <button type="button" onClick={() => setStep(selectionOrigin)}>{selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction}</button>
-        <ConversationConfiguration state={state} dispatch={dispatch} requireMistralMode={awaitingImportedMistralMode} onMistralModeChosen={() => setAwaitingImportedMistralMode(false)} />
+        <ConversationConfiguration state={state} dispatch={configurationDispatch} requireMistralMode={awaitingImportedMistralMode} onMistralModeChosen={() => setAwaitingImportedMistralMode(false)} initialAdvancedOpen={openAdvancedOnSelection} />
         <button type="button" disabled={awaitingImportedMistralMode} onClick={() => { if (!awaitingImportedMistralMode) setStep('thread'); }}>{fr.continueThreadAction}</button>
       </section> : null}
       {step === 'thread' ? <section aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
-        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={() => openSelection('thread')}>{fr.editReferenceAction}</button></div>
+        {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}
+        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{fr.editReferenceAction}</button></div>
         <button type="button" onClick={() => setStep('home')}>{fr.backHomeAction}</button>
-        <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} />
+        <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} onEditParameters={(trigger) => openSelection('thread', trigger)} />
       </section> : null}
     </main>
   );

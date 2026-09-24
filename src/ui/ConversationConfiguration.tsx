@@ -9,17 +9,20 @@ interface ConversationConfigurationProps {
   readonly dispatch: (action: ConversationAction) => void;
   readonly requireMistralMode?: boolean;
   readonly onMistralModeChosen?: () => void;
+  readonly initialAdvancedOpen?: boolean;
 }
 
-export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen }: ConversationConfigurationProps) {
+function Parameter({ name, label, unit, value, invalid }: { name: string; label: string; unit: string; value: number; invalid: boolean }) {
+  const id = `parameter-${name}`;
+  return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><input id={id} name={name} type="number" step="any" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={invalid ? `parameter-error parameter-error-${name}` : undefined} />{invalid ? <p id={`parameter-error-${name}`} className="parameter-field-error">{fr.invalidParameterField(label)}</p> : null}</div>;
+}
+
+export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen, initialAdvancedOpen = false }: ConversationConfigurationProps) {
   const providerModels = modelsForProvider(modelCatalog, state.provider);
   const [invalidFields, setInvalidFields] = useState<readonly string[]>([]);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen);
+  const [resetVersion, setResetVersion] = useState(0);
   const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
-  const Parameter = ({ name, label, unit, value }: { name: string; label: string; unit: string; value: number }) => {
-    const id = `parameter-${name}`; const invalid = invalidFields.includes(name);
-    return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><input id={id} name={name} type="number" step="any" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={invalid ? 'parameter-error' : undefined} /></div>;
-  };
 
   function selectProvider(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'providerSelected', provider: event.currentTarget.value });
@@ -59,7 +62,13 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
       shower: { flowLitresPerMinute: number('flowLitresPerMinute'), inletTemperatureC: number('inletTemperatureC'), outletTemperatureC: number('outletTemperatureC') },
     };
     const invalid = invalidParameterFields(candidate);
-    if (invalid.length > 0 || !resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, candidate)) { setInvalidFields(invalid.length ? invalid : parameterNames); dispatch({ type: 'parametersValidationFailed' }); return; }
+    if (invalid.length > 0 || !resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, candidate)) {
+      const fields = invalid.length ? invalid : parameterNames;
+      setInvalidFields(fields);
+      dispatch({ type: 'parametersValidationFailed' });
+      requestAnimationFrame(() => document.getElementById(`parameter-${fields[0]}`)?.focus());
+      return;
+    }
     const reference = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry)!;
     setInvalidFields([]); dispatch({ type: 'parametersApplied', overrides: differences(candidate, reference) });
   }
@@ -117,23 +126,23 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
             {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
           </select>
         </div>
-        {advancedOpen && resolved ? <form key={`${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}`} className="parameter-form" onSubmit={apply} noValidate>
+        {advancedOpen && resolved ? <form key={`${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}:${resetVersion}`} className="parameter-form" onSubmit={apply} noValidate>
           <p className="help">Les valeurs sont temporaires et ne déclenchent aucun calcul.</p>
-          <Parameter name="totalParameters" label="Paramètres totaux" unit="milliards" value={resolved.totalParameters} />
-          <Parameter name="activatedParameters" label="Paramètres actifs" unit="milliards" value={resolved.activatedParameters} />
-          <Parameter name="inputRatio" label="Ratio tokens entrants" unit="ratio" value={resolved.inputRatio} />
-          <Parameter name="cacheRatio" label="Ratio tokens en cache" unit="ratio" value={resolved.cacheRatio} />
-          <Parameter name="wordsPerToken" label="Coefficient mots par token" unit="mots/token" value={resolved.wordsPerToken} />
-          <Parameter name="pue" label="PUE" unit="ratio" value={resolved.pue} />
-          <Parameter name="wue" label="WUE" unit="L/kWh" value={resolved.wue} />
-          <Parameter name="carbonIntensity" label="Intensité carbone" unit="gCO2e/kWh" value={resolved.carbonIntensity} />
-          {constantFields.map(([name, label, unit]) => <Parameter key={name} name={name} label={label} unit={unit} value={resolved.constants[name]} />)}
-          <Parameter name="flowLitresPerMinute" label="Débit de douche" unit="L/min" value={resolved.shower.flowLitresPerMinute} />
-          <Parameter name="inletTemperatureC" label="Température d’eau froide" unit="°C" value={resolved.shower.inletTemperatureC} />
-          <Parameter name="outletTemperatureC" label="Température de douche" unit="°C" value={resolved.shower.outletTemperatureC} />
+          <Parameter name="totalParameters" label="Paramètres totaux" unit="milliards" value={resolved.totalParameters} invalid={invalidFields.includes('totalParameters')} />
+          <Parameter name="activatedParameters" label="Paramètres actifs" unit="milliards" value={resolved.activatedParameters} invalid={invalidFields.includes('activatedParameters')} />
+          <Parameter name="inputRatio" label="Ratio tokens entrants" unit="ratio" value={resolved.inputRatio} invalid={invalidFields.includes('inputRatio')} />
+          <Parameter name="cacheRatio" label="Ratio tokens en cache" unit="ratio" value={resolved.cacheRatio} invalid={invalidFields.includes('cacheRatio')} />
+          <Parameter name="wordsPerToken" label="Coefficient mots par token" unit="mots/token" value={resolved.wordsPerToken} invalid={invalidFields.includes('wordsPerToken')} />
+          <Parameter name="pue" label="PUE" unit="ratio" value={resolved.pue} invalid={invalidFields.includes('pue')} />
+          <Parameter name="wue" label="WUE" unit="L/kWh" value={resolved.wue} invalid={invalidFields.includes('wue')} />
+          <Parameter name="carbonIntensity" label="Intensité carbone" unit="gCO2e/kWh" value={resolved.carbonIntensity} invalid={invalidFields.includes('carbonIntensity')} />
+          {constantFields.map(([name, label, unit]) => <Parameter key={name} name={name} label={label} unit={unit} value={resolved.constants[name]} invalid={invalidFields.includes(name)} />)}
+          <Parameter name="flowLitresPerMinute" label="Débit de douche" unit="L/min" value={resolved.shower.flowLitresPerMinute} invalid={invalidFields.includes('flowLitresPerMinute')} />
+          <Parameter name="inletTemperatureC" label="Température d’eau froide" unit="°C" value={resolved.shower.inletTemperatureC} invalid={invalidFields.includes('inletTemperatureC')} />
+          <Parameter name="outletTemperatureC" label="Température de douche" unit="°C" value={resolved.shower.outletTemperatureC} invalid={invalidFields.includes('outletTemperatureC')} />
           <output className="help">Énergie par litre dérivée : {resolved.shower.energyKwhPerLitre} kWh/L</output>
           {invalidFields.length > 0 ? <p id="parameter-error" role="alert">{fr.invalidParameters}</p> : null}
-          <div className="conversation-actions"><button type="submit">{fr.applyParametersAction}</button><button type="button" onClick={() => { setInvalidFields([]); dispatch({ type: 'parametersRestored' }); }}>{fr.restoreParametersAction}</button></div>
+          <div className="conversation-actions"><button type="submit">{fr.applyParametersAction}</button><button type="button" onClick={() => { setInvalidFields([]); setResetVersion((version) => version + 1); dispatch({ type: 'parametersRestored' }); }}>{fr.restoreParametersAction}</button></div>
         </form> : null}
       </details>
     </section>

@@ -51,6 +51,7 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
 .resolved-model { display: flex; align-items: center; background: #edf5ee; }
 .parameter-form { display: grid; gap: .45rem; margin-top: 1rem; }
 .parameter-form .field { margin-top: .25rem; }
+.parameter-field-error { margin: 0; color: #9d3030; font-size: .9rem; }
 .conversation-import > button { margin-top: 1rem; }
 .import-help { margin-top: 1rem; padding: .8rem; border-left: 4px solid #245535; background: #f3f8f3; }
 .import-help h3 { margin-top: 0; }
@@ -99,16 +100,21 @@ button {
   color: inherit;
   font: inherit;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
+.advanced-settings > summary, .optional-contents > summary { display: flex; align-items: center; min-height: 2.75rem; cursor: pointer; }
+.summary-message a { display: inline-flex; align-items: center; min-height: 2.75rem; overflow-wrap: anywhere; }
+.conversation-actions > *, .conversation-block-heading > * { min-width: 0; }
 .conversation-blocks-header, .conversation-block-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 .conversation-blocks-header { margin-bottom: 1rem; }
 .conversation-blocks-header h2 { margin: 0; }
-.conversation-actions { display: flex; gap: .65rem; }
+.conversation-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 .conversation-block {
   margin-top: 1rem;
   padding: 1rem;
@@ -151,17 +157,23 @@ button {
 .summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
 .summary-panel h3 { margin: 0 0 .5rem; }
 .summary-panel p { margin: .3rem 0; }
+.summary-panel { background: #fff; }
+.summary-panel p, .summary-message { overflow-wrap: anywhere; }
+.summary-panel button { margin-top: .5rem; }
 .good-practices { margin-top: 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #f3f8f3; }
-.good-practices h3 { margin: 0 0 .5rem; }
+.good-practices h4 { margin: 0 0 .5rem; }
 .good-practices ul { margin: 0; padding-left: 1.25rem; }
 .good-practices li + li { margin-top: .45rem; }
 
 :focus-visible { outline: 3px solid #0759b8; outline-offset: 3px; }
+.conversation-block:focus { outline: 3px solid #184bb2; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 @media (max-width: 30rem) {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
   .configuration, .conversation-import, .conversation-blocks { padding: 1rem; }
   .conversation-blocks-header, .conversation-block-heading, .conversation-actions { align-items: stretch; flex-direction: column; }
+  .summary-panel button, .thread-reference button { max-width: 100%; white-space: normal; }
   .block-actions, .remove-confirmation { display: grid; gap: .65rem; }
   .remove-confirmation button + button { margin-left: 0; }
   .source-list li { align-items: stretch; flex-direction: column; }

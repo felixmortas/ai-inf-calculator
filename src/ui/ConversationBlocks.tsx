@@ -13,6 +13,8 @@ import {
   type ConversationState,
 } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
+import { formatQuantity } from './quantityFormatter';
+import { hostingCountryOptions, userCountryOptions } from '../data/modelCatalog';
 
 export { localSourceMaxBytes } from '../application/conversationReducer';
 
@@ -36,6 +38,7 @@ interface ConversationBlocksProps {
   readonly onCalculate: (blockId: string) => void;
   readonly onCalculateAll: () => void;
   readonly onRecalculateSummary?: () => void;
+  readonly onEditParameters?: (trigger: HTMLButtonElement) => void;
 }
 
 const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
@@ -47,50 +50,9 @@ const optionalFields: readonly { readonly name: ConversationBlockField; readonly
   { name: 'artifact', label: fr.artifactLabel },
 ];
 
-type QuantityKind = 'carbon' | 'water';
-const quantityUnits = {
-  carbon: [
-    { scale: 1e-6, symbol: 'µgCO₂e', name: 'microgrammes de dioxyde de carbone équivalent' },
-    { scale: 1e-3, symbol: 'mgCO₂e', name: 'milligrammes de dioxyde de carbone équivalent' },
-    { scale: 1, symbol: 'gCO₂e', name: 'grammes de dioxyde de carbone équivalent' },
-    { scale: 1e3, symbol: 'kgCO₂e', name: 'kilogrammes de dioxyde de carbone équivalent' },
-    { scale: 1e6, symbol: 'tCO₂e', name: 'tonnes de dioxyde de carbone équivalent' },
-  ],
-  water: [
-    { scale: 1e-6, symbol: 'µL', name: 'microlitres d’eau' },
-    { scale: 1e-3, symbol: 'mL', name: 'millilitres d’eau' },
-    { scale: 1, symbol: 'L', name: 'litres d’eau' },
-    { scale: 1e3, symbol: 'kL', name: 'kilolitres d’eau' },
-    { scale: 1e6, symbol: 'ML', name: 'mégalitres d’eau' },
-  ],
-} as const;
+export const formatExchangeQuantity = formatQuantity;
 
-export function formatExchangeQuantity(value: number, kind: QuantityKind): { display: string; accessible: string } {
-  const units = quantityUnits[kind];
-  if (value === 0) return { display: `0 ${units[2].symbol}`, accessible: `0 ${units[2].name}` };
-  const magnitude = Math.abs(value);
-  let unitIndex = 0;
-  for (let index = 1; index < units.length; index++) {
-    if (magnitude >= units[index].scale) unitIndex = index;
-  }
-  while (unitIndex < units.length - 1 && magnitude / units[unitIndex].scale >= 1000) unitIndex++;
-  let amount = magnitude / units[unitIndex].scale;
-  if (amount < 0.001) return { display: `< 0,001 ${units[unitIndex].symbol}`, accessible: `moins de 0,001 ${units[unitIndex].name}` };
-  let rounded = Number(amount.toPrecision(3));
-  if (rounded >= 1000 && unitIndex < units.length - 1) {
-    unitIndex++;
-    amount = magnitude / units[unitIndex].scale;
-    rounded = Number(amount.toPrecision(3));
-  }
-  const number = new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 3, useGrouping: true }).format(rounded * Math.sign(value));
-  return { display: `${number} ${units[unitIndex].symbol}`, accessible: `${number} ${units[unitIndex].name}` };
-}
-
-export function formatImpact(value: number): string {
-  return new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(value);
-}
-
-export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll, onRecalculateSummary = () => undefined }: ConversationBlocksProps) {
+export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAll, onRecalculateSummary = () => undefined, onEditParameters }: ConversationBlocksProps) {
   const nextBlockNumber = useRef(1);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const toggleButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -104,11 +66,10 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
   const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
   const currentSummaryShower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence : undefined;
-  const hasCurrentImpact = state.blocks.some((block) => isImpactCurrent(state, block.blockId));
 
   const Shower = ({ value, stale }: { value: typeof state.summaryShowerEquivalence; stale: boolean }) => value ? (
     <div className="shower-equivalence" role="status">
-      {value.equivalence.status === 'available' ? <p>{fr.showerEquivalence(formatImpact(value.equivalence.seconds))}</p> : <p>{fr.showerUnavailable}</p>}
+      {value.equivalence.status === 'available' ? <p><span aria-hidden="true">{fr.showerEquivalence(formatQuantity(value.equivalence.seconds, 'duration').display)}</span><span className="visually-hidden">{fr.showerEquivalence(formatQuantity(value.equivalence.seconds, 'duration').accessible)}</span></p> : <p>{fr.showerUnavailable}</p>}
       {value.equivalence.status === 'available' && value.equivalence.factorSource === 'world' ? <p className="impact-note">{fr.showerWorldFallback}</p> : null}
     </div>
   ) : stale ? <p role="status" className="impact-stale">{fr.staleShower}</p> : null;
@@ -207,24 +168,37 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
           </button>
         </div>
       </div>
+      {!currentSummary && onEditParameters ? <button className="edit-stale-parameters" type="button" onClick={(event) => onEditParameters(event.currentTarget)}>{fr.editParametersAction}</button> : null}
       {state.summary?.status === 'unavailable' && isSummaryFresh(state) ? <div role="status" className="summary-message">
         <p>{state.summary.code === 'no-exchanges' ? fr.noExchangesForSummary : fr.summaryUnavailable}</p>
         {state.summary.blockingBlockIds?.length ? <ul>{state.summary.blockingBlockIds.map((blockId) => {
           const number = state.blocks.findIndex((block) => block.blockId === blockId) + 1;
-          return <li key={blockId}>{fr.summaryBlockingBlock(number)}</li>;
+          return <li key={blockId}><a href={`#conversation-${blockId}`} onClick={() => {
+            setExpandedBlocks((current) => new Set([...current, blockId]));
+            document.getElementById(`conversation-${blockId}`)?.focus();
+          }}>{fr.summaryBlockingBlock(number)}</a></li>;
         })}</ul> : null}
       </div> : null}
       {state.summary && !isSummaryFresh(state) ? <p role="status" className="summary-message">{fr.staleSummaryStatus}</p> : null}
-      {currentSummary ? <section className="summary-panel" aria-labelledby="summary-title" role="status">
+      {currentSummary ? <section className="summary-panel" aria-labelledby="summary-title">
         <h3 id="summary-title">{fr.summaryTitle}</h3>
-        <p>{fr.energyLabel}: {formatImpact(currentSummary.total.energyWh)} Wh</p>
-        <p>{fr.carbonLabel}: {formatImpact(currentSummary.total.carbonGco2e)} gCO2e</p>
-        <p>{fr.waterLabel}: {formatImpact(currentSummary.total.waterL)} L</p>
+        <p role="status" className="visually-hidden">{fr.summaryCurrentStatus}</p>
+        {([['energy', fr.energyLabel, currentSummary.total.energyWh], ['carbon', fr.carbonLabel, currentSummary.total.carbonGco2e], ['water', fr.waterLabel, currentSummary.total.waterL]] as const).map(([kind, label, value]) => {
+          const quantity = formatQuantity(value, kind);
+          return <p key={kind}>{label}: <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>;
+        })}
+        <p className="impact-note">{fr.userCountryLabel} : {userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry}</p>
         <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
         <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available'
-          ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable}</p>
+          ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable} ({hostingCountryOptions.find((country) => country.code === state.hostingCountry)?.label ?? state.hostingCountry})</p>
         {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
         <p className="impact-note">{fr.summaryLimits}</p>
+        <p className="impact-note">{fr.adaptiveUnitHelp}</p>
+        {onEditParameters ? <button type="button" onClick={(event) => onEditParameters(event.currentTarget)}>{fr.editParametersAction}</button> : null}
+        <section className="good-practices" aria-labelledby="good-practices-title">
+          <h4 id="good-practices-title">{fr.goodPracticesTitle}</h4>
+          <ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul>
+        </section>
       </section> : null}
       {state.blocks.map((block, index) => {
         const ignored = isIgnoredConversationBlock(block);
@@ -243,7 +217,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
           : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? fr.failedEstimate
           : impactIsCurrent ? fr.currentEstimate : fr.awaitingEstimate;
         return (
-          <section key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockTitle(index + 1)}>
+          <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockTitle(index + 1)} tabIndex={-1}>
             <div className="conversation-block-heading">
               <h3>{fr.blockTitle(index + 1)}</h3>
               {!isLatest ? <button
@@ -276,7 +250,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
             {impactIsCurrent && impactState?.status === 'result' ? <div role="status" className="impact-result">
               <p className="impact-result-title">{fr.estimatedImpact}</p>
               {(['carbon', 'water'] as const).map((kind) => {
-                const quantity = formatExchangeQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
+                const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
                 return <p key={kind}>{kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>;
               })}
               <p className="impact-note">{fr.adaptiveUnitHelp}</p>
@@ -333,12 +307,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
           </section>
         );
       })}
-      {currentSummary || hasCurrentImpact ? <section className="good-practices" aria-labelledby="good-practices-title">
-        <h3 id="good-practices-title">{fr.goodPracticesTitle}</h3>
-        <ul>
-          {fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}
-        </ul>
-      </section> : null}
     </section>
   );
 }

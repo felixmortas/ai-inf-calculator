@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -94,7 +94,8 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
     expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-describedby', 'parameter-error');
+    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-describedby', 'parameter-error parameter-error-pue');
+    await waitFor(() => expect(screen.getByLabelText('PUE (ratio)')).toHaveFocus());
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
     expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.15);
   });
@@ -124,6 +125,6 @@ describe('configuration de conversation', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
     await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
     expect(screen.getByRole('button', { name: 'Calculer cet échange' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Tout calculer' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Calculer toute la conversation' })).toBeDisabled();
   });
 });

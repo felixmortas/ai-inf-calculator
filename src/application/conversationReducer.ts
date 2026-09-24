@@ -190,6 +190,22 @@ function invalidateCalculationsAndTokenizations(state: ConversationState): Conve
   return discardTransientCalculations(invalidateAllTokenizations(state));
 }
 
+function keepChangedResultsStale(previous: ConversationState, next: ConversationState): ConversationState {
+  const impacts = Object.fromEntries(Object.entries(next.impacts).map(([blockId, impact]) => [blockId,
+    impact.status === 'result' && impactFingerprint(previous, blockId) !== impactFingerprint(next, blockId)
+      ? { ...impact, fingerprint: `stale:${impact.fingerprint}` } : impact,
+  ]));
+  const summary = next.summary?.status === 'result' && summaryFingerprint(previous) !== summaryFingerprint(next)
+    ? { ...next.summary, fingerprint: `stale:${next.summary.fingerprint}` } : next.summary;
+  const showerChanged = showerFingerprint(previous) !== showerFingerprint(next);
+  const showerEquivalences = showerChanged ? Object.fromEntries(Object.entries(next.showerEquivalences).map(([blockId, value]) =>
+    [blockId, { ...value, fingerprint: `stale:${value.fingerprint}` }])) : next.showerEquivalences;
+  const summaryShowerEquivalence = showerChanged && next.summaryShowerEquivalence
+    ? { ...next.summaryShowerEquivalence, fingerprint: `stale:${next.summaryShowerEquivalence.fingerprint}` }
+    : next.summaryShowerEquivalence;
+  return { ...next, impacts, summary, showerEquivalences, summaryShowerEquivalence };
+}
+
 /** A canonical snapshot of exactly the inputs consumed by one impact calculation. */
 export function impactFingerprint(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'parameterOverrides'> & Partial<Pick<ConversationState, 'subscription' | 'mistralMode'>>, blockId?: string): string {
   if (!blockId) {
@@ -272,48 +288,48 @@ export function conversationReducer(state: ConversationState, action: Conversati
       if (action.provider === state.provider) return state;
       const modelId = firstModelId(action.provider);
       if (!modelId) return state;
-      return invalidateCalculationsAndTokenizations({
+      return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({
         ...state,
         provider: action.provider,
         modelId: action.provider === chatGptProvider ? resolveChatGptModel(state.subscription)
           : action.provider === mistralProvider ? resolveMistralModel(state.mistralMode) : modelId,
         hostingCountry: resolveHostingCountry(action.provider)!,
         parameterValidationInvalid: false,
-      });
+      }));
     }
     case 'subscriptionSelected':
       if (state.provider !== chatGptProvider) return state;
       if (!Object.hasOwn(chatGptSubscriptionModels, action.subscription)) return state;
       if (action.subscription === state.subscription) return state;
-      return invalidateCalculationsAndTokenizations({
+      return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({
         ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription), parameterValidationInvalid: false,
-      });
+      }));
     case 'mistralModeSelected':
       if (state.provider !== mistralProvider || !Object.hasOwn(mistralModeModels, action.mode)) return state;
       if (action.mode === state.mistralMode) return state;
-      return invalidateCalculationsAndTokenizations({
+      return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({
         ...state, mistralMode: action.mode, modelId: resolveMistralModel(action.mode), parameterValidationInvalid: false,
-      });
+      }));
     case 'modelSelected':
       if (!canSelectModel(modelCatalog.models, state.provider, action.modelId)) return state;
       if (action.modelId === state.modelId) return state;
-      return invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, parameterValidationInvalid: false });
+      return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({ ...state, modelId: action.modelId, parameterValidationInvalid: false }));
     case 'hostingCountrySelected':
       if (!isHostingCountry(action.country) || action.country === state.hostingCountry) return state;
-      return discardTransientCalculations({ ...state, hostingCountry: action.country });
+      return keepChangedResultsStale(state, discardTransientCalculations({ ...state, hostingCountry: action.country }));
     case 'userCountrySelected':
-      return !isUserCountry(action.country) || action.country === state.userCountry ? state : { ...state, userCountry: action.country };
+      return !isUserCountry(action.country) || action.country === state.userCountry ? state : keepChangedResultsStale(state, { ...state, userCountry: action.country });
     case 'parametersApplied': {
       if (!resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, action.overrides)) return state;
       const overrides = Object.freeze({ ...action.overrides, ...(action.overrides.constants ? { constants: Object.freeze({ ...action.overrides.constants }) } : {}), ...(action.overrides.shower ? { shower: Object.freeze({ ...action.overrides.shower }) } : {}) });
-      return discardTransientCalculations({ ...state, parameterOverrides: overrides, parameterValidationInvalid: false });
+      return keepChangedResultsStale(state, discardTransientCalculations({ ...state, parameterOverrides: overrides, parameterValidationInvalid: false }));
     }
     case 'parametersValidationFailed':
       return state.parameterValidationInvalid ? state : { ...state, parameterValidationInvalid: true };
     case 'parametersRestored':
       return Object.keys(state.parameterOverrides).length === 0 && !state.parameterValidationInvalid
         ? state
-        : discardTransientCalculations({ ...state, parameterOverrides: {}, parameterValidationInvalid: false });
+        : keepChangedResultsStale(state, discardTransientCalculations({ ...state, parameterOverrides: {}, parameterValidationInvalid: false }));
     case 'blockAdded':
       if (state.blocks.some((block) => block.blockId === action.blockId)) return state;
       return discardTransientCalculations({ ...state, blocks: [...state.blocks, createConversationBlock(action.blockId)] });
@@ -333,21 +349,21 @@ export function conversationReducer(state: ConversationState, action: Conversati
       const blocks = state.blocks.map((block) => (
         block.blockId === action.blockId ? { ...block, [action.field]: action.value } : block
       ));
-      return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
+      return keepChangedResultsStale(state, discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) }));
     }
     case 'sourceAdded': {
       const index = state.blocks.findIndex((block) => block.blockId === action.blockId);
       if (index === -1 || !action.source.id || !action.source.name || !isAcceptedLocalSource(action.source)
         || (state.blocks[index].sources ?? []).some((source) => source.id === action.source.id)) return state;
       const blocks = state.blocks.map((block) => block.blockId === action.blockId ? { ...block, sources: [...(block.sources ?? []), action.source] } : block);
-      return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
+      return keepChangedResultsStale(state, discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) }));
     }
     case 'sourceRemoved': {
       const block = state.blocks.find((entry) => entry.blockId === action.blockId);
       if (!block || !(block.sources ?? []).some((source) => source.id === action.sourceId)) return state;
       const blocks = state.blocks.map((entry) => entry.blockId === action.blockId
         ? { ...entry, sources: (entry.sources ?? []).filter((source) => source.id !== action.sourceId) } : entry);
-      return discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) });
+      return keepChangedResultsStale(state, discardTransientCalculations({ ...state, blocks, tokenizations: withoutTokenization(state.tokenizations, action.blockId) }));
     }
     case 'blockRemoved': {
       const blocks = state.blocks.filter((block) => block.blockId !== action.blockId);

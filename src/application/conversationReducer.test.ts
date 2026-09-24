@@ -112,7 +112,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'country' } });
     const changed = conversationReducer(state, { type: 'userCountrySelected', country: 'US' });
     expect(isImpactCurrent(changed, 'one')).toBe(true);
-    expect(changed.showerEquivalences.one?.fingerprint).toBe(shower);
+    expect(changed.showerEquivalences.one?.fingerprint).toBe(`stale:${shower}`);
     expect(showerFingerprint(changed, 2)).not.toBe(shower);
   });
 
@@ -484,6 +484,19 @@ describe('conversationReducer', () => {
     const changed = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
     expect(isImpactCurrent(changed, 'one')).toBe(false);
     expect(summaryBlockingBlockIds(changed)).toEqual(['one']);
+    const returned = conversationReducer(changed, { type: 'subscriptionSelected', subscription: 'without-paid-subscription' });
+    expect(isImpactCurrent(returned, 'one')).toBe(false);
+  });
+
+  it('ne ranime pas un résultat après une modification puis un retour au texte initial', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Salut' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    expect(isImpactCurrent(state, 'one')).toBe(false);
   });
 
   it('signale l’absence d’échange lors du recalcul de bilan', () => {
@@ -516,6 +529,7 @@ describe('conversationReducer', () => {
     const restored = conversationReducer(impactChanged, { type: 'parametersRestored' });
     expect(restored.blocks).toEqual(impactChanged.blocks);
     expect(restored.parameterOverrides).toEqual({});
+    expect(isImpactCurrent(restored, 'one')).toBe(false);
   });
 
   it('fait dépendre la frontière douche des paramètres de douche sans périmer l’impact', () => {

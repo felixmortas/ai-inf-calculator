@@ -50,7 +50,7 @@ describe('parcours de départ', () => {
     expect(screen.queryByLabelText('Question de la personne')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByRole('button', { name: 'Retour au fil' }));
-    expect(screen.getByRole('heading', { name: 'Fil de conversation' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
   });
 
   it('refuse localement une URL non Mistral et conserve la voie manuelle', async () => {
