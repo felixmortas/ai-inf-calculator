@@ -39,7 +39,8 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const cancelConsentRef = useRef<HTMLButtonElement>(null);
   const cancelReplaceRef = useRef<HTMLButtonElement>(null);
-  const replaceButtonRef = useRef<HTMLButtonElement>(null);
+  const replacementTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const returnToReplaceTriggerRef = useRef(false);
   const previewTitleRef = useRef<HTMLHeadingElement>(null);
   const loadingRef = useRef<HTMLParagraphElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -50,6 +51,12 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
 
   useEffect(() => {
     if (!pendingConsent && !confirming) {
+      if (returnToReplaceTriggerRef.current && replacementTriggerRef.current) {
+        replacementTriggerRef.current.focus();
+        replacementTriggerRef.current = null;
+        returnToReplaceTriggerRef.current = false;
+        return;
+      }
       focusReturnRef.current?.current?.focus();
       focusReturnRef.current = null;
       return;
@@ -153,6 +160,11 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   }
 
+  function beginReplacement(event: React.MouseEvent<HTMLButtonElement>) {
+    if (hasExistingContent && !confirming) replacementTriggerRef.current = event.currentTarget;
+    replace();
+  }
+
   function replace() {
     if (!preview || preview.blocks.length === 0) return;
     if (hasExistingContent && !confirming) { setConfirming(true); return; }
@@ -170,8 +182,8 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
   }
 
   function closeConfirmation() {
+    returnToReplaceTriggerRef.current = true;
     setConfirming(false);
-    restoreFocus(replaceButtonRef);
   }
 
   return <section ref={sectionRef} className="conversation-import" aria-labelledby="conversation-import-title">
@@ -212,7 +224,7 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
     {error ? <div className="import-error"><p ref={errorRef} role="alert" tabIndex={-1}>{error}</p><button type="button" onClick={onManual}>{fr.importManualAction}</button></div> : null}
     {preview ? <div className="import-preview">
       <p role="status">{fr.importPreviewCount(preview.blocks.length, preview.warnings.length)}</p>
-      <p className="import-preview-repeat">{fr.importPreviewCount(preview.blocks.length, preview.warnings.length)}</p>
+      <button type="button" onClick={beginReplacement}>{fr.importReplaceAction}</button>
       <h3 ref={previewTitleRef} tabIndex={-1}>{fr.importPreviewTitle}</h3>
       {preview.blocks.map((block, index) => <article key={index} className="import-preview-block">
         <h4>{fr.blockTitle(index + 1)}</h4>
@@ -226,7 +238,7 @@ export function ConversationImport({ state, dispatch, onImported, onManual, prov
         <p id="import-confirm-title">{fr.importConfirmText}</p>
         <button ref={cancelReplaceRef} type="button" onClick={closeConfirmation}>{fr.importKeepConversationAction}</button>
         <button type="button" onClick={replace}>{fr.importConfirmAction}</button>
-      </div></div>, document.body) : <button ref={replaceButtonRef} type="button" onClick={replace}>{fr.importReplaceAction}</button>}
+      </div></div>, document.body) : <button type="button" onClick={beginReplacement}>{fr.importReplaceAction}</button>}
     </div> : null}
   </section>;
 }

@@ -182,7 +182,7 @@ describe('ConversationImport', () => {
     const first = providerWith();
     const { rerender } = render(<ConversationImport state={state} dispatch={vi.fn()} providers={[first]} />);
     await consent(user);
-    await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click((await screen.findAllByRole('button', { name: 'Remplacer les échanges par l’import' }))[0]);
     expect(screen.getByRole('alertdialog')).toBeVisible();
     rerender(<ConversationImport state={state} dispatch={vi.fn()} providers={[{ ...first }]} />);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
@@ -243,7 +243,7 @@ describe('ConversationImport', () => {
     expect(await screen.findByRole('heading', { name: 'Prévisualisation de l’import' })).toBeVisible();
     expect(provider.importResolvedShare).toHaveBeenCalledTimes(1);
     expect(provider.importResolvedShare).toHaveBeenCalledWith(expect.objectContaining({ canonicalUrl: shareUrl }), expect.any(Object));
-    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
     expect(screen.getByRole('alertdialog')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
     expect(document.querySelector('.conversation-import')).toHaveProperty('inert', true);
@@ -262,12 +262,12 @@ describe('ConversationImport', () => {
     await consent(user);
     const title = await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
     expect(title).toHaveFocus();
-    expect(screen.getAllByText('1 échange extrait, 0 avertissements.')).toHaveLength(2);
+    expect(screen.getAllByText('1 échange extrait, 0 avertissements.')).toHaveLength(1);
     expect(title.parentElement?.querySelector('[role="status"]')).toHaveTextContent('1 échange extrait, 0 avertissements.');
-    expect(title.previousElementSibling).toHaveClass('import-preview-repeat');
+    expect(title.previousElementSibling).toHaveTextContent('Remplacer les échanges par l’import');
     expect(title.previousElementSibling?.previousElementSibling).toHaveAttribute('role', 'status');
     expect(screen.getByText('Bonjour', { exact: false })).not.toHaveAttribute('role', 'status');
-    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
     expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
     await user.keyboard('{Tab}');
     expect(screen.getByRole('button', { name: 'Confirmer le remplacement' })).toHaveFocus();
@@ -275,7 +275,7 @@ describe('ConversationImport', () => {
     expect(screen.getByRole('button', { name: 'Conserver ma conversation' })).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' })).toHaveFocus();
+    expect(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]).toHaveFocus();
     expect(dispatch).not.toHaveBeenCalled();
   });
 
@@ -304,7 +304,7 @@ describe('ConversationImport', () => {
     expect(JSON.stringify({ requestUrl, init })).not.toContain('secret local');
     expect(dispatch).not.toHaveBeenCalled();
     expect(state.blocks[0].message).toBe('secret local');
-    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
     expect(screen.getByRole('alertdialog')).toBeVisible();
     expect(state.blocks[0].message).toBe('secret local');
     await user.click(screen.getByRole('button', { name: 'Confirmer le remplacement' }));
@@ -352,7 +352,7 @@ describe('ConversationImport', () => {
     const dispatch = vi.fn();
     render(<ConversationImport state={state} dispatch={dispatch} providers={[provider]} />);
     await consent(user);
-    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
     await user.click(screen.getByRole('button', { name: 'Conserver ma conversation' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(state.blocks[0].sources).toEqual([{ id: 'source-1', name: 'note.txt', type: 'text/plain', size: 5, text: 'notes' }]);
@@ -365,7 +365,7 @@ describe('ConversationImport', () => {
     const dispatch = vi.fn();
     render(<ConversationImport state={initialConversationState} dispatch={dispatch} providers={[provider]} />);
     await consent(user);
-    await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+    await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'blocksReplaced' }));
   });

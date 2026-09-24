@@ -97,7 +97,7 @@ describe('parcours de départ', () => {
       await user.type(screen.getByLabelText('Lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
-      await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      await user.click((await screen.findAllByRole('button', { name: 'Remplacer les échanges par l’import' }))[0]);
       expect(screen.getByRole('heading', { name: 'Choisir le chatbot et le modèle' })).toHaveFocus();
       expect(screen.getByLabelText('Chatbot')).toHaveValue('Mistral AI');
       expect(screen.getByLabelText('Mode Mistral')).toHaveValue('');
@@ -140,7 +140,7 @@ describe('parcours de départ', () => {
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
       await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
-      await user.click(screen.getByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
       expect(screen.getByRole('alertdialog')).toBeVisible();
       expect(background).toHaveProperty('inert', true);
       expect(back.closest('.app-shell')).toHaveProperty('inert', true);
@@ -159,7 +159,7 @@ describe('parcours de départ', () => {
       await user.type(screen.getByLabelText('Lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
       await user.click(screen.getByRole('button', { name: 'Analyser le lien' }));
       await user.click(await screen.findByRole('button', { name: 'Continuer avec le Worker' }));
-      await user.click(await screen.findByRole('button', { name: 'Remplacer les échanges par l’import' }));
+      await user.click((await screen.findAllByRole('button', { name: 'Remplacer les échanges par l’import' }))[0]);
       expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeDisabled();
       await user.click(screen.getByRole('button', { name: 'Retour à l’import' }));
       await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
