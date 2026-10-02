@@ -114,34 +114,32 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
         <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{fr.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
         <div id="advanced-settings-content">
         <div className="field">
-          <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
-          <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
-          <select id="hosting-country" aria-describedby="hosting-country-help" value={state.hostingCountry} onChange={selectHostingCountry}>
-            {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
-          </select>
-        </div>
-        <div className="field">
           <label htmlFor="user-country">{fr.userCountryLabel}</label>
           <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
           <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
             {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
           </select>
         </div>
+        <div className="field">
+          <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
+          <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
+          <select id="hosting-country" aria-describedby="hosting-country-help" value={state.hostingCountry} onChange={selectHostingCountry}>
+            {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+          </select>
+        </div>
         {advancedOpen && resolved ? <form key={`${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}:${resetVersion}`} className="parameter-form" onSubmit={apply} noValidate>
-          <p className="help">Les valeurs sont temporaires et ne déclenchent aucun calcul.</p>
-          <Parameter name="totalParameters" label="Paramètres totaux" unit="milliards" value={resolved.totalParameters} invalid={invalidFields.includes('totalParameters')} />
-          <Parameter name="activatedParameters" label="Paramètres actifs" unit="milliards" value={resolved.activatedParameters} invalid={invalidFields.includes('activatedParameters')} />
-          <Parameter name="inputRatio" label="Ratio tokens entrants" unit="ratio" value={resolved.inputRatio} invalid={invalidFields.includes('inputRatio')} />
-          <Parameter name="cacheRatio" label="Ratio tokens en cache" unit="ratio" value={resolved.cacheRatio} invalid={invalidFields.includes('cacheRatio')} />
-          <Parameter name="wordsPerToken" label="Coefficient mots par token" unit="mots/token" value={resolved.wordsPerToken} invalid={invalidFields.includes('wordsPerToken')} />
-          <Parameter name="pue" label="PUE" unit="ratio" value={resolved.pue} invalid={invalidFields.includes('pue')} />
+          <Parameter name="flowLitresPerMinute" label="Débit de votre douche" unit="L/min" value={resolved.shower.flowLitresPerMinute} invalid={invalidFields.includes('flowLitresPerMinute')} />
+          <Parameter name="inletTemperatureC" label="Température de l'eau froide dans le réseau" unit="°C" value={resolved.shower.inletTemperatureC} invalid={invalidFields.includes('inletTemperatureC')} />
+          <Parameter name="outletTemperatureC" label="Température de l'eau pendant votre douche" unit="°C" value={resolved.shower.outletTemperatureC} invalid={invalidFields.includes('outletTemperatureC')} />
+          <Parameter name="totalParameters" label="Paramètres totaux du modèle" unit="en milliards" value={resolved.totalParameters} invalid={invalidFields.includes('totalParameters')} />
+          <Parameter name="activatedParameters" label="Paramètres actifs à l'inférence" unit="en milliards" value={resolved.activatedParameters} invalid={invalidFields.includes('activatedParameters')} />
+          <Parameter name="inputRatio" label="Ratio consommation énergétique tokens entrants/tokens sortants" unit="sans unité" value={resolved.inputRatio} invalid={invalidFields.includes('inputRatio')} />
+          <Parameter name="cacheRatio" label="Ratio consommation énergétique tokens entrants en cache/tokens entrant" unit="sans unité" value={resolved.cacheRatio} invalid={invalidFields.includes('cacheRatio')} />
+          <Parameter name="wordsPerToken" label="Mots par token" unit="utilisé en repli si tokenizer indisponible" value={resolved.wordsPerToken} invalid={invalidFields.includes('wordsPerToken')} />
+          <Parameter name="pue" label="PUE" unit="sans unité" value={resolved.pue} invalid={invalidFields.includes('pue')} />
           <Parameter name="wue" label="WUE" unit="L/kWh" value={resolved.wue} invalid={invalidFields.includes('wue')} />
-          <Parameter name="carbonIntensity" label="Intensité carbone" unit="gCO2e/kWh" value={resolved.carbonIntensity} invalid={invalidFields.includes('carbonIntensity')} />
+          <Parameter name="carbonIntensity" label="Intensité carbone du pays d'hébergement du modèle" unit="gCO2e/kWh" value={resolved.carbonIntensity} invalid={invalidFields.includes('carbonIntensity')} />
           {constantFields.map(([name, label, unit]) => <Parameter key={name} name={name} label={label} unit={unit} value={resolved.constants[name]} invalid={invalidFields.includes(name)} />)}
-          <Parameter name="flowLitresPerMinute" label="Débit de douche" unit="L/min" value={resolved.shower.flowLitresPerMinute} invalid={invalidFields.includes('flowLitresPerMinute')} />
-          <Parameter name="inletTemperatureC" label="Température d’eau froide" unit="°C" value={resolved.shower.inletTemperatureC} invalid={invalidFields.includes('inletTemperatureC')} />
-          <Parameter name="outletTemperatureC" label="Température de douche" unit="°C" value={resolved.shower.outletTemperatureC} invalid={invalidFields.includes('outletTemperatureC')} />
-          <output className="help">Énergie par litre dérivée : {resolved.shower.energyKwhPerLitre} kWh/L</output>
           {invalidFields.length > 0 ? <p id="parameter-error" role="alert">{fr.invalidParameters}</p> : null}
           <div className="conversation-actions"><button type="submit">{fr.applyParametersAction}</button><button type="button" onClick={() => { setInvalidFields([]); setResetVersion((version) => version + 1); dispatch({ type: 'parametersRestored' }); }}>{fr.restoreParametersAction}</button></div>
         </form> : null}
@@ -152,7 +150,7 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
 }
 
 const constantFields = [
-  ['batchSize', 'Taille de batch', 'tokens'], ['gpuInstalledPerServer', 'GPU installés par serveur', 'GPU'], ['serverPowerWithoutGpuW', 'Puissance serveur hors GPU', 'W'], ['gpuMemoryGb', 'Mémoire GPU', 'Go'], ['quantizationBits', 'Quantification', 'bits'], ['memoryOverhead', 'Surcoût mémoire', 'ratio'], ['energyAlpha', 'Constante énergie alpha', 'Wh/token'], ['energyBeta', 'Constante énergie beta', 'ratio'], ['energyGamma', 'Constante énergie gamma', 'Wh/token'], ['latencyAlpha', 'Constante latence alpha', 's/token'], ['latencyBeta', 'Constante latence beta', 's/token'], ['latencyGamma', 'Constante latence gamma', 's'],
+  ['batchSize', 'Taille de batch', 'tokens'], ['gpuInstalledPerServer', 'GPU installés par serveur', 'GPU'], ['serverPowerWithoutGpuW', 'Puissance serveur hors GPU', 'W'], ['gpuMemoryGb', 'Mémoire GPU', 'Go'], ['quantizationBits', 'Quantification', 'bits'], ['memoryOverhead', 'Surcoût mémoire', 'sans unité'],
 ] as const;
 
 const parameterNames = ['totalParameters', 'activatedParameters', 'inputRatio', 'cacheRatio', 'wordsPerToken', 'pue', 'wue', 'carbonIntensity', ...constantFields.map(([name]) => name), 'flowLitresPerMinute', 'inletTemperatureC', 'outletTemperatureC'];
