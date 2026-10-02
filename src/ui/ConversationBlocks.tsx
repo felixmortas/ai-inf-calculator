@@ -303,7 +303,7 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
         <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available' ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable} ({hostingCountryOptions.find((country) => country.code === state.hostingCountry)?.label ?? state.hostingCountry})</p>
         {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
-        <p className="impact-note">{fr.summaryLimits}</p><p className="impact-note">{fr.adaptiveUnitHelp}</p>
+        <p className="impact-note">{fr.summaryLimits}</p>
         <section className="good-practices" aria-labelledby="good-practices-title"><h4 id="good-practices-title">{fr.goodPracticesTitle}</h4><ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul></section>
       </section> : null}
     </section>
