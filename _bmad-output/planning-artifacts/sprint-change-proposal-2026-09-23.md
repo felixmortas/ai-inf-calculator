@@ -28,7 +28,7 @@ Exemples vérifiables :
 - `src/application/import/registry.ts` publie quatre fournisseurs, alors que l’UX n’admet que le lien Mistral dans le parcours publié.
 - `ConversationBlocks.tsx` affiche énergie et équivalence douche par échange, en unités fixes à quatre chiffres significatifs ; l’UX prévoit carbone et eau par échange, les autres indicateurs dans le bilan, et des unités adaptées à trois chiffres significatifs au plus.
 - Le PRD, AD-8 et les anciennes stories désignent `corsproxy.io`, tandis que `remoteGateway.ts` utilise le Worker HTML configuré et transmet un `POST` contenant seulement l’URL canonique du partage.
-- Felix a ajouté `mistral-small` et `mistral-large` à `data/clean/models_params.csv`. Leur clé fournisseur `MistralAI` ne correspond pas encore à `Mistral AI` dans `data/clean/provider_country.csv` ; le pays d’hébergement ne peut donc pas être résolu sous cette clé.
+- Felix a ajouté `mistral-small` et `mistral-large` à `data/clean/models.csv`. Leur clé fournisseur `MistralAI` ne correspond pas encore à `Mistral AI` dans `data/clean/provider_country.csv` ; le pays d’hébergement ne peut donc pas être résolu sous cette clé.
 
 ## 2. Analyse d’impact
 

@@ -1,4 +1,4 @@
-import modelsParamsCsv from '../../data/clean/models_params.csv?raw';
+import modelsParamsCsv from '../../data/clean/models.csv?raw';
 import pueCsv from '../../data/clean/pue.csv?raw';
 import wueCsv from '../../data/clean/wue.csv?raw';
 import providerCountryCsv from '../../data/clean/provider_country.csv?raw';

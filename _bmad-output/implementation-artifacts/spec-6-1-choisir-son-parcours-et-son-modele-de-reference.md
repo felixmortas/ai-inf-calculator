@@ -40,7 +40,7 @@ context: []
 - `src/ui/ConversationConfiguration.tsx` — réutiliser sélecteurs fournisseur et modèle ; ChatGPT affiche actuellement un modèle non modifiable ; ajouter mode Mistral et référence expliquée.
 - `src/application/conversationReducer.ts` — `providerSelected`, `subscriptionSelected`, `modelSelected` et `invalidateCalculationsAndTokenizations` préservent les blocs ; autoriser un modèle ChatGPT valide, ajouter le mode Mistral et conserver l’invalidation.
 - `src/domain/modelSelection.ts` — centraliser la correspondance abonnement/mode → modèle de référence.
-- `src/data/modelCatalog.ts`, `data/clean/models_params.csv`, `data/clean/provider_country.csv` — les clés Mistral divergent (`MistralAI` / `Mistral AI`) ; normaliser puis valider les deux modèles et leur résolution complète au chargement.
+- `src/data/modelCatalog.ts`, `data/clean/models.csv`, `data/clean/provider_country.csv` — les clés Mistral divergent (`MistralAI` / `Mistral AI`) ; normaliser puis valider les deux modèles et leur résolution complète au chargement.
 - `src/application/import/registry.ts`, `remoteGateway.ts`, `src/ui/ConversationImport.tsx` — publier Mistral seul et refuser aussi une attestation ou résolution non Mistral forgée ; préserver les adaptateurs historiques isolés.
 - `src/i18n/fr.ts`, `src/ui/styles.css` — textes des deux voies et des références, habillage et focus Canopée claire selon `DESIGN.md` et `EXPERIENCE.md`.
 

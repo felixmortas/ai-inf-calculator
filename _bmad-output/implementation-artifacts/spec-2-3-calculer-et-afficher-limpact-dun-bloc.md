@@ -44,7 +44,7 @@ context:
 - `src/domain/impact.test.ts` -- jeux chiffrés, PUE appliqué une fois, validation des bornes et erreurs sans résultat non fini.
 - `src/domain/conversationHistory.ts` -- réutiliser `prepareConversationHistory` pour les textes antérieurs, l’artifact et le prompt système opaque; ne pas modifier ses règles de diff.
 - `src/domain/tokenization.ts` et `src/application/tokenizationClient.ts` -- étendre les contrats/orchestration pour tokeniser les catégories dérivées en local, sans contourner le Worker ni son fallback.
-- `src/data/modelCatalog.ts` et `data/clean/models_params.csv` -- enrichir la lecture typée et immuable des paramètres modèle existants; ne pas fabriquer les données environnementales absentes.
+- `src/data/modelCatalog.ts` et `data/clean/models.csv` -- enrichir la lecture typée et immuable des paramètres modèle existants; ne pas fabriquer les données environnementales absentes.
 - `src/application/conversationReducer.ts` -- ajouter l’intention explicite, l’état d’attente/résultat/erreur individuel et son invalidation; conserver le reducer comme seule mutation de session.
 - `src/ui/App.tsx`, `src/ui/ConversationBlocks.tsx`, `src/i18n/fr.ts`, `src/ui/styles.css` -- orchestrer le client, offrir « Calculer » accessible et afficher résultat/erreur/incertitude, sans logique métier dans React.
 - `src/application/conversationReducer.test.ts` et `src/ui/ConversationBlocks.test.tsx` -- couvrir ciblage, péremption, absence de calcul automatique et restitution accessible.
@@ -72,7 +72,7 @@ context:
 
 ## Review Triage Log
 
-- low — Les lignes existantes de `models_params.csv` n’ont pas de date de consolidation; cette métadonnée n’influe pas sur un calcul individuel et sa correction exige de compléter la donnée source, donc elle est rejetée dans cette story.
+- low — Les lignes existantes de `models.csv` n’ont pas de date de consolidation; cette métadonnée n’influe pas sur un calcul individuel et sa correction exige de compléter la donnée source, donc elle est rejetée dans cette story.
 - low — La validation de format de `consolidation_date` recoupe la métadonnée absente précédente; elle n’affecte pas l’usage quotidien et ne justifie pas d’inventer une date.
 - false — Les ratios tarifaires ne possèdent pas de borne maximale dans le contrat mathématique; seules leurs valeurs finies et non négatives sont nécessaires au calcul.
 - false — `maximumSignificantDigits: 4` arrondit bien à quatre chiffres significatifs; l’absence de zéros de remplissage ne modifie pas la précision de l’estimation.

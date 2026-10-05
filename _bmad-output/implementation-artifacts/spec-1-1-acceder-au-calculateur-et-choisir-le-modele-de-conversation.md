@@ -18,7 +18,7 @@ context:
 
 **Approach:** Créer le sous-projet React/Vite statique servi sous `/ai-inf-calculator/`, avec un état de session exclusivement en mémoire. Exposer une configuration française et accessible : ChatGPT résout son modèle depuis le statut d’abonnement, tandis que les autres fournisseurs ne présentent que leurs modèles catalogués.
 
-**Décision :** Le catalogue initial est exclusivement issu de `data/clean/models_params.csv`. Il contient ChatGPT, Gemini et Claude ; les lignes ChatGPT `gpt-5.6-luna` et `gpt-5.6-terra` restent les seules cibles de la convention d’abonnement.
+**Décision :** Le catalogue initial est exclusivement issu de `data/clean/models.csv`. Il contient ChatGPT, Gemini et Claude ; les lignes ChatGPT `gpt-5.6-luna` et `gpt-5.6-terra` restent les seules cibles de la convention d’abonnement.
 
 ## Boundaries & Constraints
 
@@ -40,7 +40,7 @@ context:
 
 ## Code Map
 
-- `data/clean/models_params.csv` -- source de catalogue locale à importer et valider; contient Gemini, Claude et les deux modèles de référence ChatGPT avec leurs paramètres.
+- `data/clean/models.csv` -- source de catalogue locale à importer et valider; contient Gemini, Claude et les deux modèles de référence ChatGPT avec leurs paramètres.
 - `_bmad-output/implementation-artifacts/epic-1-context.md` -- contraintes compilées de l’epic : architecture en couches, session éphémère et conventions ChatGPT.
 - `package.json`, `vite.config.ts`, `tsconfig*.json`, `index.html` -- nouveaux fichiers de fondation du sous-projet Vite; ne pas modifier un site hôte absent.
 - `src/domain/modelSelection.ts` et ses tests -- résolution pure de la convention ChatGPT et filtrage de catalogue, sans React ni navigateur.
@@ -54,7 +54,7 @@ context:
 **Execution:**
 
 - [x] `package.json`, `vite.config.ts`, `tsconfig*.json`, `index.html` -- initialiser Vite, React, TypeScript, Vitest et le build statique avec `base: '/ai-inf-calculator/'` -- rendre le sous-projet portable et publiable.
-- [x] `src/data/modelCatalog.ts`, `src/domain/modelSelection.ts`, `src/domain/modelSelection.test.ts` -- importer et valider `data/clean/models_params.csv`, puis définir les règles pures de résolution ChatGPT et de filtrage fournisseur -- empêcher un modèle absent ou d’un autre fournisseur d’être sélectionné.
+- [x] `src/data/modelCatalog.ts`, `src/domain/modelSelection.ts`, `src/domain/modelSelection.test.ts` -- importer et valider `data/clean/models.csv`, puis définir les règles pures de résolution ChatGPT et de filtrage fournisseur -- empêcher un modèle absent ou d’un autre fournisseur d’être sélectionné.
 - [x] `src/application/conversationReducer.ts`, `src/application/conversationReducer.test.ts` -- modéliser les sélections de session et leurs transitions sans stockage persistant -- garantir que le modèle résolu est commun à la conversation.
 - [x] `src/i18n/fr.ts`, `src/ui/App.tsx`, `src/ui/ConversationConfiguration.tsx`, `src/ui/styles.css`, `src/main.tsx` -- construire le parcours français, ses libellés, son focus, son adaptation mobile et l’emplacement de conversation -- permettre la configuration sans paramètres avancés ni survol.
 - [x] `src/ui/ConversationConfiguration.test.tsx` -- tester les scénarios utilisateur ChatGPT, fournisseur alternatif, clavier et réinitialisation après nouveau montage -- couvrir la matrice d’entrées/sorties du parcours.
