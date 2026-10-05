@@ -11,15 +11,13 @@ Ce calculateur estime l'empreinte environnementale **d'une requête individuelle
 - l'énergie de génération des tokens de sortie (`r_out`) est modélisée **physiquement**, à partir d'une régression publique sur du matériel réel (méthodologie Ecologits) ;
 - l'énergie des tokens d'entrée et de cache (`r_in`, `r_cache`) est estimée **par les prix publics** facturés par les fournisseurs, faute d'accès aux caractéristiques d'infrastructure des modèles propriétaires.
 
-Ce choix hybride n'est pas un compromis par défaut : c'est une décision motivée, documentée ci-dessous, avec ses justifications et ses limites explicites — dans l'esprit de la documentation méthodologique d'Ecologits, dont ce calculateur reprend largement l'approche pour la partie output.
-
 ---
 
 ## 2. Objectif et périmètre de l'étude
 
 ### 2.1 Ce que le calculateur mesure
 
-- L'énergie électrique **de la phase d'inférence** (« use phase »), pour une requête donnée à un modèle donné.
+- L'énergie électrique **de la phase d'inférence** (« use phase »), pour une requête donnée à un modèle donné, prenant en compte.
 - Les émissions de gaz à effet de serre associées, converties via l'intensité carbone du réseau électrique du pays d'hébergement du datacenter.
 - La consommation d'eau **on-site** du datacenter (refroidissement), et un indicateur qualitatif de risque de sécheresse du pays concerné.
 
