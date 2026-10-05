@@ -1,8 +1,12 @@
 /.DS_Store
-/data/raw
 .agents
 _bmad
 node_modules
 dist
 chatgpt-share-output
 __pycache__
+
+system_prompts_leaks
+Aqueduct40_baseline_annual_y2023m07d05.csv
+release_generation_yearly_global.csv
+ikp
