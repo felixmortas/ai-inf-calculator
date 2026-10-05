@@ -11,4 +11,8 @@ Le nombre de paramètres activés des modèles fermés ont été prédit à part
 
 # Tokens des prompts system
 Le nombre de tokens du prompt système a été calculé avec le tokenizer du calculateur, à partir des leak de prompt system sur le dépôt github `https://github.com/asgeirtj/system_prompts_leaks`.
-Les modèles n'ayant pas de prompt system correspondant sur le depôt se sont vus attribués en priorité le prompt system du modèle de la même famille le plus proche, puis la moyenne du nombre de tokens de tous les prompts system le cas échéant.
+Les modèles n'ayant pas de prompt system correspondant sur le depôt se sont vus attribués en priorité le prompt system du modèle de la même famille le plus proche, ou bien la médiane du nombre de tokens de tous les prompts system le cas échéant. La médiane a été choisie car elle est insensible au valeurs extrêmes et cas particuliers comme Claude Fable 5.
+
+# Consommation des tokens d'input et de cache
+Les ratios input/output et cache/input sont calculés à partir des prix des tokens sur openrouters.
+On réalise une approche market-based car si même pas représentative, elle équilibre avec les incertitudes. Cette approche offre une méthode d'estimation simple et pertinente par rapport aux bonnes pratiques souhaitant être mises en avant.
