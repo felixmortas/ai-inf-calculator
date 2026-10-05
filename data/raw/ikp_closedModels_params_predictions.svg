@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820">
+<rect width="100%" height="100%" fill="#fff"/>
+<style>text{font-family:Inter,Arial,sans-serif;fill:#172033}.muted{fill:#64748b}.grid{stroke:#e2e8f0;stroke-width:1}.axis{stroke:#64748b;stroke-width:1.4}.dot{stroke:#fff;stroke-width:1.4;opacity:.82}</style>
+<text x="105" y="48" font-size="27" font-weight="700">Paramètres actifs prédits des modèles fermés</text>
+<text x="105" y="78" font-size="15" class="muted">97 modèles · estimation basée sur leur nombre total de paramètres</text>
+<rect x="105" y="95" width="1120" height="38" rx="7" fill="#fff7ed" stroke="#fed7aa"/>
+<text x="120" y="119" font-size="13" fill="#9a3412">Ajustement MoE sur 0.0998093–2800 Md ; les points hors plage sont extrapolés.</text>
+<line class="grid" x1="105" y1="700.0" x2="1225" y2="700.0"/>
+<text x="92" y="705.0" font-size="13" text-anchor="end" class="muted">0</text>
+<line class="grid" x1="105" y1="617.9" x2="1225" y2="617.9"/>
+<text x="92" y="622.9" font-size="13" text-anchor="end" class="muted">20</text>
+<line class="grid" x1="105" y1="535.7" x2="1225" y2="535.7"/>
+<text x="92" y="540.7" font-size="13" text-anchor="end" class="muted">40</text>
+<line class="grid" x1="105" y1="453.6" x2="1225" y2="453.6"/>
+<text x="92" y="458.6" font-size="13" text-anchor="end" class="muted">60</text>
+<line class="grid" x1="105" y1="371.4" x2="1225" y2="371.4"/>
+<text x="92" y="376.4" font-size="13" text-anchor="end" class="muted">80</text>
+<line class="grid" x1="105" y1="289.3" x2="1225" y2="289.3"/>
+<text x="92" y="294.3" font-size="13" text-anchor="end" class="muted">100</text>
+<line class="grid" x1="105" y1="207.1" x2="1225" y2="207.1"/>
+<text x="92" y="212.1" font-size="13" text-anchor="end" class="muted">120</text>
+<line class="grid" x1="105" y1="125.0" x2="1225" y2="125.0"/>
+<text x="92" y="130.0" font-size="13" text-anchor="end" class="muted">140</text>
+<line class="grid" x1="159.9" y1="125" x2="159.9" y2="700"/>
+<text x="159.9" y="724" font-size="13" text-anchor="middle" class="muted">10</text>
+<line class="grid" x1="343.7" y1="125" x2="343.7" y2="700"/>
+<text x="343.7" y="724" font-size="13" text-anchor="middle" class="muted">30</text>
+<line class="grid" x1="545.0" y1="125" x2="545.0" y2="700"/>
+<text x="545.0" y="724" font-size="13" text-anchor="middle" class="muted">100</text>
+<line class="grid" x1="728.8" y1="125" x2="728.8" y2="700"/>
+<text x="728.8" y="724" font-size="13" text-anchor="middle" class="muted">300</text>
+<line class="grid" x1="930.1" y1="125" x2="930.1" y2="700"/>
+<text x="930.1" y="724" font-size="13" text-anchor="middle" class="muted">1,000</text>
+<line class="grid" x1="1113.9" y1="125" x2="1113.9" y2="700"/>
+<text x="1113.9" y="724" font-size="13" text-anchor="middle" class="muted">3,000</text>
+<line class="axis" x1="105" y1="700" x2="1225" y2="700"/>
+<line class="axis" x1="105" y1="125" x2="105" y2="700"/>
+<text x="665.0" y="757" text-anchor="middle" font-size="15">Paramètres totaux estimés (milliards, échelle logarithmique)</text>
+<text x="28" y="412.5" text-anchor="middle" font-size="15" transform="rotate(-90 28 412.5)">Paramètres actifs prédits (milliards)</text>
+<circle class="dot" cx="1209.06" cy="168.55" r="6" fill="#2563eb"><title>gpt-5.5-pro (openai) — total estimé : 5300 Md; actifs prédits : 129.40 Md</title></circle>
+<circle class="dot" cx="1188.97" cy="204.33" r="6" fill="#2563eb"><title>gpt-5.5 (openai) — total estimé : 4700 Md; actifs prédits : 120.69 Md</title></circle>
+<circle class="dot" cx="1188.97" cy="204.33" r="6" fill="#2563eb"><title>gpt-5.5-think (openai) — total estimé : 4700 Md; actifs prédits : 120.69 Md</title></circle>
+<circle class="dot" cx="1139.66" cy="282.23" r="6" fill="#e11d48"><title>claude-fable-5 (anthropic) — total estimé : 3500 Md; actifs prédits : 101.72 Md</title></circle>
+<circle class="dot" cx="1113.88" cy="317.97" r="6" fill="#d97706"><title>gemini-2.5-pro (google) — total estimé : 3000 Md; actifs prédits : 93.02 Md</title></circle>
+<circle class="dot" cx="1102.34" cy="332.95" r="6" fill="#d97706"><title>gemini-2.5-pro-think (google) — total estimé : 2800 Md; actifs prédits : 89.37 Md</title></circle>
+<circle class="dot" cx="1076.56" cy="364.35" r="6" fill="#2563eb"><title>gpt-5.4-pro (openai) — total estimé : 2400 Md; actifs prédits : 81.72 Md</title></circle>
+<circle class="dot" cx="1062.01" cy="380.87" r="6" fill="#2563eb"><title>gpt-4.1 (openai) — total estimé : 2200 Md; actifs prédits : 77.70 Md</title></circle>
+<circle class="dot" cx="1054.23" cy="389.36" r="6" fill="#2563eb"><title>gpt-5-pro (openai) — total estimé : 2100 Md; actifs prédits : 75.63 Md</title></circle>
+<circle class="dot" cx="1054.23" cy="389.36" r="6" fill="#2563eb"><title>o3 (openai) — total estimé : 2100 Md; actifs prédits : 75.63 Md</title></circle>
+<circle class="dot" cx="1054.23" cy="389.36" r="6" fill="#0891b2"><title>grok-3 (xai) — total estimé : 2100 Md; actifs prédits : 75.63 Md</title></circle>
+<circle class="dot" cx="1046.07" cy="398.03" r="6" fill="#0891b2"><title>grok-4 (xai) — total estimé : 2000 Md; actifs prédits : 73.52 Md</title></circle>
+<circle class="dot" cx="1046.07" cy="398.03" r="6" fill="#2563eb"><title>gpt-5-think (openai) — total estimé : 2000 Md; actifs prédits : 73.52 Md</title></circle>
+<circle class="dot" cx="1028.45" cy="415.93" r="6" fill="#2563eb"><title>gpt-5 (openai) — total estimé : 1800 Md; actifs prédits : 69.16 Md</title></circle>
+<circle class="dot" cx="1008.75" cy="434.69" r="6" fill="#e11d48"><title>claude-opus-4.6-think (anthropic) — total estimé : 1600 Md; actifs prédits : 64.60 Md</title></circle>
+<circle class="dot" cx="986.41" cy="454.46" r="6" fill="#7c3aed"><title>mimo-v2.5-pro (xiaomi) — total estimé : 1400 Md; actifs prédits : 59.78 Md</title></circle>
+<circle class="dot" cx="986.41" cy="454.46" r="6" fill="#7c3aed"><title>mimo-v2.5-pro-think (xiaomi) — total estimé : 1400 Md; actifs prédits : 59.78 Md</title></circle>
+<circle class="dot" cx="986.41" cy="454.46" r="6" fill="#475569"><title>hy3-preview (tencent) — total estimé : 1400 Md; actifs prédits : 59.78 Md</title></circle>
+<circle class="dot" cx="974.02" cy="464.79" r="6" fill="#2563eb"><title>o1 (openai) — total estimé : 1300 Md; actifs prédits : 57.27 Md</title></circle>
+<circle class="dot" cx="974.02" cy="464.79" r="6" fill="#e11d48"><title>claude-opus-4.6 (anthropic) — total estimé : 1300 Md; actifs prédits : 57.27 Md</title></circle>
+<circle class="dot" cx="946.08" cy="486.51" r="6" fill="#e11d48"><title>claude-3.7-sonnet (anthropic) — total estimé : 1100 Md; actifs prédits : 51.98 Md</title></circle>
+<circle class="dot" cx="946.08" cy="486.51" r="6" fill="#2563eb"><title>gpt-5.4 (openai) — total estimé : 1100 Md; actifs prédits : 51.98 Md</title></circle>
+<circle class="dot" cx="946.08" cy="486.51" r="6" fill="#2563eb"><title>gpt-5.3 (openai) — total estimé : 1100 Md; actifs prédits : 51.98 Md</title></circle>
+<circle class="dot" cx="930.14" cy="498.00" r="6" fill="#2563eb"><title>gpt-4-turbo (openai) — total estimé : 1000 Md; actifs prédits : 49.18 Md</title></circle>
+<circle class="dot" cx="930.14" cy="498.00" r="6" fill="#65a30d"><title>glm-5.2 (zhipu) — total estimé : 1000 Md; actifs prédits : 49.18 Md</title></circle>
+<circle class="dot" cx="912.52" cy="509.97" r="6" fill="#65a30d"><title>glm-5-turbo (zhipu) — total estimé : 900 Md; actifs prédits : 46.27 Md</title></circle>
+<circle class="dot" cx="910.65" cy="511.20" r="6" fill="#e11d48"><title>claude-opus-4.5 (anthropic) — total estimé : 890 Md; actifs prédits : 45.97 Md</title></circle>
+<circle class="dot" cx="910.65" cy="511.20" r="6" fill="#059669"><title>qwen3.7-max (alibaba) — total estimé : 890 Md; actifs prédits : 45.97 Md</title></circle>
+<circle class="dot" cx="908.76" cy="512.43" r="6" fill="#65a30d"><title>glm-5-turbo-think (zhipu) — total estimé : 880 Md; actifs prédits : 45.67 Md</title></circle>
+<circle class="dot" cx="902.96" cy="516.17" r="6" fill="#e11d48"><title>claude-opus-4.1-think (anthropic) — total estimé : 850 Md; actifs prédits : 44.76 Md</title></circle>
+<circle class="dot" cx="898.98" cy="518.69" r="6" fill="#e11d48"><title>claude-opus-4.5-think (anthropic) — total estimé : 830 Md; actifs prédits : 44.15 Md</title></circle>
+<circle class="dot" cx="890.72" cy="523.81" r="6" fill="#d97706"><title>gemini-2.5-flash-think (google) — total estimé : 790 Md; actifs prédits : 42.90 Md</title></circle>
+<circle class="dot" cx="886.43" cy="526.41" r="6" fill="#e11d48"><title>claude-sonnet-4.6-think (anthropic) — total estimé : 770 Md; actifs prédits : 42.27 Md</title></circle>
+<circle class="dot" cx="884.24" cy="527.72" r="6" fill="#e11d48"><title>claude-sonnet-4.6 (anthropic) — total estimé : 760 Md; actifs prédits : 41.95 Md</title></circle>
+<circle class="dot" cx="879.78" cy="530.37" r="6" fill="#e11d48"><title>claude-opus-4.7-think (anthropic) — total estimé : 740 Md; actifs prédits : 41.30 Md</title></circle>
+<circle class="dot" cx="877.51" cy="531.70" r="6" fill="#4f46e5"><title>seed-2.0-lite-think (bytedance) — total estimé : 730 Md; actifs prédits : 40.98 Md</title></circle>
+<circle class="dot" cx="872.86" cy="534.39" r="6" fill="#7c3aed"><title>mimo-v2.5 (xiaomi) — total estimé : 710 Md; actifs prédits : 40.32 Md</title></circle>
+<circle class="dot" cx="868.08" cy="537.11" r="6" fill="#0891b2"><title>grok-4.20 (xai) — total estimé : 690 Md; actifs prédits : 39.66 Md</title></circle>
+<circle class="dot" cx="855.50" cy="544.07" r="6" fill="#2563eb"><title>gpt-5.2-pro (openai) — total estimé : 640 Md; actifs prédits : 37.97 Md</title></circle>
+<circle class="dot" cx="852.87" cy="545.48" r="6" fill="#2563eb"><title>gpt-5.1 (openai) — total estimé : 630 Md; actifs prédits : 37.62 Md</title></circle>
+<circle class="dot" cx="850.19" cy="546.91" r="6" fill="#2563eb"><title>gpt-4 (openai) — total estimé : 620 Md; actifs prédits : 37.27 Md</title></circle>
+<circle class="dot" cx="847.47" cy="548.35" r="6" fill="#7c3aed"><title>mimo-v2.5-think (xiaomi) — total estimé : 610 Md; actifs prédits : 36.92 Md</title></circle>
+<circle class="dot" cx="847.47" cy="548.35" r="6" fill="#059669"><title>qwen3-max (alibaba) — total estimé : 610 Md; actifs prédits : 36.92 Md</title></circle>
+<circle class="dot" cx="839.04" cy="552.72" r="6" fill="#e11d48"><title>claude-sonnet-5 (anthropic) — total estimé : 580 Md; actifs prédits : 35.86 Md</title></circle>
+<circle class="dot" cx="839.04" cy="552.72" r="6" fill="#059669"><title>qwen3.7-plus (alibaba) — total estimé : 580 Md; actifs prédits : 35.86 Md</title></circle>
+<circle class="dot" cx="836.13" cy="554.20" r="6" fill="#2563eb"><title>gpt-5.2 (openai) — total estimé : 570 Md; actifs prédits : 35.50 Md</title></circle>
+<circle class="dot" cx="827.09" cy="558.70" r="6" fill="#e11d48"><title>claude-opus-4.7 (anthropic) — total estimé : 540 Md; actifs prédits : 34.40 Md</title></circle>
+<circle class="dot" cx="814.21" cy="564.87" r="6" fill="#2563eb"><title>gpt-4.1-mini (openai) — total estimé : 500 Md; actifs prédits : 32.90 Md</title></circle>
+<circle class="dot" cx="803.87" cy="569.63" r="6" fill="#aeb846"><title>step-3.7-flash (stepfun) — total estimé : 470 Md; actifs prédits : 31.74 Md</title></circle>
+<circle class="dot" cx="800.27" cy="571.25" r="6" fill="#0891b2"><title>grok-4.20-think (xai) — total estimé : 460 Md; actifs prédits : 31.35 Md</title></circle>
+<circle class="dot" cx="796.59" cy="572.88" r="6" fill="#d97706"><title>gemini-2.0-flash (google) — total estimé : 450 Md; actifs prédits : 30.95 Md</title></circle>
+<circle class="dot" cx="792.83" cy="574.53" r="6" fill="#059669"><title>qwen3.5-plus-think (alibaba) — total estimé : 440 Md; actifs prédits : 30.55 Md</title></circle>
+<circle class="dot" cx="792.83" cy="574.53" r="6" fill="#e11d48"><title>claude-sonnet-4.5-think (anthropic) — total estimé : 440 Md; actifs prédits : 30.55 Md</title></circle>
+<circle class="dot" cx="776.89" cy="581.27" r="6" fill="#db2777"><title>nova-premier (amazon) — total estimé : 400 Md; actifs prédits : 28.91 Md</title></circle>
+<circle class="dot" cx="772.66" cy="583.00" r="6" fill="#2563eb"><title>gpt-4o (openai) — total estimé : 390 Md; actifs prédits : 28.49 Md</title></circle>
+<circle class="dot" cx="763.86" cy="586.52" r="6" fill="#2563eb"><title>o4-mini-think (openai) — total estimé : 370 Md; actifs prédits : 27.63 Md</title></circle>
+<circle class="dot" cx="749.71" cy="591.95" r="6" fill="#2563eb"><title>gpt-5.4-mini (openai) — total estimé : 340 Md; actifs prédits : 26.31 Md</title></circle>
+<circle class="dot" cx="739.57" cy="595.69" r="6" fill="#059669"><title>qwen3.6-plus-think (alibaba) — total estimé : 320 Md; actifs prédits : 25.40 Md</title></circle>
+<circle class="dot" cx="734.26" cy="597.59" r="6" fill="#a046b8"><title>minimax-m3 (minimax) — total estimé : 310 Md; actifs prédits : 24.93 Md</title></circle>
+<circle class="dot" cx="728.78" cy="599.52" r="6" fill="#7c3aed"><title>mimo-v2-pro (xiaomi) — total estimé : 300 Md; actifs prédits : 24.46 Md</title></circle>
+<circle class="dot" cx="717.24" cy="603.46" r="6" fill="#46b87f"><title>mistral-medium-3.1 (mistral) — total estimé : 280 Md; actifs prédits : 23.50 Md</title></circle>
+<circle class="dot" cx="711.16" cy="605.48" r="6" fill="#059669"><title>qwen-plus (alibaba) — total estimé : 270 Md; actifs prédits : 23.01 Md</title></circle>
+<circle class="dot" cx="711.16" cy="605.48" r="6" fill="#4f46e5"><title>seed-2.0-mini-think (bytedance) — total estimé : 270 Md; actifs prédits : 23.01 Md</title></circle>
+<circle class="dot" cx="704.85" cy="607.52" r="6" fill="#7c3aed"><title>mimo-v2-pro-think (xiaomi) — total estimé : 260 Md; actifs prédits : 22.52 Md</title></circle>
+<circle class="dot" cx="698.29" cy="609.60" r="6" fill="#2563eb"><title>gpt-3.5-turbo (openai) — total estimé : 250 Md; actifs prédits : 22.01 Md</title></circle>
+<circle class="dot" cx="691.46" cy="611.72" r="6" fill="#d97706"><title>gemini-2.5-flash (google) — total estimé : 240 Md; actifs prédits : 21.49 Md</title></circle>
+<circle class="dot" cx="691.46" cy="611.72" r="6" fill="#e11d48"><title>claude-opus-4.8 (anthropic) — total estimé : 240 Md; actifs prédits : 21.49 Md</title></circle>
+<circle class="dot" cx="676.91" cy="616.06" r="6" fill="#e11d48"><title>claude-3.7-sonnet-think (anthropic) — total estimé : 220 Md; actifs prédits : 20.44 Md</title></circle>
+<circle class="dot" cx="669.13" cy="618.30" r="6" fill="#e11d48"><title>claude-opus-4-think (anthropic) — total estimé : 210 Md; actifs prédits : 19.89 Md</title></circle>
+<circle class="dot" cx="660.97" cy="620.58" r="6" fill="#0891b2"><title>grok-3-mini-think (xai) — total estimé : 200 Md; actifs prédits : 19.34 Md</title></circle>
+<circle class="dot" cx="643.35" cy="625.29" r="6" fill="#4f46e5"><title>seed-1.6-think (bytedance) — total estimé : 180 Md; actifs prédits : 18.19 Md</title></circle>
+<circle class="dot" cx="643.35" cy="625.29" r="6" fill="#d97706"><title>gemini-2.5-flash-lite-think (google) — total estimé : 180 Md; actifs prédits : 18.19 Md</title></circle>
+<circle class="dot" cx="612.85" cy="632.78" r="6" fill="#b85d46"><title>deepseek-v3.1 (deepseek) — total estimé : 150 Md; actifs prédits : 16.37 Md</title></circle>
+<circle class="dot" cx="575.53" cy="640.94" r="6" fill="#e11d48"><title>claude-sonnet-4-think (anthropic) — total estimé : 120 Md; actifs prédits : 14.38 Md</title></circle>
+<circle class="dot" cx="560.98" cy="643.85" r="6" fill="#db2777"><title>nova-pro (amazon) — total estimé : 110 Md; actifs prédits : 13.67 Md</title></circle>
+<circle class="dot" cx="560.98" cy="643.85" r="6" fill="#e11d48"><title>claude-sonnet-4.5 (anthropic) — total estimé : 110 Md; actifs prédits : 13.67 Md</title></circle>
+<circle class="dot" cx="560.98" cy="643.85" r="6" fill="#2563eb"><title>gpt-5-mini-think (openai) — total estimé : 110 Md; actifs prédits : 13.67 Md</title></circle>
+<circle class="dot" cx="545.04" cy="646.87" r="6" fill="#e11d48"><title>claude-opus-4.1 (anthropic) — total estimé : 100 Md; actifs prédits : 12.94 Md</title></circle>
+<circle class="dot" cx="536.46" cy="648.43" r="6" fill="#d97706"><title>gemini-2.5-flash-lite (google) — total estimé : 95 Md; actifs prédits : 12.56 Md</title></circle>
+<circle class="dot" cx="534.69" cy="648.74" r="6" fill="#2563eb"><title>gpt-5-mini (openai) — total estimé : 94 Md; actifs prédits : 12.48 Md</title></circle>
+<circle class="dot" cx="531.10" cy="649.38" r="6" fill="#2563eb"><title>gpt-4o-mini (openai) — total estimé : 92 Md; actifs prédits : 12.33 Md</title></circle>
+<circle class="dot" cx="515.88" cy="651.98" r="6" fill="#059669"><title>qwen3.5-flash-think (alibaba) — total estimé : 84 Md; actifs prédits : 11.69 Md</title></circle>
+<circle class="dot" cx="503.49" cy="654.00" r="6" fill="#e11d48"><title>claude-3.5-haiku (anthropic) — total estimé : 78 Md; actifs prédits : 11.20 Md</title></circle>
+<circle class="dot" cx="487.76" cy="656.44" r="6" fill="#2563eb"><title>gpt-4.1-nano (openai) — total estimé : 71 Md; actifs prédits : 10.61 Md</title></circle>
+<circle class="dot" cx="467.77" cy="659.36" r="6" fill="#059669"><title>qwen-max (alibaba) — total estimé : 63 Md; actifs prédits : 9.89 Md</title></circle>
+<circle class="dot" cx="467.77" cy="659.36" r="6" fill="#2563eb"><title>o3-mini (openai) — total estimé : 63 Md; actifs prédits : 9.89 Md</title></circle>
+<circle class="dot" cx="425.74" cy="664.87" r="6" fill="#e11d48"><title>claude-sonnet-4 (anthropic) — total estimé : 49 Md; actifs prédits : 8.55 Md</title></circle>
+<circle class="dot" cx="425.74" cy="664.87" r="6" fill="#e11d48"><title>claude-opus-4 (anthropic) — total estimé : 49 Md; actifs prédits : 8.55 Md</title></circle>
+<circle class="dot" cx="418.77" cy="665.71" r="6" fill="#e11d48"><title>claude-haiku-4.5-think (anthropic) — total estimé : 47 Md; actifs prédits : 8.35 Md</title></circle>
+<circle class="dot" cx="332.14" cy="674.61" r="6" fill="#e11d48"><title>claude-haiku-4.5 (anthropic) — total estimé : 28 Md; actifs prédits : 6.18 Md</title></circle>
+<circle class="dot" cx="319.75" cy="675.68" r="6" fill="#2563eb"><title>gpt-5-nano-think (openai) — total estimé : 26 Md; actifs prédits : 5.92 Md</title></circle>
+<circle class="dot" cx="299.24" cy="677.35" r="6" fill="#2563eb"><title>gpt-5-nano (openai) — total estimé : 23 Md; actifs prédits : 5.52 Md</title></circle>
+<circle class="dot" cx="299.24" cy="677.35" r="6" fill="#4f46e5"><title>seed-1.6-flash-think (bytedance) — total estimé : 23 Md; actifs prédits : 5.52 Md</title></circle>
+<circle class="dot" cx="258.25" cy="680.35" r="6" fill="#059669"><title>qwen-turbo (alibaba) — total estimé : 18 Md; actifs prédits : 4.78 Md</title></circle>
+<circle class="dot" cx="159.94" cy="686.03" r="6" fill="#e11d48"><title>claude-3-haiku (anthropic) — total estimé : 10 Md; actifs prédits : 3.40 Md</title></circle>
+<circle class="dot" cx="159.94" cy="686.03" r="6" fill="#2563eb"><title>gpt-5.4-nano (openai) — total estimé : 10 Md; actifs prédits : 3.40 Md</title></circle>
+<circle class="dot" cx="142.32" cy="686.85" r="6" fill="#db2777"><title>nova-micro (amazon) — total estimé : 9 Md; actifs prédits : 3.20 Md</title></circle>
+<circle cx="105" cy="758" r="5" fill="#2563eb"/>
+<text x="116" y="762" font-size="12">openai (30)</text>
+<circle cx="292" cy="758" r="5" fill="#e11d48"/>
+<text x="303" y="762" font-size="12">anthropic (25)</text>
+<circle cx="479" cy="758" r="5" fill="#059669"/>
+<text x="490" y="762" font-size="12">alibaba (9)</text>
+<circle cx="666" cy="758" r="5" fill="#d97706"/>
+<text x="677" y="762" font-size="12">google (7)</text>
+<circle cx="853" cy="758" r="5" fill="#7c3aed"/>
+<text x="864" y="762" font-size="12">xiaomi (6)</text>
+<circle cx="1040" cy="758" r="5" fill="#0891b2"/>
+<text x="1051" y="762" font-size="12">xai (5)</text>
+<circle cx="105" cy="780" r="5" fill="#4f46e5"/>
+<text x="116" y="784" font-size="12">bytedance (4)</text>
+<circle cx="292" cy="780" r="5" fill="#65a30d"/>
+<text x="303" y="784" font-size="12">zhipu (3)</text>
+<circle cx="479" cy="780" r="5" fill="#db2777"/>
+<text x="490" y="784" font-size="12">amazon (3)</text>
+<circle cx="666" cy="780" r="5" fill="#475569"/>
+<text x="677" y="784" font-size="12">tencent (1)</text>
+<circle cx="853" cy="780" r="5" fill="#aeb846"/>
+<text x="864" y="784" font-size="12">stepfun (1)</text>
+<circle cx="1040" cy="780" r="5" fill="#a046b8"/>
+<text x="1051" y="784" font-size="12">minimax (1)</text>
+<circle cx="105" cy="802" r="5" fill="#46b87f"/>
+<text x="116" y="806" font-size="12">mistral (1)</text>
+<circle cx="292" cy="802" r="5" fill="#b85d46"/>
+<text x="303" y="806" font-size="12">deepseek (1)</text>
+</svg>

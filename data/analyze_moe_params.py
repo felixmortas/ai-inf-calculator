@@ -5,10 +5,15 @@ import csv
 import argparse
 import math
 from pathlib import Path
+import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 CSV_PATH = ROOT / "data/raw/moe_models_params.csv"
 SVG_PATH = ROOT / "data/raw/moe_params_regression.svg"
+CLOSED_MODELS_PATH = ROOT / "data/raw/ikp_closedModels_params.csv"
+PREDICTIONS_PATH = ROOT / "data/raw/ikp_closedModels_params_with_active_predictions.csv"
+CLOSED_MODELS_SVG_PATH = ROOT / "data/raw/ikp_closedModels_params_predictions.svg"
 
 
 def lire_donnees():
@@ -107,13 +112,62 @@ def valider_croisee(modele, x, y):
     return math.sqrt(sum(erreurs) / len(erreurs))
 
 
-def predire_params_actives(params):
+def ajuster_meilleur_modele(donnees):
+    """Retourne l'ajustement qui minimise la RMSE leave-one-out."""
+    x = [d["x"] for d in donnees]
+    y = [d["y"] for d in donnees]
+    resultats = []
+    for nom in ("linéaire", "logarithmique", "quadratique", "puissance"):
+        predict, formule = ajuster(nom, x, y)
+        cv = valider_croisee(nom, x, y)
+        resultats.append((cv, nom, predict, formule))
+    return min(resultats, key=lambda resultat: resultat[0]), resultats
+
+
+def predire_params_actives(params, donnees=None, predict=None):
     """Prédit les paramètres actifs (milliards) pour un total donné (milliards)."""
     if not math.isfinite(params) or params <= 0:
         raise ValueError("Le nombre de paramètres totaux doit être positif et fini")
-    donnees = lire_donnees()
-    predire, _ = ajuster("puissance", [d["x"] for d in donnees], [d["y"] for d in donnees])
-    return predire(params)
+    if predict is None:
+        donnees = lire_donnees() if donnees is None else donnees
+        (_, _, predict, _), _ = ajuster_meilleur_modele(donnees)
+    return predict(params)
+
+
+def creer_csv_predictions(predict, nom_modele, formule, minimum_ajustement, maximum_ajustement):
+    """Régénère le CSV des modèles fermés avec le même ajustement que le graphique."""
+    with CLOSED_MODELS_PATH.open(encoding="utf-8", newline="") as fichier:
+        lecteur = csv.DictReader(fichier)
+        champs_source = lecteur.fieldnames
+        lignes = list(lecteur)
+    if not champs_source or not {"model", "vendor", "estimated_params_billions"}.issubset(champs_source):
+        raise ValueError(f"Colonnes manquantes dans {CLOSED_MODELS_PATH}")
+    champ_prediction = "predicted_active_params_billions"
+    champs_metadonnees = [
+        "regression_model", "regression_formula",
+        "moe_fit_min_params_billions", "moe_fit_max_params_billions",
+    ]
+    champs = [champ for champ in champs_source if champ not in {champ_prediction, *champs_metadonnees}]
+    champs += [champ_prediction, *champs_metadonnees]
+    for ligne in lignes:
+        total = float(ligne["estimated_params_billions"])
+        if not math.isfinite(total) or total <= 0:
+            raise ValueError(f"Nombre total invalide pour {ligne['model']}: {total}")
+        prediction = predire_params_actives(total, predict=predict)
+        if not math.isfinite(prediction) or prediction < 0:
+            raise ValueError(f"Prédiction invalide pour {ligne['model']}: {prediction}")
+        ligne.update({
+            champ_prediction: f"{prediction:.6f}",
+            "regression_model": nom_modele,
+            "regression_formula": formule,
+            "moe_fit_min_params_billions": f"{minimum_ajustement:.6f}",
+            "moe_fit_max_params_billions": f"{maximum_ajustement:.6f}",
+        })
+    with PREDICTIONS_PATH.open("w", encoding="utf-8", newline="") as fichier:
+        ecrivain = csv.DictWriter(fichier, fieldnames=champs)
+        ecrivain.writeheader()
+        ecrivain.writerows(lignes)
+    print(f"Prédictions actualisées : {PREDICTIONS_PATH.relative_to(ROOT)} ({len(lignes)} modèles)")
 
 
 def creer_svg(donnees, predire, formule):
@@ -180,11 +234,7 @@ def main():
     x = [d["x"] for d in donnees]
     y = [d["y"] for d in donnees]
     observations = list(zip(x, y))
-    resultats = []
-    for nom in ("linéaire", "logarithmique", "quadratique", "puissance"):
-        predire, formule = ajuster(nom, x, y)
-        resultats.append((valider_croisee(nom, x, y), nom, predire, formule))
-    erreur, nom, predire, formule = min(resultats, key=lambda resultat: resultat[0])
+    (erreur, nom, predire, formule), resultats = ajuster_meilleur_modele(donnees)
     print(f"Observations : {len(donnees)}")
     print("RMSE leave-one-out (milliards de paramètres actifs) :")
     for cv, nom_modele, _, _ in sorted(resultats):
@@ -193,9 +243,17 @@ def main():
     print(f"RMSE ajustement : {rmse(observations, predire):.3f} milliards")
     print(f"RMSE leave-one-out : {erreur:.3f} milliards")
     if arguments.params is not None:
-        print(f"Prédiction pour {arguments.params:g}B : {predire_params_actives(arguments.params):.3f}B paramètres actifs")
+        print(f"Prédiction pour {arguments.params:g}B : {predire_params_actives(arguments.params, predict=predire):.3f}B paramètres actifs")
     creer_svg(donnees, predire, formule)
     print(f"Graphique : {SVG_PATH.relative_to(ROOT)}")
+    creer_csv_predictions(predire, nom, formule, min(x), max(x))
+    subprocess.run([
+        sys.executable,
+        str(ROOT / "data/visualize_closed_model_params.py"),
+        "--csv", str(PREDICTIONS_PATH),
+        "--fit-csv", str(CSV_PATH),
+        "--output", str(CLOSED_MODELS_SVG_PATH),
+    ], check=True)
     print("Attention : la régression décrit une tendance empirique, pas une règle structurelle des architectures MoE.")
 
 

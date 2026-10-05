@@ -11,6 +11,7 @@ Création d'un fichier csv qui reprend les modeles de https://github.com/19PINE-
 Ajout de 20 modèles d'huggingface.
 Suppression des doublons et gpt-4 (nombre de paramètre non vériafiable).
 Le nombre de paramètres activés des modèles fermés ont été prédit à partir d'une regression sur une liste de modèles ouverts. Régression et création d'une fonction exponentielle.
+ai-inf-calculator/data/visualize_closed_model_params.py et ai-inf-calculator/data/analyze_moe_params.py ont été utilisés pour prédire les paramètres des modèles fermés.
 
 # Tokens des prompts system
 Le nombre de tokens du prompt système a été calculé avec le tokenizer du calculateur, à partir des leak de prompt system sur le dépôt github `https://github.com/asgeirtj/system_prompts_leaks`.
