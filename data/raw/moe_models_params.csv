@@ -2,6 +2,8 @@ model,params,params_activated,source
 mixtral-8x22b,141,39,ikp
 llama-4-scout,109,17,ikp
 llama-4-maverick,402,17,ikp
+Qwen/qwen3.8-2.4t-a95b,2400,95,huggingface
+Qwen/Qwen3.8-Flash-Next,125,6,huggingface
 qwen3-30b-a3b-think,30,3,ikp
 qwen3-235b-a22b-think,235,22,ikp
 qwen3.5-35b-a3b-think,35,3,ikp
@@ -30,7 +32,6 @@ intellect-3-think,106,12,ikp
 nemotron-3-super-120b,120,12,ikp
 nemotron-3-nano-30b,30,3,ikp
 step-3.5-flash-think,197,11,ikp
-mimo-v2-flash-think,309,15,ikp
 mimo-v2-flash,309,15,ikp
 mixtral-8x7b,46.7,12.9,ikp
 ling-2.6-flash,104,7.4,ikp
@@ -57,4 +58,10 @@ Qwen/Qwen3-VL-30B-A3B-Instruct,31,3,huggingface
 Qwen/Qwen3-VL-235B-A22B-Instruct,235,22,huggingface
 Qwen/Qwen3-Coder-30B-A3B-Instruct,30.5,3.3,huggingface
 Qwen/Qwen3-Coder-Next,80,3,huggingface
+Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8,480,35,huggingface
+Qwen/Qwen3.6-35B-A3B,35,3,huggingface
 XiaomiMiMo/MiMo-V2.5-Pro,1020,42,huggingface
+zai-org/GLM-5,744,40,huggingface
+zai-org/GLM-5.3-Flash,321,18,huggingface
+unsloth/Kimi-K3-GGUF,2800,104,huggingface
+zai-org/GLM-5.3,744,40,huggingface

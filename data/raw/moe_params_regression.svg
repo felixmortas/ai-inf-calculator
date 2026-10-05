@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#253244}.grille{stroke:#dce2e8;stroke-width:1}.courbe{fill:none;stroke:#192d46;stroke-width:3}</style>
+<text x="500" y="34" text-anchor="middle" font-size="22" font-weight="bold">Paramètres actifs des modèles MoE</text>
+<text x="500" y="61" text-anchor="middle" font-size="14">Régression ajustée : y = 0.8948 x^0.5800</text>
+<line class="grille" x1="100" y1="520.0" x2="950" y2="520.0"/>
+<text x="88" y="525.0" text-anchor="end" font-size="12">0</text>
+<line class="grille" x1="100" y1="483.1" x2="950" y2="483.1"/>
+<text x="88" y="488.1" text-anchor="end" font-size="12">10</text>
+<line class="grille" x1="100" y1="446.2" x2="950" y2="446.2"/>
+<text x="88" y="451.2" text-anchor="end" font-size="12">20</text>
+<line class="grille" x1="100" y1="409.3" x2="950" y2="409.3"/>
+<text x="88" y="414.3" text-anchor="end" font-size="12">30</text>
+<line class="grille" x1="100" y1="372.3" x2="950" y2="372.3"/>
+<text x="88" y="377.3" text-anchor="end" font-size="12">40</text>
+<line class="grille" x1="100" y1="335.4" x2="950" y2="335.4"/>
+<text x="88" y="340.4" text-anchor="end" font-size="12">50</text>
+<line class="grille" x1="100" y1="298.5" x2="950" y2="298.5"/>
+<text x="88" y="303.5" text-anchor="end" font-size="12">60</text>
+<line class="grille" x1="100" y1="261.6" x2="950" y2="261.6"/>
+<text x="88" y="266.6" text-anchor="end" font-size="12">70</text>
+<line class="grille" x1="100" y1="224.7" x2="950" y2="224.7"/>
+<text x="88" y="229.7" text-anchor="end" font-size="12">80</text>
+<line class="grille" x1="100" y1="187.8" x2="950" y2="187.8"/>
+<text x="88" y="192.8" text-anchor="end" font-size="12">90</text>
+<line class="grille" x1="100" y1="150.8" x2="950" y2="150.8"/>
+<text x="88" y="155.8" text-anchor="end" font-size="12">100</text>
+<line class="grille" x1="100" y1="113.9" x2="950" y2="113.9"/>
+<text x="88" y="118.9" text-anchor="end" font-size="12">110</text>
+<line class="grille" x1="100.2" y1="90" x2="100.2" y2="520"/>
+<text x="100.2" y="542" text-anchor="middle" font-size="12">0.1</text>
+<line class="grille" x1="291.3" y1="90" x2="291.3" y2="520"/>
+<text x="291.3" y="542" text-anchor="middle" font-size="12">1</text>
+<line class="grille" x1="482.4" y1="90" x2="482.4" y2="520"/>
+<text x="482.4" y="542" text-anchor="middle" font-size="12">10</text>
+<line class="grille" x1="673.5" y1="90" x2="673.5" y2="520"/>
+<text x="673.5" y="542" text-anchor="middle" font-size="12">100</text>
+<line class="grille" x1="864.5" y1="90" x2="864.5" y2="520"/>
+<text x="864.5" y="542" text-anchor="middle" font-size="12">1000</text>
+<polyline class="courbe" points="100.0,519.1 105.3,519.1 110.6,519.1 115.9,519.0 121.2,519.0 126.6,519.0 131.9,518.9 137.2,518.9 142.5,518.8 147.8,518.8 153.1,518.7 158.4,518.7 163.8,518.6 169.1,518.6 174.4,518.5 179.7,518.5 185.0,518.4 190.3,518.4 195.6,518.3 200.9,518.2 206.2,518.2 211.6,518.1 216.9,518.0 222.2,518.0 227.5,517.9 232.8,517.8 238.1,517.7 243.4,517.6 248.8,517.5 254.1,517.5 259.4,517.4 264.7,517.3 270.0,517.2 275.3,517.0 280.6,516.9 285.9,516.8 291.2,516.7 296.6,516.6 301.9,516.4 307.2,516.3 312.5,516.2 317.8,516.0 323.1,515.9 328.4,515.7 333.8,515.6 339.1,515.4 344.4,515.2 349.7,515.0 355.0,514.8 360.3,514.6 365.6,514.4 370.9,514.2 376.2,514.0 381.6,513.8 386.9,513.6 392.2,513.3 397.5,513.1 402.8,512.8 408.1,512.5 413.4,512.2 418.8,511.9 424.1,511.6 429.4,511.3 434.7,511.0 440.0,510.7 445.3,510.3 450.6,509.9 455.9,509.6 461.2,509.2 466.6,508.8 471.9,508.3 477.2,507.9 482.5,507.4 487.8,507.0 493.1,506.5 498.4,505.9 503.7,505.4 509.1,504.9 514.4,504.3 519.7,503.7 525.0,503.1 530.3,502.4 535.6,501.8 540.9,501.1 546.2,500.4 551.6,499.6 556.9,498.9 562.2,498.1 567.5,497.2 572.8,496.4 578.1,495.5 583.4,494.5 588.8,493.6 594.1,492.6 599.4,491.5 604.7,490.5 610.0,489.4 615.3,488.2 620.6,487.0 625.9,485.7 631.3,484.4 636.6,483.1 641.9,481.7 647.2,480.3 652.5,478.8 657.8,477.2 663.1,475.6 668.4,473.9 673.8,472.1 679.1,470.3 684.4,468.5 689.7,466.5 695.0,464.5 700.3,462.4 705.6,460.2 710.9,457.9 716.2,455.6 721.6,453.2 726.9,450.6 732.2,448.0 737.5,445.3 742.8,442.5 748.1,439.5 753.4,436.5 758.8,433.3 764.1,430.0 769.4,426.6 774.7,423.1 780.0,419.4 785.3,415.6 790.6,411.7 795.9,407.6 801.2,403.3 806.6,398.9 811.9,394.4 817.2,389.6 822.5,384.7 827.8,379.5 833.1,374.2 838.4,368.7 843.8,363.0 849.1,357.1 854.4,350.9 859.7,344.5 865.0,337.9 870.3,331.0 875.6,323.8 880.9,316.4 886.2,308.7 891.6,300.7 896.9,292.4 902.2,283.8 907.5,274.9 912.8,265.6 918.1,256.0 923.4,246.0 928.8,235.6 934.1,224.9 939.4,213.7 944.7,202.1 950.0,190.1"/>
+<circle cx="702.0" cy="376.0" r="5" fill="#2674b8" fill-opacity=".75"><title>mixtral-8x22b: 141B totaux, 39B actifs (ikp)</title></circle>
+<circle cx="680.6" cy="457.2" r="5" fill="#2674b8" fill-opacity=".75"><title>llama-4-scout: 109B totaux, 17B actifs (ikp)</title></circle>
+<circle cx="788.9" cy="457.2" r="5" fill="#2674b8" fill-opacity=".75"><title>llama-4-maverick: 402B totaux, 17B actifs (ikp)</title></circle>
+<circle cx="937.2" cy="169.3" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/qwen3.8-2.4t-a95b: 2400B totaux, 95B actifs (huggingface)</title></circle>
+<circle cx="692.0" cy="497.9" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3.8-Flash-Next: 125B totaux, 6B actifs (huggingface)</title></circle>
+<circle cx="573.5" cy="508.9" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3-30b-a3b-think: 30B totaux, 3B actifs (ikp)</title></circle>
+<circle cx="744.4" cy="438.8" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3-235b-a22b-think: 235B totaux, 22B actifs (ikp)</title></circle>
+<circle cx="586.3" cy="508.9" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3.5-35b-a3b-think: 35B totaux, 3B actifs (ikp)</title></circle>
+<circle cx="690.0" cy="483.1" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3.5-122b-a10b-think: 122B totaux, 10B actifs (ikp)</title></circle>
+<circle cx="787.9" cy="457.2" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3.5-397b-a17b-think: 397B totaux, 17B actifs (ikp)</title></circle>
+<circle cx="654.9" cy="508.9" r="5" fill="#2674b8" fill-opacity=".75"><title>qwen3-next-80b-a3b: 80B totaux, 3B actifs (ikp)</title></circle>
+<circle cx="561.7" cy="505.2" r="5" fill="#2674b8" fill-opacity=".75"><title>gemma-4-26b-a4b: 26B totaux, 4B actifs (ikp)</title></circle>
+<circle cx="831.4" cy="383.4" r="5" fill="#2674b8" fill-opacity=".75"><title>deepseek-v3: 671B totaux, 37B actifs (ikp)</title></circle>
+<circle cx="903.6" cy="339.1" r="5" fill="#2674b8" fill-opacity=".75"><title>deepseek-v4-pro: 1600B totaux, 49B actifs (ikp)</title></circle>
+<circle cx="760.1" cy="472.0" r="5" fill="#2674b8" fill-opacity=".75"><title>deepseek-v4-flash: 284B totaux, 13B actifs (ikp)</title></circle>
+<circle cx="831.4" cy="383.4" r="5" fill="#2674b8" fill-opacity=".75"><title>deepseek-r1-think: 671B totaux, 37B actifs (ikp)</title></circle>
+<circle cx="788.1" cy="173.0" r="5" fill="#2674b8" fill-opacity=".75"><title>jamba-large: 398B totaux, 94B actifs (ikp)</title></circle>
+<circle cx="864.5" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>kimi-k2: 1000B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="867.8" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>kimi-k2.5-think: 1040B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="867.8" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>kimi-k2.6-think: 1040B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="764.6" cy="346.5" r="5" fill="#2674b8" fill-opacity=".75"><title>ernie-4.5-300b-a47b: 300B totaux, 47B actifs (ikp)</title></circle>
+<circle cx="799.4" cy="350.6" r="5" fill="#2674b8" fill-opacity=".75"><title>minimax-m1-think: 456B totaux, 45.9B actifs (ikp)</title></circle>
+<circle cx="742.6" cy="483.1" r="5" fill="#2674b8" fill-opacity=".75"><title>minimax-m2.7-think: 230B totaux, 10B actifs (ikp)</title></circle>
+<circle cx="778.6" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-4.5-think: 355B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="678.3" cy="475.7" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-4.5-air-think: 106B totaux, 12B actifs (ikp)</title></circle>
+<circle cx="779.1" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-4.6-think: 357B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="779.3" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-4.7-think: 358B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="573.5" cy="508.9" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-4.7-flash-think: 30B totaux, 3B actifs (ikp)</title></circle>
+<circle cx="654.9" cy="472.0" r="5" fill="#2674b8" fill-opacity=".75"><title>hunyuan-a13b: 80B totaux, 13B actifs (ikp)</title></circle>
+<circle cx="678.3" cy="475.7" r="5" fill="#2674b8" fill-opacity=".75"><title>intellect-3-think: 106B totaux, 12B actifs (ikp)</title></circle>
+<circle cx="688.6" cy="475.7" r="5" fill="#2674b8" fill-opacity=".75"><title>nemotron-3-super-120b: 120B totaux, 12B actifs (ikp)</title></circle>
+<circle cx="573.5" cy="508.9" r="5" fill="#2674b8" fill-opacity=".75"><title>nemotron-3-nano-30b: 30B totaux, 3B actifs (ikp)</title></circle>
+<circle cx="729.7" cy="479.4" r="5" fill="#2674b8" fill-opacity=".75"><title>step-3.5-flash-think: 197B totaux, 11B actifs (ikp)</title></circle>
+<circle cx="767.1" cy="464.6" r="5" fill="#2674b8" fill-opacity=".75"><title>mimo-v2-flash: 309B totaux, 15B actifs (ikp)</title></circle>
+<circle cx="610.3" cy="472.4" r="5" fill="#2674b8" fill-opacity=".75"><title>mixtral-8x7b: 46.7B totaux, 12.9B actifs (ikp)</title></circle>
+<circle cx="676.7" cy="492.7" r="5" fill="#2674b8" fill-opacity=".75"><title>ling-2.6-flash: 104B totaux, 7.4B actifs (ikp)</title></circle>
+<circle cx="840.0" cy="372.3" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-5: 744B totaux, 40B actifs (ikp)</title></circle>
+<circle cx="841.1" cy="372.3" r="5" fill="#2674b8" fill-opacity=".75"><title>glm-5.1: 754B totaux, 40B actifs (ikp)</title></circle>
+<circle cx="867.8" cy="401.9" r="5" fill="#2674b8" fill-opacity=".75"><title>kimi-k2.7-code: 1040B totaux, 32B actifs (ikp)</title></circle>
+<circle cx="814.9" cy="317.0" r="5" fill="#2674b8" fill-opacity=".75"><title>nemotron-3-ultra: 550B totaux, 55B actifs (ikp)</title></circle>
+<circle cx="313.0" cy="519.0" r="5" fill="#e57c28" fill-opacity=".75"><title>facebook/MobileMoE-S-Base: 1.3B totaux, 0.272B actifs (huggingface)</title></circle>
+<circle cx="376.7" cy="518.1" r="5" fill="#e57c28" fill-opacity=".75"><title>facebook/MobileMoE-M-Base: 2.8B totaux, 0.528B actifs (huggingface)</title></circle>
+<circle cx="429.7" cy="516.6" r="5" fill="#e57c28" fill-opacity=".75"><title>facebook/MobileMoE-L-Base: 5.3B totaux, 0.922B actifs (huggingface)</title></circle>
+<circle cx="521.4" cy="509.7" r="5" fill="#e57c28" fill-opacity=".75"><title>amd/Instella-MoE-16B-A3B-Think: 16B totaux, 2.8B actifs (huggingface)</title></circle>
+<circle cx="522.6" cy="508.3" r="5" fill="#e57c28" fill-opacity=".75"><title>trillionlabs/Gravity-MoE-16.2B-A3.2B: 16.24B totaux, 3.16B actifs (huggingface)</title></circle>
+<circle cx="572.3" cy="500.3" r="5" fill="#e57c28" fill-opacity=".75"><title>trillionlabs/Gravity-30B-A5B-Base: 29.56B totaux, 5.34B actifs (huggingface)</title></circle>
+<circle cx="506.0" cy="516.0" r="5" fill="#e57c28" fill-opacity=".75"><title>PleIAs/Baguettotron-MoE: 13.3B totaux, 1.08B actifs (huggingface)</title></circle>
+<circle cx="100.0" cy="519.9" r="5" fill="#e57c28" fill-opacity=".75"><title>FlameF0X/TinyMoE-100m-2x8: 0.0998093B totaux, 0.0225446B actifs (huggingface)</title></circle>
+<circle cx="313.0" cy="518.9" r="5" fill="#e57c28" fill-opacity=".75"><title>CMU-FLAME/FLAME-MoE-290M-1.3B: 1.3B totaux, 0.29B actifs (huggingface)</title></circle>
+<circle cx="484.8" cy="513.7" r="5" fill="#e57c28" fill-opacity=".75"><title>CMU-FLAME/FLAME-MoE-1.7B-10.3B: 10.3B totaux, 1.7B actifs (huggingface)</title></circle>
+<circle cx="543.9" cy="506.7" r="5" fill="#e57c28" fill-opacity=".75"><title>openai/gpt-oss-20b: 21B totaux, 3.6B actifs (huggingface)</title></circle>
+<circle cx="686.5" cy="501.2" r="5" fill="#e57c28" fill-opacity=".75"><title>openai/gpt-oss-120b: 117B totaux, 5.1B actifs (huggingface)</title></circle>
+<circle cx="626.8" cy="468.3" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen2-57B-A14B-Instruct: 57B totaux, 14B actifs (huggingface)</title></circle>
+<circle cx="803.6" cy="457.2" r="5" fill="#e57c28" fill-opacity=".75"><title>Snowflake/snowflake-arctic-instruct: 480B totaux, 17B actifs (huggingface)</title></circle>
+<circle cx="768.4" cy="202.5" r="5" fill="#e57c28" fill-opacity=".75"><title>xai-org/grok-1: 314B totaux, 86B actifs (huggingface)</title></circle>
+<circle cx="576.3" cy="508.9" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3-VL-30B-A3B-Instruct: 31B totaux, 3B actifs (huggingface)</title></circle>
+<circle cx="744.4" cy="438.8" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3-VL-235B-A22B-Instruct: 235B totaux, 22B actifs (huggingface)</title></circle>
+<circle cx="574.9" cy="507.8" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3-Coder-30B-A3B-Instruct: 30.5B totaux, 3.3B actifs (huggingface)</title></circle>
+<circle cx="654.9" cy="508.9" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3-Coder-Next: 80B totaux, 3B actifs (huggingface)</title></circle>
+<circle cx="803.6" cy="390.8" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8: 480B totaux, 35B actifs (huggingface)</title></circle>
+<circle cx="586.3" cy="508.9" r="5" fill="#e57c28" fill-opacity=".75"><title>Qwen/Qwen3.6-35B-A3B: 35B totaux, 3B actifs (huggingface)</title></circle>
+<circle cx="866.2" cy="365.0" r="5" fill="#e57c28" fill-opacity=".75"><title>XiaomiMiMo/MiMo-V2.5-Pro: 1020B totaux, 42B actifs (huggingface)</title></circle>
+<circle cx="840.0" cy="372.3" r="5" fill="#e57c28" fill-opacity=".75"><title>zai-org/GLM-5: 744B totaux, 40B actifs (huggingface)</title></circle>
+<circle cx="770.2" cy="453.6" r="5" fill="#e57c28" fill-opacity=".75"><title>zai-org/GLM-5.3-Flash: 321B totaux, 18B actifs (huggingface)</title></circle>
+<circle cx="950.0" cy="136.1" r="5" fill="#e57c28" fill-opacity=".75"><title>unsloth/Kimi-K3-GGUF: 2800B totaux, 104B actifs (huggingface)</title></circle>
+<circle cx="840.0" cy="372.3" r="5" fill="#e57c28" fill-opacity=".75"><title>zai-org/GLM-5.3: 744B totaux, 40B actifs (huggingface)</title></circle>
+<text x="796.1" y="161.0" font-size="11">jamba-large</text>
+<text x="776.4" y="220.5" font-size="11">xai-org/grok-1</text>
+<text x="710.0" y="364.0" font-size="11">mixtral-8x22b</text>
+<text x="772.6" y="364.5" font-size="11">ernie-4.5-300b-a47b</text>
+<line x1="100" y1="520" x2="950" y2="520" stroke="#253244"/>
+<line x1="100" y1="90" x2="100" y2="520" stroke="#253244"/>
+<text x="525.0" y="575" text-anchor="middle" font-size="15">Paramètres totaux (milliards, échelle logarithmique)</text>
+<text x="25" y="305.0" text-anchor="middle" font-size="15" transform="rotate(-90 25 305.0)">Paramètres actifs (milliards)</text>
+<circle cx="720" cy="596" r="5" fill="#2674b8"/>
+<text x="732" y="601" font-size="13">ikp</text>
+<circle cx="855" cy="596" r="5" fill="#e57c28"/>
+<text x="867" y="601" font-size="13">huggingface</text>
+</svg>
