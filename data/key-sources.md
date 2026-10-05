@@ -7,7 +7,10 @@
 L'estimation du nombre de paramètres des modèles fermées a été extraite du site web de l'article [Incompressible Knowledge Probes: Estimating Black-Box LLM Parameter Counts via Factual Capacity](https://01.me/research/ikp/).
 
 # Paramètres activés des modèles fermés
-Le nombre de paramètres activés des modèles fermés ont été prédit à partir d'une regression sur une liste de modèles ouverts
+Le nombre de paramètres activés des modèles fermés ont été prédit à partir d'une regression sur une liste de modèles ouverts.
+Création d'un fichier csv qui reprend les modeles de https://github.com/19PINE-AI/ikp/blob/main/configs/all_models.json qui ont un nombre de paramètre et paramètres activés renseignés et non-égaux (MoE). Le fichier a 3 colonnes : model,params, params_activated.
+Ajout de 20 modèles d'huggingface.
+Suppression des doublons et gpt-4 (nombre de paramètre non vériafiable).
 
 # Tokens des prompts system
 Le nombre de tokens du prompt système a été calculé avec le tokenizer du calculateur, à partir des leak de prompt system sur le dépôt github `https://github.com/asgeirtj/system_prompts_leaks`.
