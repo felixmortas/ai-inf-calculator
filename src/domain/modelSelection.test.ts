@@ -14,9 +14,9 @@ describe('sélection de modèle', () => {
   });
 
   it('résout les deux modes Mistral avec pays et facteurs complets', () => {
-    expect(resolveMistralModel('fast')).toBe('mistral-small');
-    expect(resolveMistralModel('reasoning')).toBe('mistral-large');
-    for (const id of ['mistral-small', 'mistral-large']) {
+    expect(resolveMistralModel('fast')).toBe('mistral-medium-3.1');
+    expect(resolveMistralModel('reasoning')).toBe('mistral-medium-3.1');
+    for (const id of ['mistral-medium-3.1', 'mistral-medium-3.1']) {
       expect(resolveImpactParameters('Mistral AI', id)).toMatchObject({ provider: 'Mistral AI', id, hostingCountry: 'CH' });
     }
   });

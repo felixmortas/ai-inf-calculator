@@ -33,7 +33,7 @@ describe('conversationReducer', () => {
       { type: 'modelSelected', modelId: 'gpt-5.6-terra' },
       { type: 'providerSelected', provider: 'Mistral AI' },
       { type: 'mistralModeSelected', mode: 'reasoning' },
-      { type: 'modelSelected', modelId: 'mistral-small' },
+      { type: 'modelSelected', modelId: 'mistral-medium-3.1' },
     ] as const;
     for (const choice of choices) {
       const changed = conversationReducer(state, choice);
@@ -61,7 +61,7 @@ describe('conversationReducer', () => {
 
   it('périme un résultat Mistral actuel après changement de mode même si le modèle reste identique', () => {
     let state = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'Mistral AI' });
-    state = conversationReducer(state, { type: 'modelSelected', modelId: 'mistral-large' });
+    state = conversationReducer(state, { type: 'modelSelected', modelId: 'mistral-medium-3.1' });
     state = conversationReducer(state, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Texte Mistral' });
     const fingerprint = impactFingerprint(state, 'one');
@@ -69,7 +69,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     expect(isImpactCurrent(state, 'one')).toBe(true);
     const changed = conversationReducer(state, { type: 'mistralModeSelected', mode: 'reasoning' });
-    expect(changed.modelId).toBe('mistral-large');
+    expect(changed.modelId).toBe('mistral-medium-3.1');
     expect(changed.blocks[0].message).toBe('Texte Mistral');
     expect(isImpactCurrent(changed, 'one')).toBe(false);
   });

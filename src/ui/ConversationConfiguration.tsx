@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
-import { chatGptProvider, mistralProvider, resolveMistralModel, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
+import { chatGptProvider, chatGptSubscriptions, mistralProvider, resolveMistralModel, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 
@@ -88,8 +88,7 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
         <div className="field">
           <label htmlFor="subscription">{fr.subscriptionLabel}</label>
           <select id="subscription" value={state.subscription} onChange={selectSubscription}>
-            <option value="without-paid-subscription">{fr.subscriptionFree}</option>
-            <option value="with-paid-subscription">{fr.subscriptionPaid}</option>
+            {chatGptSubscriptions.map(({ id, label }) => <option key={id} value={id}>{fr[label]}</option>)}
           </select>
         </div>
       ) : null}

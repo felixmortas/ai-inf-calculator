@@ -40,11 +40,11 @@ describe('parcours de départ', () => {
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
     await user.selectOptions(screen.getByLabelText('Chatbot'), 'Mistral AI');
-    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-small');
+    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-medium-3.1');
     await user.selectOptions(screen.getByLabelText('Mode Mistral'), 'reasoning');
-    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-large');
-    await user.selectOptions(screen.getByLabelText('Modèle applicable à la conversation'), 'mistral-small');
-    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-small');
+    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-medium-3.1');
+    await user.selectOptions(screen.getByLabelText('Modèle applicable à la conversation'), 'mistral-medium-3.1');
+    expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('mistral-medium-3.1');
   });
 
   it('laisse corriger directement la référence ChatGPT proposée', async () => {
@@ -102,7 +102,7 @@ describe('parcours de départ', () => {
       expect(screen.getByLabelText('Chatbot')).toHaveValue('Mistral AI');
       expect(screen.getByLabelText('Mode Mistral')).toHaveValue('');
       expect(screen.getByLabelText('Modèle applicable à la conversation')).toHaveValue('');
-      expect(screen.queryByRole('option', { name: 'mistral-small' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'mistral-medium-3.1' })).not.toBeInTheDocument();
       expect(screen.getByLabelText('Chatbot')).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeDisabled();
       expect(screen.queryByRole('button', { name: 'Calculer cet échange' })).not.toBeInTheDocument();
@@ -111,7 +111,7 @@ describe('parcours de départ', () => {
       expect(screen.getByRole('button', { name: 'Continuer vers le fil' })).toBeEnabled();
       await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
       expect(screen.getByRole('heading', { name: 'Fil de conversation' })).toHaveFocus();
-      expect(screen.getByText(/Référence actuelle : Mistral AI — mistral-large/)).toBeVisible();
+      expect(screen.getByText(/Référence actuelle : Mistral AI — mistral-medium-3.1/)).toBeVisible();
       expect(screen.getByDisplayValue('Question importée')).toBeVisible();
       expect(fetcher).toHaveBeenCalledOnce();
     } finally { vi.unstubAllGlobals(); }

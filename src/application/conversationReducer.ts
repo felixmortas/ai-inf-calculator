@@ -3,7 +3,8 @@ import type { ShowerEquivalence } from '../domain/showerEquivalence';
 import {
   canSelectModel,
   chatGptProvider,
-  chatGptSubscriptionModels,
+  defaultChatGptSubscription,
+  isChatGptSubscription,
   mistralModeModels,
   mistralProvider,
   resolveChatGptModel,
@@ -128,7 +129,7 @@ export type ConversationAction =
   | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
-const initialSubscription: ChatGptSubscription = 'without-paid-subscription';
+const initialSubscription: ChatGptSubscription = defaultChatGptSubscription;
 
 export const initialConversationState: ConversationState = Object.freeze({
   provider: chatGptProvider,
@@ -301,7 +302,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
     }
     case 'subscriptionSelected':
       if (state.provider !== chatGptProvider) return state;
-      if (!Object.hasOwn(chatGptSubscriptionModels, action.subscription)) return state;
+      if (!isChatGptSubscription(action.subscription)) return state;
       if (action.subscription === state.subscription) return state;
       return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({
         ...state, subscription: action.subscription, modelId: resolveChatGptModel(action.subscription), parameterValidationInvalid: false,
