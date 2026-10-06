@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -23,7 +23,7 @@ describe('parcours de départ', () => {
   it('propose les deux voies dans l’ordre et place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
-    const actions = screen.getAllByRole('button');
+    const actions = within(screen.getByRole('region', { name: 'Choisissez votre méthode de calcul :' })).getAllByRole('button');
     expect(actions.map((action) => action.getAttribute('aria-label'))).toEqual(['Importer un lien Mistral', 'Saisir un échange']);
     expect(screen.getByRole('heading', { name: 'Choisissez votre méthode de calcul :' })).toHaveFocus();
     await user.click(actions[1]);

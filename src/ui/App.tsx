@@ -16,6 +16,7 @@ import { fr } from '../i18n/fr';
 import { ConversationConfiguration } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
 import { ConversationImport } from './ConversationImport';
+import { Methodology } from './Methodology';
 import './styles.css';
 
 function Icon({ children }: { readonly children: string }) { return <span aria-hidden="true" className="icon-glyph">{children}</span>; }
@@ -34,10 +35,13 @@ export function impactTexts(
 export function App() {
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
   const summaryPending = state.summary?.status === 'pending';
-  const [step, setStep] = useState<'home' | 'import' | 'selection' | 'thread'>('home');
+  const [step, setStep] = useState<'home' | 'import' | 'selection' | 'thread' | 'methodology'>('home');
+  const stepBeforeMethodology = useRef<'home' | 'import' | 'selection' | 'thread'>('home');
+  const visibleStep = step === 'methodology' ? stepBeforeMethodology.current : step;
   const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'import' | 'thread'>('home');
   const [awaitingImportedMistralMode, setAwaitingImportedMistralMode] = useState(false);
   const stepTitle = useRef<HTMLHeadingElement>(null);
+  const methodologyTitle = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<'summary' | 'reference' | null>(null);
   const calculationStatus = useRef<HTMLDivElement>(null);
   const calculationReturnFocus = useRef<HTMLElement | null>(null);
@@ -77,7 +81,7 @@ export function App() {
       const target = returnFocus.current === 'summary' ? document.querySelector<HTMLButtonElement>('.summary-panel button') : null;
       (target ?? document.querySelector<HTMLButtonElement>('.thread-reference button'))?.focus();
       returnFocus.current = null;
-    } else stepTitle.current?.focus();
+    } else (step === 'methodology' ? methodologyTitle.current : stepTitle.current)?.focus();
     if (step === 'thread' && document.documentElement.scrollHeight > window.innerHeight) {
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
     }
@@ -113,6 +117,11 @@ export function App() {
   function openManualSelection(origin: 'home' | 'import') {
     setAwaitingImportedMistralMode(false);
     openSelection(origin);
+  }
+
+  function openMethodology() {
+    if (step !== 'methodology') stepBeforeMethodology.current = step;
+    setStep('methodology');
   }
 
   useEffect(() => {
@@ -222,16 +231,20 @@ export function App() {
   return (
     <>
     <main className="app-shell" inert={summaryPending} aria-busy={summaryPending}>
-      <header>
-        <h1>{fr.title}</h1>
-        <p>{fr.introduction}</p>
+      <header className="app-header">
+        <div className="app-header-copy">
+          <h1>{fr.title}</h1>
+          <p>{fr.introduction}</p>
+        </div>
+        {step !== 'methodology' ? <button className="icon-button methodology-help" type="button" aria-label={fr.methodologyAction} onClick={openMethodology}><Icon>?</Icon></button> : null}
       </header>
-      {step === 'home' ? <section className="start-paths" aria-labelledby="step-title">
+      {step === 'methodology' ? <Methodology titleRef={methodologyTitle} onReturn={() => setStep(stepBeforeMethodology.current)} /> : null}
+      {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths" aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.homeTitle}</h2>
         <div className="start-choice"><h3>{fr.importPathTitle}</h3><p>{fr.importPathHelp}</p><button className="icon-button" type="button" aria-label={fr.importPathAction} onClick={() => setStep('import')}><Icon>→</Icon></button></div>
         <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button className="icon-button" type="button" aria-label={fr.manualPathAction} onClick={() => openManualSelection('home')}><Icon>→</Icon></button></div>
       </section> : null}
-      {step === 'import' ? <section aria-labelledby="step-title">
+      {visibleStep === 'import' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.importPathTitle}</h2>
         <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>←</Icon></button>
         <ConversationImport state={state} dispatch={dispatch} onImported={() => {
@@ -240,13 +253,13 @@ export function App() {
           openSelection('import');
         }} onManual={() => openManualSelection('import')} />
       </section> : null}
-      {step === 'selection' ? <section aria-labelledby="step-title">
+      {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
         <button className="icon-button below-title" type="button" aria-label={selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction} onClick={() => setStep(selectionOrigin)}><Icon>←</Icon></button>
         <ConversationConfiguration state={state} dispatch={configurationDispatch} requireMistralMode={awaitingImportedMistralMode} onMistralModeChosen={() => setAwaitingImportedMistralMode(false)} initialAdvancedOpen={openAdvancedOnSelection} />
         <button type="button" disabled={awaitingImportedMistralMode} onClick={() => { if (!awaitingImportedMistralMode) setStep('thread'); }}>{fr.continueThreadAction}</button>
       </section> : null}
-      {step === 'thread' ? <section aria-labelledby="step-title">
+      {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
         <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>⌂</Icon></button>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}

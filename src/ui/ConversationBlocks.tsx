@@ -14,7 +14,7 @@ import {
 } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 import { formatQuantity } from './quantityFormatter';
-import { hostingCountryOptions, userCountryOptions } from '../data/modelCatalog';
+import { userCountryOptions } from '../data/modelCatalog';
 
 export { localSourceMaxBytes } from '../application/conversationReducer';
 
