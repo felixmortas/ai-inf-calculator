@@ -20,3 +20,15 @@ Les modèles n'ayant pas de prompt system correspondant sur le depôt se sont vu
 # Consommation des tokens d'input et de cache
 Les ratios input/output et cache/input sont calculés à partir des prix des tokens sur openrouters.
 On réalise une approche market-based car si même pas représentative, elle équilibre avec les incertitudes. Cette approche offre une méthode d'estimation simple et pertinente par rapport aux bonnes pratiques souhaitant être mises en avant.
+
+# Localisation des data centers et fournisseurs de coud pour chaque fournisseur de LLM
+OpenAI en partenariat avec Microsoft est probablement chez Azure et aux Etats-Unis pour les utilisateurs gratuits.
+Mistral AI étant également en partenariat avec Microsoft, les data center souverains sont en Europe, probablement en Suisse.
+Gemini est forcément chez Google, probablement aux Etats-Unis pour les utilisateurs gratuits.
+Et Anthropic peut être chez les 3 cloud provider. Nous allons sélectionner AWS car il est le fournisseur le plus concurrentiel. Les modèles sont probablement hébergés aux Etats-Unis pour les utilisateurs gratuits.
+
+# PUE par pays et fournisseur
+
+
+# WUE par pays et fournisseur
+

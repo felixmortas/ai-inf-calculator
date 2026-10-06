@@ -1,5 +1,5 @@
-provider,country
-MistralAI,Switzerland
-ChatGPT,United States
-Gemini,United States
-Claude,United States
+provider,country,cloud
+MistralAI,Switzerland,microsoft
+ChatGPT,United States,microsoft
+Gemini,United States,google
+Claude,United States,aws
