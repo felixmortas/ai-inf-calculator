@@ -1,7 +1,10 @@
 | Title | id | source | link | Source file | Generated file(s) |
 |---|---|---|---|---|---|
-| Emission factors | emission_factor | Ember Energy | https://files.ember-energy.org/public-downloads/generation/outputs/release_generation_yearly_global.csv | release_generation_yearly_global.csv | carbon_emissions_intensity_2025.csv |
+| Emission factors | emission_factor | Ember Energy |  | release_generation_yearly_global.csv | carbon_emissions_intensity_2025.csv |
 | Drought risk | dry_risk | WRI Aqueduc | https://files.wri.org/aqueduct/aqueduct-4-0-water-risk-data.zip | Aqueduct40_baseline_annual_y2023m07d05.csv | country_drought_risk.csv |
+
+# Facteurs d'émission carbone
+L’indicateur présente, pour chaque pays ou économie (`Area type = Country or economy`) couvert par le jeu de données [Ember](https://files.ember-energy.org/public-downloads/generation/outputs/release_generation_yearly_global.csv), l’intensité carbone moyenne de la production d’électricité en 2025, exprimée en `gCO2e/kWh`. Le périmètre est limité aux observations de l’année 2025 et au total de la production électrique (`Electricity source = Total generation`), afin de mesurer l’intensité du mix de production domestique dans son ensemble, et non celle des différentes technologies ni celle de l’électricité consommée après prise en compte des échanges internationaux. La variable `Emissions intensity (gCO2e/kWh)` est reprise directement depuis Ember, sans recalcul à partir des émissions et de la production ; les observations sans valeur renseignée sont exclues. Un contrôle garantit par ailleurs l’unicité d’une observation par pays après filtrage, toute duplication entraînant une erreur plutôt qu’une déduplication automatique. Le nom et l’unité de la variable sont conservés à l’identique afin d’assurer la traçabilité avec la source. Enfin, la ligne `World` (473 `gCO2e/kWh`) constitue une référence distincte, correspondant à l’intensité mondiale 2024 publiée par Ember dans le *Global Electricity Review 2025* ; elle est utilisée comme valeur de référence et ne se substitue pas aux données nationales.
 
 # Paramètres des modèles fermés
 L'estimation du nombre de paramètres des modèles fermées a été extraite du site web de l'article [Incompressible Knowledge Probes: Estimating Black-Box LLM Parameter Counts via Factual Capacity](https://01.me/research/ikp/).
