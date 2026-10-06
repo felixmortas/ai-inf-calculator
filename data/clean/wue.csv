@@ -1,6 +1,277 @@
-Area,wue,source,version,date
-France,0.01,AWS,0,18/09/2026
-Brazil,0.5,AWS,0,18/09/2026
-India,0.7,AWS,0,18/09/2026
-United States,0.15,AWS,0,18/09/2026
-Switzerland,0.02,AWS,0,18/09/2026
+Area,wue,source
+Albania,0.1200,AWS
+Albania,0.2700,Azure
+Albania,0.5000,GCP
+Argentina,0.1000,AWS
+Argentina,0.2700,Azure
+Argentina,0.8400,GCP
+Armenia,0.1200,AWS
+Armenia,0.2700,Azure
+Armenia,1.2000,GCP
+Australia,0.1200,AWS
+Australia,0.2700,Azure
+Australia,0.8500,GCP
+Austria,0.1200,AWS
+Austria,0.2700,Azure
+Austria,0.5000,GCP
+Azerbaijan,0.1200,AWS
+Azerbaijan,0.2700,Azure
+Azerbaijan,1.2000,GCP
+Bangladesh,0.1200,AWS
+Bangladesh,0.2700,Azure
+Bangladesh,1.2000,GCP
+Belarus,0.1200,AWS
+Belarus,0.2700,Azure
+Belarus,0.5000,GCP
+Belgium,0.1200,AWS
+Belgium,0.2700,Azure
+Belgium,0.5000,GCP
+Bolivia,0.1000,AWS
+Bolivia,0.2700,Azure
+Bolivia,0.8400,GCP
+Bosnia Herzegovina,0.1200,AWS
+Bosnia Herzegovina,0.2700,Azure
+Bosnia Herzegovina,0.5000,GCP
+Brazil,0.1000,AWS
+Brazil,0.2700,Azure
+Brazil,0.8400,GCP
+Bulgaria,0.1200,AWS
+Bulgaria,0.2700,Azure
+Bulgaria,0.5000,GCP
+Cambodia,0.1200,AWS
+Cambodia,0.2700,Azure
+Cambodia,1.2000,GCP
+Canada,0.1000,AWS
+Canada,0.2700,Azure
+Canada,0.8400,GCP
+Chile,0.1000,AWS
+Chile,0.2700,Azure
+Chile,0.8400,GCP
+China,0.1200,AWS
+China,0.2700,Azure
+China,1.2000,GCP
+Colombia,0.1000,AWS
+Colombia,0.2700,Azure
+Colombia,0.8400,GCP
+Costa Rica,0.1000,AWS
+Costa Rica,0.2700,Azure
+Costa Rica,0.8400,GCP
+Croatia,0.1200,AWS
+Croatia,0.2700,Azure
+Croatia,0.5000,GCP
+Cyprus,0.1200,AWS
+Cyprus,0.2700,Azure
+Cyprus,0.5000,GCP
+Czechia,0.1200,AWS
+Czechia,0.2700,Azure
+Czechia,0.5000,GCP
+Denmark,0.1200,AWS
+Denmark,0.2700,Azure
+Denmark,0.5000,GCP
+Dominican Republic,0.1000,AWS
+Dominican Republic,0.2700,Azure
+Dominican Republic,0.8400,GCP
+Ecuador,0.1000,AWS
+Ecuador,0.2700,Azure
+Ecuador,0.8400,GCP
+Egypt,0.1200,AWS
+Egypt,0.2700,Azure
+Egypt,1.2000,GCP
+El Salvador,0.1000,AWS
+El Salvador,0.2700,Azure
+El Salvador,0.8400,GCP
+Estonia,0.1200,AWS
+Estonia,0.2700,Azure
+Estonia,0.5000,GCP
+Ethiopia,0.1200,AWS
+Ethiopia,0.2700,Azure
+Ethiopia,1.2000,GCP
+Finland,0.1200,AWS
+Finland,0.2700,Azure
+Finland,0.5000,GCP
+France,0.1200,AWS
+France,0.2700,Azure
+France,0.5000,GCP
+Georgia,0.1200,AWS
+Georgia,0.2700,Azure
+Georgia,0.5000,GCP
+Germany,0.1200,AWS
+Germany,0.2700,Azure
+Germany,0.5000,GCP
+Greece,0.1200,AWS
+Greece,0.2700,Azure
+Greece,0.5000,GCP
+Hungary,0.1200,AWS
+Hungary,0.2700,Azure
+Hungary,0.5000,GCP
+Iceland,0.1200,AWS
+Iceland,0.2700,Azure
+Iceland,0.5000,GCP
+India,0.1200,AWS
+India,0.2700,Azure
+India,1.2000,GCP
+Iran,0.1200,AWS
+Iran,0.2700,Azure
+Iran,1.2000,GCP
+Ireland,0.1200,AWS
+Ireland,0.2700,Azure
+Ireland,0.5000,GCP
+Israel,0.1200,AWS
+Israel,0.2700,Azure
+Israel,1.2000,GCP
+Japan,0.1200,AWS
+Japan,0.2700,Azure
+Japan,1.2000,GCP
+Kazakhstan,0.1200,AWS
+Kazakhstan,0.2700,Azure
+Kazakhstan,1.2000,GCP
+Kenya,0.1200,AWS
+Kenya,0.2700,Azure
+Kenya,1.2000,GCP
+Kosovo,0.1200,AWS
+Kosovo,0.2700,Azure
+Kosovo,0.5000,GCP
+Kuwait,0.1200,AWS
+Kuwait,0.2700,Azure
+Kuwait,1.2000,GCP
+Kyrgyzstan,0.1200,AWS
+Kyrgyzstan,0.2700,Azure
+Kyrgyzstan,1.2000,GCP
+Latvia,0.1200,AWS
+Latvia,0.2700,Azure
+Latvia,0.5000,GCP
+Lithuania,0.1200,AWS
+Lithuania,0.2700,Azure
+Lithuania,0.5000,GCP
+Luxembourg,0.1200,AWS
+Luxembourg,0.2700,Azure
+Luxembourg,0.5000,GCP
+Malaysia,0.1200,AWS
+Malaysia,0.2700,Azure
+Malaysia,1.2000,GCP
+Malta,0.1200,AWS
+Malta,0.2700,Azure
+Malta,0.5000,GCP
+Mexico,0.1000,AWS
+Mexico,0.2700,Azure
+Mexico,0.8400,GCP
+Moldova,0.1200,AWS
+Moldova,0.2700,Azure
+Moldova,0.5000,GCP
+Mongolia,0.1200,AWS
+Mongolia,0.2700,Azure
+Mongolia,1.2000,GCP
+Montenegro,0.1200,AWS
+Montenegro,0.2700,Azure
+Montenegro,0.5000,GCP
+Morocco,0.1200,AWS
+Morocco,0.2700,Azure
+Morocco,1.2000,GCP
+Netherlands,0.1200,AWS
+Netherlands,0.2700,Azure
+Netherlands,0.5000,GCP
+New Zealand,0.1200,AWS
+New Zealand,0.2700,Azure
+New Zealand,0.8500,GCP
+Nigeria,0.1200,AWS
+Nigeria,0.2700,Azure
+Nigeria,1.2000,GCP
+North Macedonia,0.1200,AWS
+North Macedonia,0.2700,Azure
+North Macedonia,0.5000,GCP
+Norway,0.1200,AWS
+Norway,0.2700,Azure
+Norway,0.5000,GCP
+Oman,0.1200,AWS
+Oman,0.2700,Azure
+Oman,1.2000,GCP
+Pakistan,0.1200,AWS
+Pakistan,0.2700,Azure
+Pakistan,1.2000,GCP
+Paraguay,0.1000,AWS
+Paraguay,0.2700,Azure
+Paraguay,0.8400,GCP
+Peru,0.1000,AWS
+Peru,0.2700,Azure
+Peru,0.8400,GCP
+Poland,0.1200,AWS
+Poland,0.2700,Azure
+Poland,0.5000,GCP
+Portugal,0.1200,AWS
+Portugal,0.2700,Azure
+Portugal,0.5000,GCP
+Puerto Rico,0.1000,AWS
+Puerto Rico,0.2700,Azure
+Puerto Rico,0.8400,GCP
+Qatar,0.1200,AWS
+Qatar,0.2700,Azure
+Qatar,1.2000,GCP
+Romania,0.1200,AWS
+Romania,0.2700,Azure
+Romania,0.5000,GCP
+Russia,0.1200,AWS
+Russia,0.2700,Azure
+Russia,0.5000,GCP
+Serbia,0.1200,AWS
+Serbia,0.2700,Azure
+Serbia,0.5000,GCP
+Singapore,0.1200,AWS
+Singapore,0.2700,Azure
+Singapore,1.2000,GCP
+Slovakia,0.1200,AWS
+Slovakia,0.2700,Azure
+Slovakia,0.5000,GCP
+Slovenia,0.1200,AWS
+Slovenia,0.2700,Azure
+Slovenia,0.5000,GCP
+South Africa,0.1200,AWS
+South Africa,0.2700,Azure
+South Africa,0.8500,GCP
+South Korea,0.1200,AWS
+South Korea,0.2700,Azure
+South Korea,1.2000,GCP
+Spain,0.1200,AWS
+Spain,0.2700,Azure
+Spain,0.5000,GCP
+Sri Lanka,0.1200,AWS
+Sri Lanka,0.2700,Azure
+Sri Lanka,1.2000,GCP
+Sweden,0.1200,AWS
+Sweden,0.2700,Azure
+Sweden,0.5000,GCP
+Switzerland,0.1200,AWS
+Switzerland,0.2700,Azure
+Switzerland,0.5000,GCP
+Taiwan (China),0.1200,AWS
+Taiwan (China),0.2700,Azure
+Taiwan (China),1.2000,GCP
+Tajikistan,0.1200,AWS
+Tajikistan,0.2700,Azure
+Tajikistan,1.2000,GCP
+Thailand,0.1200,AWS
+Thailand,0.2700,Azure
+Thailand,1.2000,GCP
+The Philippines,0.1200,AWS
+The Philippines,0.2700,Azure
+The Philippines,1.2000,GCP
+Tunisia,0.1200,AWS
+Tunisia,0.2700,Azure
+Tunisia,1.2000,GCP
+Türkiye,0.1200,AWS
+Türkiye,0.2700,Azure
+Türkiye,0.5000,GCP
+United Kingdom,0.1200,AWS
+United Kingdom,0.2700,Azure
+United Kingdom,0.5000,GCP
+United States,0.1000,AWS
+United States,0.2700,Azure
+United States,0.8400,GCP
+Uruguay,0.1000,AWS
+Uruguay,0.2700,Azure
+Uruguay,0.8400,GCP
+Uzbekistan,0.1200,AWS
+Uzbekistan,0.2700,Azure
+Uzbekistan,1.2000,GCP
+Viet Nam,0.1200,AWS
+Viet Nam,0.2700,Azure
+Viet Nam,1.2000,GCP

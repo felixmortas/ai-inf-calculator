@@ -241,9 +241,8 @@ export function resolveDroughtRisk(country: string, source = droughtRiskCsv): Dr
 }
 
 /** Résout exclusivement des données locales ; undefined signifie un blocage explicite. */
-function factorRows(source: string, key: string, expected: number, requiresMetadata = true): readonly EnvironmentalFactorRow[] {
+function factorRows(source: string, key: string, expected: number): readonly EnvironmentalFactorRow[] {
   return Object.freeze(parseRows(source).flatMap((row) => {
-    if (requiresMetadata && (!row.source || !row.version || !row.date)) return [];
     const value = Number(row[key]);
     return Number.isFinite(value) && value >= expected ? [Object.freeze({ country: row.Area, value })] : [];
   }));
@@ -252,7 +251,7 @@ function factorRows(source: string, key: string, expected: number, requiresMetad
 const environmentalFactorRows: Readonly<Record<EnvironmentalFactor, readonly EnvironmentalFactorRow[]>> = Object.freeze({
   pue: factorRows(pueCsv, 'pue', 1),
   wue: factorRows(wueCsv, 'wue', 0),
-  carbonIntensity: factorRows(carbonCsv, 'Emissions intensity (gCO2e/kWh)', 0, false),
+  carbonIntensity: factorRows(carbonCsv, 'Emissions intensity (gCO2e/kWh)', 0),
 });
 
 /** Résout les paramètres sans jamais modifier les catalogues importés. */
