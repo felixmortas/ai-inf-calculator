@@ -2,7 +2,7 @@
 
 ## Données de référence
 
-Le catalogue local validé au build porte versions, dates et provenance. Pour chaque modèle/fournisseur, il fournit au minimum `P_tot`, `P_act`, `S_tokens`, pays de référence, ratios `κ_in` et `κ_cache` calibrés à date, ainsi que les facteurs `PUE`, `EF`, `WUE`, risque de sécheresse et valeurs Monde nécessaires. `P_tot` et `P_act` sont exprimés en milliards de paramètres. Les prix ne sont jamais encodés dans les formules : `κ_in = prix_input / prix_output` et `κ_cache = prix_input_en_cache / prix_input`.
+Le catalogue local validé au build porte versions, dates et provenance. Pour chaque modèle/fournisseur, il fournit au minimum `P_tot`, `P_act`, `S_tokens`, pays de référence, ratios `κ_in` et `κ_cache` calibrés à date, ainsi que les facteurs `PUE`, `EF`, `WUE` et leurs valeurs Monde nécessaires. `P_tot` et `P_act` sont exprimés en milliards de paramètres. Les prix ne sont jamais encodés dans les formules : `κ_in = prix_input / prix_output` et `κ_cache = prix_input_en_cache / prix_input`.
 
 ## Comptage
 
@@ -45,7 +45,7 @@ water = (energy / 1000) × WUE(pays_hébergement, fournisseur)                [L
 total = Σ résultats de blocs renseignés à jour
 ```
 
-PUE est appliqué exactement une fois ; carbone et eau réutilisent la même énergie datacenter. Le risque est une catégorie recherchée pour le pays d’hébergement, sans somme ni multiplication. L’affichage peut convertir les unités mais ne modifie pas le calcul. Le modèle couvre l’usage uniquement, eau sur site uniquement, sans KV-cache réel, mesure physique de l’exécution ni marge chiffrée d’incertitude.
+PUE est appliqué exactement une fois ; carbone et eau réutilisent la même énergie datacenter. L’affichage peut convertir les unités mais ne modifie pas le calcul. Le modèle couvre l’usage uniquement, eau sur site uniquement, sans KV-cache réel, mesure physique de l’exécution ni marge chiffrée d’incertitude.
 
 ## Équivalence douche
 

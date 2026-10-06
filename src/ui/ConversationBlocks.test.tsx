@@ -205,7 +205,6 @@ describe('composition de la conversation', () => {
     const frenchCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
     await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
     const summary = await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
-    expect(summary.parentElement).toHaveTextContent('Medium - High (0.6-0.8)');
     expect(summary.parentElement).toHaveTextContent('🪨 Carbone:');
     french.unmount();
 
@@ -230,7 +229,6 @@ describe('composition de la conversation', () => {
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     expect(screen.getAllByText(/Énergie:/)).toHaveLength(1);
     expect(summaryEnergy).toBeGreaterThan(0);
-    expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).toBeVisible();
   });
 
@@ -254,19 +252,6 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
     expect(screen.getByText('Saisissez au moins un échange avant de calculer le bilan.')).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
-  });
-
-  it('signale un risque de sécheresse indisponible sans inventer de niveau', () => {
-    const fingerprint = impactFingerprint(initialConversationState);
-    let state = conversationReducer(initialConversationState, { type: 'summaryRequested', fingerprint });
-    state = conversationReducer(state, {
-      type: 'summaryResolved', fingerprint,
-      total: { energyWh: 1, carbonGco2e: 2, waterL: 3 },
-      droughtRisk: { status: 'unavailable' },
-    });
-    render(<ConversationBlocks state={state} dispatch={() => undefined} onCalculate={() => undefined} onCalculateAll={() => undefined} />);
-    expect(screen.getByText(/Risque de sécheresse du pays d’hébergement:/)).toHaveTextContent('Indisponible pour ce pays d’hébergement');
-    expect(screen.getByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).toBeVisible();
   });
 
   it('prépare les catégories dérivées complètes pour un bloc avec historique et artifact', () => {
@@ -414,7 +399,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'summaryRequested', fingerprint: summaryCurrentFingerprint });
     state = conversationReducer(state, {
       type: 'summaryResolved', fingerprint: summaryCurrentFingerprint,
-      total: { energyWh: 5, carbonGco2e: 7, waterL: 9 }, droughtRisk: { status: 'available', level: 'Low', source: 'country' },
+      total: { energyWh: 5, carbonGco2e: 7, waterL: 9 },
     });
     const current = renderBlocks(state);
     const heading = screen.getByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' });

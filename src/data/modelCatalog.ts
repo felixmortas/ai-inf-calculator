@@ -3,7 +3,6 @@ import pueCsv from '../../data/clean/pue.csv?raw';
 import wueCsv from '../../data/clean/wue.csv?raw';
 import providerCountryCsv from '../../data/clean/provider_country.csv?raw';
 import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw';
-import droughtRiskCsv from '../../data/clean/country_drought_risk.csv?raw';
 import { defaultImpactConstants, type ImpactConstants } from '../domain/impact';
 import { chatGptProvider, chatGptSubscriptionModels, mistralModeModels, mistralProvider } from '../domain/modelSelection';
 
@@ -215,29 +214,10 @@ export function resolveEnvironmentalFactor(
     : Object.freeze({ status: 'world', value: worldValue });
 }
 
-export type DroughtRisk =
-  | { readonly status: 'available'; readonly level: string; readonly source: EnvironmentalFactorSource }
-  | { readonly status: 'unavailable' };
-
 /** Pays d'hébergement localement catalogué pour le fournisseur sélectionné. */
 export function resolveHostingCountry(provider: string): string | undefined {
   const country = parseRows(providerCountryCsv).find((entry) => (entry.provider === 'MistralAI' ? mistralProvider : entry.provider) === provider)?.country;
   return country ? normalizeCountry(country) : undefined;
-}
-
-/** Le niveau reste catégoriel : « No Data » ne devient jamais un niveau inventé. */
-export function resolveDroughtRisk(country: string, source = droughtRiskCsv): DroughtRisk {
-  const normalized = normalizeCountry(country);
-  if (!normalized) return Object.freeze({ status: 'unavailable' });
-  const levelFor = (code: string) => parseRows(source).find((entry) => normalizeCountry(entry.Area) === code)?.drought_risk_level;
-  const countryLevel = levelFor(normalized);
-  if (countryLevel && countryLevel !== 'No Data') {
-    return Object.freeze({ status: 'available', level: countryLevel, source: 'country' });
-  }
-  const worldLevel = levelFor('WORLD');
-  return worldLevel && worldLevel !== 'No Data'
-    ? Object.freeze({ status: 'available', level: worldLevel, source: 'world' })
-    : Object.freeze({ status: 'unavailable' });
 }
 
 /** Résout exclusivement des données locales ; undefined signifie un blocage explicite. */

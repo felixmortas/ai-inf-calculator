@@ -33,7 +33,7 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
   - **success:** Tiktoken par défaut est employé, avec fallback `mots / 0,75` en cas d’échec ; texte vide et raisonnement non fourni comptent zéro.
 - **CAP-4 — Estimer les impacts**
   - **intent:** La personne déclenche le calcul d’un échange ou de toute la conversation et consulte les résultats à l’endroit adapté.
-  - **success:** Après calcul explicite, chaque échange montre carbone et eau avec incertitude ; le bilan valide montre carbone, eau, électricité et risque de sécheresse. Les formules, données et replis suivent `calculation-contract.md` ; le total additionne les valeurs non arrondies à jour.
+  - **success:** Après calcul explicite, chaque échange montre carbone et eau avec incertitude ; le bilan valide montre carbone, eau et électricité. Les formules, données et replis suivent `calculation-contract.md` ; le total additionne les valeurs non arrondies à jour.
 - **CAP-5 — Préserver la validité des résultats**
   - **intent:** La personne peut savoir quels résultats doivent être recalculés avant de consulter un total complet.
   - **success:** Toute modification invalide exactement les résultats dépendants et les signale par un texte ; aucun calcul n’est automatique et aucun total incomplet ou périmé n’est présenté comme actuel.
@@ -59,7 +59,6 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
 - Le noyau fonctionnel pur, le Worker local de tokenisation, les catalogues immuables versionnés et la séparation des couches suivent l’architecture adoptée.
 - Les valeurs internes en Wh, gCO₂e et L restent non arrondies ; seul l’affichage choisit les unités et arrondit à trois chiffres significatifs au plus selon `EXPERIENCE.md`. Les totaux partent des valeurs internes ; zéro, sous-seuil, changement d’unité après arrondi et dépassement de l’unité maximale sont traités.
 - Aucune valeur invalide, donnée indispensable absente ou division indéfinie ne produit un résultat présenté comme calculé.
-- Le risque de sécheresse est catégoriel, affiché seulement au total, non additif et non proportionnel au volume d’eau.
 - `DESIGN.md` et `EXPERIENCE.md` gouvernent l’expérience Canopée claire et priment sur les quatre maquettes statiques. Dialogues, annonces, focus, états textuels, cibles de 44 × 44 px, reflow à 320 px et zooms 200 % et 400 % suivent `EXPERIENCE.md`. Sa mention de CorsProxy décrit l’ancien état d’AD-8 ; l’architecture actualisée du 23 septembre fixe le Worker comme destination.
 
 ## Non-goals

@@ -13,7 +13,7 @@ updated: 2026-09-23
 
 Page web responsive, en français, sans compte, pour un public curieux et non technique. Le fil représente une conversation **déjà tenue** avec un chatbot : le calculateur guide la reconstruction et estime son impact ; il ne répond pas aux questions collées. Le système visuel est défini par [DESIGN.md](DESIGN.md). Pas de bibliothèque de composants imposée. Les calculs et textes saisis restent locaux ; l'import d'un lien Mistral suit un consentement ponctuel avant chaque requête distante. La session n'est pas conservée après fermeture.
 
-Les décisions récentes de Felix font évoluer le PRD : import par lien Mistral uniquement dans l'interface ; modèle ChatGPT prérempli mais directement modifiable ; chaque échange montre carbone et eau, tandis que l'électricité et le risque de sécheresse sont réservés au bilan. Les exigences de calcul en arrière-plan restent à réconcilier avec ces choix d'affichage. L'architecture AD-8 décrit encore CorsProxy ; la migration implémentée vers le Worker d'import HTML est la source actuelle pour la destination du consentement. Le dialogue doit montrer l'URL canonique transmise et l'endpoint Worker réellement configuré, sans nom d'hôte figé dans le texte.
+Les décisions récentes de Felix font évoluer le PRD : import par lien Mistral uniquement dans l'interface ; modèle ChatGPT prérempli mais directement modifiable ; chaque échange montre carbone et eau, tandis que l'électricité est réservée au bilan. Les exigences de calcul en arrière-plan restent à réconcilier avec ces choix d'affichage. L'architecture AD-8 décrit encore CorsProxy ; la migration implémentée vers le Worker d'import HTML est la source actuelle pour la destination du consentement. Le dialogue doit montrer l'URL canonique transmise et l'endpoint Worker réellement configuré, sans nom d'hôte figé dans le texte.
 
 ### Décisions à reporter dans le produit existant
 
@@ -22,7 +22,7 @@ Les décisions récentes de Felix font évoluer le PRD : import par lien Mistral
 | Quatre fournisseurs de liens annoncés | Seul le lien Mistral est proposé et accepté à l'import ; les autres chatbots restent disponibles en saisie manuelle. |
 | Configuration affichée avant toute saisie | Accueil à deux voies, puis choix du chatbot et du modèle dans la voie manuelle. |
 | Modèle ChatGPT déduit de l'abonnement et non éditable | Valeur de référence préremplie, mais choix direct parmi les modèles ChatGPT du catalogue. |
-| Électricité dans le résultat de chaque échange | Résultat d'échange limité au carbone et à l'eau ; électricité et risque de sécheresse figurent dans le bilan. |
+| Électricité dans le résultat de chaque échange | Résultat d'échange limité au carbone et à l'eau ; électricité figure dans le bilan. |
 | Valeurs en unités fixes | Unité adaptée à la quantité sur toutes les valeurs numériques affichées. |
 
 ## Information Architecture
@@ -66,8 +66,8 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 | Start choice | Deux actions entièrement visibles : import Mistral en premier, saisie manuelle en second. Choisir l'une ouvre son étape sans effacer l'autre possibilité. |
 | Exchange card | Les échanges antérieurs sont des cartes compactes ordonnées. Résumé de question et réponse, état du calcul et valeurs disponibles ; déplier révèle contenu, modification, suppression et calcul. |
 | Exchange editor | Échange courant ouvert : question puis réponse ; raisonnement visible, artifact et fichiers source dans « Ajouter des contenus facultatifs ». Ajouter un échange ouvre un nouvel éditeur sans imposer de calcul préalable. |
-| Metric pair | Après calcul explicite, affiche carbone et eau avec unités adaptées et indication « estimation ». Ne montre ni électricité ni risque de sécheresse ici. |
-| Summary panel | Bouton « Calculer toute la conversation » accessible dans le fil. Affiche carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations après calcul valide. |
+| Metric pair | Après calcul explicite, affiche carbone et eau avec unités adaptées et indication « estimation ». Ne montre pas l'électricité ici. |
+| Summary panel | Bouton « Calculer toute la conversation » accessible dans le fil. Affiche carbone, eau, électricité, équivalence douche et recommandations après calcul valide. |
 | Button primary | L'action principale correspond à l'étape. Calculer un échange et tout calculer sont des actions distinctes, nommées explicitement. |
 | Status message | Signale import refusé/échoué, données invalides, calcul en cours, résultat périmé et facteurs de repli avec une action de suite lorsque possible. |
 | Import consent | Dialogue nommé avec URL canonique et endpoint Worker courants, données transmises et non transmises. L'action de refus garde la conversation ; aucun réseau avant consentement. Le focus initial va sur « Annuler », reste dans le dialogue et revient au déclencheur. |
@@ -115,7 +115,7 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 
 Les calculs gardent leurs valeurs non arrondies ; seule la présentation change. Après arrondi, choisir l'unité pour afficher une valeur dans `[0,001 ; 1 000[`, donc au plus deux zéros consécutifs après la virgule et trois chiffres avant elle. Séries autorisées : carbone µgCO₂e → mgCO₂e → gCO₂e → kgCO₂e → tCO₂e ; eau µL → mL → L → kL → ML ; électricité mWh → Wh → kWh → MWh → GWh ; durée de douche ms → s → min → h → j. Utiliser au plus trois chiffres significatifs, la virgule française et le regroupement des milliers dans l'unité maximale. Si l'arrondi donnerait 1 000, passer à l'unité suivante. Zéro reste « 0 » avec l'unité de base ; sous la plus petite unité, afficher « < 0,001 » avec cette unité. Si la valeur dépasse l'unité maximale, afficher un nombre groupé sans notation scientifique et expliciter sa grande taille. [ASSUMPTION : précision d'affichage et unités extrêmes à valider sur les données réelles avant livraison.]
 
-Chaque unité abrégée possède un nom accessible complet, par exemple « milligrammes de dioxyde de carbone équivalent » ou « millilitres d'eau ». Une aide courte indique que l'unité change selon la valeur. Le risque de sécheresse reste un niveau qualitatif associé au pays d'hébergement, jamais une quantité d'eau consommée.
+Chaque unité abrégée possède un nom accessible complet, par exemple « milligrammes de dioxyde de carbone équivalent » ou « millilitres d'eau ». Une aide courte indique que l'unité change selon la valeur.
 
 ## Accessibility Floor
 
@@ -147,7 +147,7 @@ Sur mobile, une seule colonne : choix d'entrée, puis en-tête chatbot/modèle, 
 4. Elle colle la réponse et lance « Calculer cet échange ». **Climax :** une carte près du texte affiche une estimation lisible du carbone et de l'eau, avec unités adaptées ; Camille comprend le lien entre son échange et ces valeurs.
 5. Elle ajoute un échange. Le premier devient une carte compacte dépliable, le nouveau champ de question reçoit le focus.
 6. Elle peut calculer ce nouvel échange, puis lancer « Calculer toute la conversation ».
-7. Le bilan présente carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations.
+7. Le bilan présente carbone, eau, électricité, équivalence douche et recommandations.
 
 Échec : un paramètre indispensable manque → le calcul explique le blocage près de l'action sans effacer les textes. Si Camille modifie un échange déjà calculé, le résultat et le bilan dépendants deviennent périmés jusqu'au recalcul explicite.
 

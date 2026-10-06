@@ -8,7 +8,7 @@ import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { fallbackTokenCount } from '../domain/tokenization';
-import { resolveDroughtRisk, resolveImpactParameters, resolveUserCarbonIntensity, type DroughtRisk } from '../data/modelCatalog';
+import { resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
 import { calculateShowerEquivalence } from '../domain/showerEquivalence';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
@@ -187,14 +187,9 @@ export function App() {
       return;
     }
     const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
-    const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,
-      droughtRisk,
-      factorSources: parameters ? {
-        ...parameters.factorSources,
-        ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
-      } : undefined,
+      factorSources: parameters?.factorSources,
     });
     const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
     dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
@@ -216,14 +211,9 @@ export function App() {
       return;
     }
     const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
-    const droughtRisk: DroughtRisk = parameters ? resolveDroughtRisk(parameters.hostingCountry) : { status: 'unavailable' };
     dispatch({
       type: 'summaryResolved', fingerprint, total: aggregation.total,
-      droughtRisk,
-      factorSources: parameters ? {
-        ...parameters.factorSources,
-        ...(droughtRisk.status === 'available' ? { droughtRisk: droughtRisk.source } : {}),
-      } : undefined,
+      factorSources: parameters?.factorSources,
     });
     const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
     dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });

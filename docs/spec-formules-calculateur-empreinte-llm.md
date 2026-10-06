@@ -17,7 +17,6 @@ Inputs utilisateur : modèle (P_tot, P_act) + nb tokens (new_input, cache, outpu
         │
         ├──[4a]──► × emission_factor(pays)           = co2_request(i)
         ├──[4b]──► × WUE(pays, fournisseur)          = water_request(i)
-        └──[4c]──► lookup dry_risk(pays, fournisseur) = dry_risk_request(i)
 ```
 
 **Principe central :** `co2_request` et `water_request` ne se calculent **pas** directement à partir des tokens — ils dérivent tous les deux de `nrj_request`. Calculer `nrj_request` une seule fois par requête, puis le réutiliser pour les deux conversions.
@@ -35,7 +34,6 @@ Le calcul se fait **par requête** (un bloc `i` = un appel API envoyant l'histor
 | `EF(pays)` | `emission_factor` | gCO2e / kWh | carbon_emissions_intensity_2025.csv → colonnes : Area, Emissions intensity (gCO2e/kWh) |
 | `PUE(pays, fournisseur)` | Power Usage Effectiveness du datacenter (étape [3]) | sans unité (ratio ≥ 1) | data fournisseurs + extrapolation |
 | `WUE(pays, fournisseur)` | Water Usage Effectiveness | L / kWh | data fournisseurs + extrapolation |
-| `dry_risk(pays, fournisseur)` | Risque de sécheresse | catégoriel (low/med/high/extreme) | country_drought_risk.csv → colonnes : Area, drought_risk_level |
 | `r_out(P_act, P_tot)` | `nrj_output_token` | Wh / token | dérivé du modèle Ecologits — **§3bis** |
 | `r_in(P_act, P_tot)` | `nrj_input_token` | Wh / token | `κ_in × r_out` — **§3ter** |
 | `r_cache(P_act, P_tot)` | `nrj_cache_input_token` | Wh / token | `κ_cache × r_in` — **§3ter** |
@@ -264,17 +262,7 @@ water_request(i) = (nrj_request(i) / 1000)   ×   WUE(pays, fournisseur)
 
 ---
 
-## 7. Étape 4c — Indicateur de risque : `dry_risk_request`
-
-```
-dry_risk_request(i) = dry_risk(pays, fournisseur)   # simple lookup, pas de calcul
-```
-
-Label **catégoriel** (WRI Aqueduct), affiché à côté de `water_request` pour contextualiser le risque (ex. « 12 L consommés — pays à risque de sécheresse ÉLEVÉ »).
-
----
-
-## 8. Agrégation sur une conversation entière (optionnel)
+## 7. Agrégation sur une conversation entière (optionnel)
 
 - **Par requête** : `nrj_request(i)`, `co2_request(i)`, `water_request(i)` pour le dernier bloc.
 - **Cumulé** :
@@ -313,7 +301,6 @@ nrj_request(i) = nrj_compute(i) × PUE(pays, fournisseur)                       
 
 co2_request(i)      = (nrj_request(i)/1000) × EF(pays)                         [gCO2e]
 water_request(i)    = (nrj_request(i)/1000) × WUE(pays, fournisseur)           [L]
-dry_risk_request(i) = dry_risk(pays, fournisseur)                              [catégoriel]
 ```
 
 ---

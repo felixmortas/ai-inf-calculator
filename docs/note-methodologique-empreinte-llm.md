@@ -19,7 +19,7 @@ Ce calculateur estime l'empreinte environnementale **d'une requête individuelle
 
 - L'énergie électrique **de la phase d'inférence** (« use phase »), pour une requête donnée à un modèle donné, prenant en compte.
 - Les émissions de gaz à effet de serre associées, converties via l'intensité carbone du réseau électrique du pays d'hébergement du datacenter.
-- La consommation d'eau **on-site** du datacenter (refroidissement), et un indicateur qualitatif de risque de sécheresse du pays concerné.
+- La consommation d'eau **on-site** du datacenter (refroidissement).
 
 ### 2.2 Ce que le calculateur ne mesure pas
 
@@ -56,7 +56,6 @@ Modèle sélectionné (P_act, P_tot)  +  tokens saisis (input, cache, output)
         │
         ├──► × emission_factor(pays)        = co2_request     [gCO2e]
         ├──► × WUE(pays, fournisseur)        = water_request   [L]
-        └──► lookup dry_risk(pays, fournisseur) = dry_risk_request
 ```
 
 Un seul poste (`r_out`) est modélisé physiquement ; les deux autres en héritent la dépendance à la taille du modèle par construction (`r_in` et `r_cache` sont des fractions de `r_out`, jamais des valeurs indépendantes). Le PUE n'intervient qu'une seule fois, en toute fin de chaîne énergétique, avant la conversion en CO2/eau.
@@ -178,7 +177,6 @@ water_request = (nrj_request / 1000) × WUE(pays_datacenter, fournisseur)
 
 **Justification :** l'énergie est le dénominateur commun ; calculer CO2 et eau indépendamment à partir des tokens dupliquerait la logique de pondération par `P_act`/`P_tot` et introduirait un risque d'incohérence entre les deux sorties si l'une des deux formules était modifiée sans l'autre. Le pays du datacenter (et non celui de l'utilisateur) est utilisé car c'est là que l'électricité est consommée — le mix électrique de l'utilisateur final n'a aucune incidence sur cette empreinte.
 
-Le risque de sécheresse (`dry_risk_request`) reste un simple lookup catégoriel, affiché à côté de `water_request` pour contextualiser la valeur sans être combiné numériquement — un chiffre de litres n'a pas le même sens en Norvège et en Californie.
 
 ---
 
@@ -212,7 +210,6 @@ Le risque de sécheresse (`dry_risk_request`) reste un simple lookup catégoriel
 | `PUE(pays, fournisseur)` | Rendement énergétique du datacenter | Données fournisseur / extrapolation |
 | `EF(pays)` | Intensité carbone du réseau électrique (gCO2e/kWh) | carbon_emissions_intensity_2025.csv |
 | `WUE(pays, fournisseur)` | Eau consommée par kWh (L/kWh) | Données fournisseur / extrapolation |
-| `dry_risk(pays, fournisseur)` | Risque de sécheresse (catégoriel) | WRI Aqueduct |
 
 Le détail des constantes internes du modèle Ecologits (`ENERGY_ALPHA`, `LATENCY_ALPHA`, `GPU_MEMORY_GB`, etc.) et des formules (a)–(e) qui les combinent est donné au §4.1.
 
@@ -221,6 +218,5 @@ Le détail des constantes internes du modèle Ecologits (`ENERGY_ALPHA`, `LATENC
 ## 7. Sources et méthodologie de référence
 
 - **Ecologits** — méthodologie d'estimation de l'empreinte des LLM à l'inférence (régression énergie/latence GPU, estimation `nb_params_activated` par régression pour les modèles fermés, principe repris et adapté ici pour `r_out`).
-- **WRI Aqueduct** — indicateur de risque de sécheresse par pays.
 - **Grilles tarifaires publiques des fournisseurs** (OpenAI, Anthropic, Google, etc.) — source de `κ_in` et `κ_cache`, à recalibrer à chaque mise à jour de tarifs. Consigner systématiquement la date de relevé des prix utilisés à côté des valeurs de `κ` dans l'implémentation.
-- **carbon_emissions_intensity_2025.csv**, **country_drought_risk.csv** — données pays fournies avec le modèle de données du calculateur.
+- **carbon_emissions_intensity_2025.csv** — données pays fournies avec le modèle de données du calculateur.

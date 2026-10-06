@@ -61,3 +61,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-bloquer-interface-pendant-calcul.md`
   summary: Ajouter une couverture automatisée des transitions de l’indicateur de calcul global et du verrouillage/restauration du défilement.
   evidence: La revue a identifié ces comportements comme non vérifiés ; l’exécution et l’ajout de tests ne sont pas autorisés par les consignes de cette session.
+- source_spec: `_bmad-output/implementation-artifacts/spec-supprimer-indicateur-risque-secheresse.md`
+  summary: Réconcilier les anciennes mentions du risque de sécheresse dans les artefacts de planification BMAD, notamment architecture, PRD, epics, propositions de sprint et revue UX.
+  evidence: La recherche globale retrouve encore l’indicateur comme exigence dans des documents BMAD datés ; ils ont été conservés comme traces des décisions antérieures et doivent être explicitement mis à jour ou marqués comme supersédés avant de servir à de futurs travaux.

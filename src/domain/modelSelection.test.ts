@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canSelectModel, resolveChatGptModel, resolveMistralModel, selectableModels } from './modelSelection';
-import { detectUserCountry, hasModel, modelCatalog, resolveDroughtRisk, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
+import { detectUserCountry, hasModel, modelCatalog, resolveEnvironmentalFactor, resolveHostingCountry, resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
 
 describe('sélection de modèle', () => {
   const models = [
@@ -57,17 +57,9 @@ describe('sélection de modèle', () => {
     expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
   });
 
-  it('expose le pays d’hébergement et distingue un risque absent', () => {
+  it('expose le pays d’hébergement', () => {
     expect(resolveHostingCountry('ChatGPT')).toBe('US');
-    expect(resolveDroughtRisk('US')).toEqual({ status: 'available', level: 'Medium (0.4-0.6)', source: 'country' });
     expect(resolveHostingCountry('Mistral AI')).toBe('CH');
-    expect(resolveDroughtRisk('CH')).toEqual({ status: 'available', level: 'Medium - High (0.6-0.8)', source: 'country' });
-    expect(resolveDroughtRisk('pays absent')).toEqual({ status: 'unavailable' });
-  });
-
-  it('utilise Monde pour le risque de sécheresse lorsque le pays est absent', () => {
-    const risks = 'Area,drought_risk_level\nWorld,Low';
-    expect(resolveDroughtRisk('FR', risks)).toEqual({ status: 'available', level: 'Low', source: 'world' });
   });
 
   it('résout sans mutation la valeur pays, le repli Monde, zéro et l’absence complète', () => {

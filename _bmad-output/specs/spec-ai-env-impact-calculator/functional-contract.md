@@ -20,9 +20,9 @@ Les facteurs manquants utilisent leur valeur « Monde » du même facteur, en le
 
 ## Présentation
 
-Les résultats sont des estimations uniques : incertitude, hypothèses et périmètre usage hors fabrication/amortissement/Scope 3 restent visibles dans le parcours courant. L’eau est exclusivement l’eau sur site. Après calcul explicite, chaque échange affiche carbone et eau près de ses textes ; le bilan valide affiche carbone, eau, électricité, risque de sécheresse, équivalence douche et conseils. Le risque de sécheresse dépend du pays d’hébergement ; il n’est ni affiché par échange, ni agrégé.
+Les résultats sont des estimations uniques : incertitude, hypothèses et périmètre usage hors fabrication/amortissement/Scope 3 restent visibles dans le parcours courant. L’eau est exclusivement l’eau sur site. Après calcul explicite, chaque échange affiche carbone et eau près de ses textes ; le bilan valide affiche carbone, eau, électricité, équivalence douche et conseils.
 
-Le pays utilisateur est proposé localement de façon indicative, visible et corrigeable ; il ne sert qu’au facteur carbone de la douche électrique de référence. Le pays d’hébergement est distinct, prérempli par le fournisseur et alimente énergie, carbone, eau et risque. La liste de conseils, non personnalisée, couvre : petit modèle ; éviter de faire raisonner ; moins de tokens entrants et sortants ; relancer une conversation pour supprimer l’historique ; éditer un message lorsque pertinent. Ses textes ne promettent aucun gain chiffré.
+Le pays utilisateur est proposé localement de façon indicative, visible et corrigeable ; il ne sert qu’au facteur carbone de la douche électrique de référence. Le pays d’hébergement est distinct, prérempli par le fournisseur et alimente énergie, carbone et eau. La liste de conseils, non personnalisée, couvre : petit modèle ; éviter de faire raisonner ; moins de tokens entrants et sortants ; relancer une conversation pour supprimer l’historique ; éditer un message lorsque pertinent. Ses textes ne promettent aucun gain chiffré.
 
 ## Exigences UX minimales
 

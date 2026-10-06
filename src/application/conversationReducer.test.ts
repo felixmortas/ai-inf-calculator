@@ -394,7 +394,6 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'summaryRequested', fingerprint });
     state = conversationReducer(state, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 1.25, carbonGco2e: 2.5, waterL: 3.75 },
-      droughtRisk: { status: 'available', level: 'Medium (0.4-0.6)', source: 'country' },
     });
     expect(state.summary?.status).toBe('result');
     const changed = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonsoir' });
@@ -402,7 +401,6 @@ describe('conversationReducer', () => {
     expect(isSummaryCurrent(changed)).toBe(false);
     expect(conversationReducer(changed, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 1, carbonGco2e: 1, waterL: 1 },
-      droughtRisk: { status: 'unavailable' },
     })).toBe(changed);
   });
 
@@ -457,7 +455,6 @@ describe('conversationReducer', () => {
     expect(requested.summary).toEqual({ status: 'pending', fingerprint });
     const resolved = conversationReducer(requested, {
       type: 'summaryResolved', fingerprint, total: { energyWh: 2, carbonGco2e: 4, waterL: 6 },
-      droughtRisk: { status: 'unavailable' },
     });
     expect(resolved.summary).toMatchObject({ status: 'result', total: { energyWh: 2, carbonGco2e: 4, waterL: 6 } });
   });

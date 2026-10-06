@@ -301,7 +301,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         {([['energy', fr.energyLabel, currentSummary.total.energyWh], ['carbon', fr.carbonLabel, currentSummary.total.carbonGco2e], ['water', fr.waterLabel, currentSummary.total.waterL]] as const).map(([kind, label, value]) => { const quantity = formatQuantity(value, kind); return <p key={kind}>{label}: <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>; })}
         <p className="impact-note">{fr.userCountryLabel} : {userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry}</p>
         <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
-        <p>{fr.droughtRiskLabel}: {currentSummary.droughtRisk.status === 'available' ? currentSummary.droughtRisk.level : fr.droughtRiskUnavailable} ({hostingCountryOptions.find((country) => country.code === state.hostingCountry)?.label ?? state.hostingCountry})</p>
         {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
         <p className="impact-note">{fr.summaryLimits}</p>
         <section className="good-practices" aria-labelledby="good-practices-title"><h4 id="good-practices-title">{fr.goodPracticesTitle}</h4><ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul></section>

@@ -87,7 +87,7 @@ Les surfaces se séparent par leur teinte et une bordure `{colors.border}`. Une 
 | Exchange card | Carte compacte : numéro, aperçu, état textuel et, si calculé, carbone et eau. Dépliage dans la page. Voir [conversation](mockups/conversation.html). |
 | Exchange editor | Carte active avec question, réponse, puis options facultatives ; actions après le contenu. Voir [conversation](mockups/conversation.html). |
 | Metric pair | Deux valeurs en `{typography.metric.fontSize}` avec libellé et unité, par échange. |
-| Summary panel | Bilan séparé : carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations. Voir [bilan](mockups/bilan.html). |
+| Summary panel | Bilan séparé : carbone, eau, électricité, équivalence douche et recommandations. Voir [bilan](mockups/bilan.html). |
 | Button primary | Une action principale par étape, fond `{colors.accent}` et texte `{colors.on-accent}`. |
 | Status message | Erreur et résultat périmé ont un texte explicite sur `{colors.error-surface}` ou `{colors.warning-surface}`. |
 | Import consent | Panneau clair à contour `{colors.border-interactive}` ; URL et destination complètes, sans ellipse ; actions consentir/annuler distinctes. Voir [import](mockups/import.html). |

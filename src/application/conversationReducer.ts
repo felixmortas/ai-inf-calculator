@@ -23,7 +23,7 @@ import {
 import type { TokenizationResponse } from '../workers/tokenizationProtocol';
 import type { ImpactResult } from '../domain/impact';
 import type { ImpactTotal } from '../domain/impactAggregation';
-import { resolveImpactParameters, type DroughtRisk } from '../data/modelCatalog';
+import { resolveImpactParameters } from '../data/modelCatalog';
 import { prepareConversationHistory } from '../domain/conversationHistory';
 import { hasConversationBlockContent } from '../domain/conversationContent';
 
@@ -98,7 +98,7 @@ export type BlockImpactState =
 
 export type ConversationSummaryState =
   | { readonly status: 'pending'; readonly fingerprint: string }
-  | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
+  | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
 export interface ShowerEquivalenceState { readonly fingerprint: string; readonly equivalence: ShowerEquivalence; }
 
@@ -125,7 +125,7 @@ export type ConversationAction =
   | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block'; readonly async?: true }
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryRecalculationRequested'; readonly fingerprint: string }
-  | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly droughtRisk: DroughtRisk; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
+  | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
@@ -445,7 +445,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
       return state.summary?.status === 'pending'
         && state.summary.fingerprint === action.fingerprint
         && summaryFingerprint(state) === action.fingerprint
-        ? { ...state, summary: { status: 'result', fingerprint: action.fingerprint, total: action.total, droughtRisk: action.droughtRisk, factorSources: action.factorSources } }
+        ? { ...state, summary: { status: 'result', fingerprint: action.fingerprint, total: action.total, factorSources: action.factorSources } }
         : state;
     case 'summaryUnavailable':
       return state.summary?.status === 'pending'
