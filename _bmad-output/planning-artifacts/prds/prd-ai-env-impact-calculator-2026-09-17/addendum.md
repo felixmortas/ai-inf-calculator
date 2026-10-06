@@ -32,29 +32,29 @@ duree_equivalente_minutes = C / (0.348 × EF_utilisateur)
 duree_equivalente_secondes = 60 × duree_equivalente_minutes
 ```
 
-Ces formules de durée s’appliquent lorsque le facteur d’émission est disponible et strictement positif. Un facteur manquant utilise la référence « Monde », signalée à l’utilisateur. Si les émissions de la douche de référence sont nulles, la durée est indiquée comme non calculable, conformément à NFR-6 ; aucune division par zéro n’est permise. Les valeurs internes restent non arrondies ; la présentation suit les unités et la précision définies dans `EXPERIENCE.md`, à valider sur des valeurs représentatives avant livraison (D-2).
+Ces formules de durée s’appliquent lorsque le facteur d’émission de l’utilisateur est disponible et strictement positif. Si les émissions de la douche de référence sont nulles, la durée est non calculable ; aucune division par zéro n’est permise. Les valeurs internes restent non arrondies ; la présentation suit les unités et la précision définies dans `EXPERIENCE.md`, à valider sur des valeurs représentatives avant livraison (D-2).
 
 `EF_utilisateur` dépend du pays détecté automatiquement ou corrigé manuellement par l’utilisateur. Il est sélectionné indépendamment du facteur d’émission du pays d’hébergement utilisé pour calculer `C`. Le changement du pays utilisateur modifie l’équivalence, pas `C`.
 
 La comparaison porte uniquement sur les émissions carbone. Aucun volume d’eau équivalent n’est calculé pour l’affichage.
 
-## Contrat mathématique de référence
+## Référence méthodologique
 
-Ce contrat reprend les §1–10 de `spec-formules-calculateur-empreinte-llm.md` et les adapte aux décisions produit du PRD. Il ne constitue pas une vérification scientifique externe des données annoncées dans cette source. Les constantes ci-dessous sont des **valeurs par défaut modifiables dans les paramètres avancés** ; le seul paramètre imposé et masqué est le nombre de tokens du prompt système issu du catalogue. Les équations elles-mêmes ne sont pas éditables.
+La source de vérité unique pour la méthode, ses données, leurs provenances et leurs limites est [`docs/methodologie-empreinte-inference-llm.md`](../../../../docs/methodologie-empreinte-inference-llm.md). Ce résumé ne la remplace pas ; en cas d’écart, elle prévaut. Les exigences produit ci-dessous ne doivent pas modifier les règles de calcul. Les constantes de la méthode sont appliquées telles que publiées, sans réglage utilisateur ; `S_tokens` provient du catalogue et reste masqué.
 
 ### Données, unités et provenance
 
 | Donnée | Unité ou domaine | Provenance annoncée dans la source |
 |---|---|---|
 | `P_tot` (`nb_params`) | milliards de paramètres | estimation IKP (§1) |
-| `P_act` (`nb_params_activated`) | milliards de paramètres activés | régression sur modèles ouverts, étendue aux modèles fermés (§1, §10.2) |
+| `P_act` (`nb_params_activated`) | milliards de paramètres activés | régression sur modèles ouverts, étendue aux modèles fermés (§4.3, §9.2) |
 | `S_tokens` | tokens, sans reconversion en mots | catalogue `models_params` fourni par Felix |
-| `EF(pays)` | gCO2e/kWh | `carbon_emissions_intensity_2025.csv`, `Area`, `Emissions intensity (gCO2e/kWh)` (§1) |
-| `PUE(pays, fournisseur)` | ratio ≥ 1 | données fournisseurs et extrapolation (§1) |
-| `WUE(pays, fournisseur)` | L/kWh | données fournisseurs et extrapolation (§1) |
-| `κ_in`, `κ_cache` | ratios sans unité, par modèle/fournisseur | calibration tarifaire datée à partir des tarifs dans `models_params` (§3ter.2) |
+| `EF(pays)` | gCO₂e/kWh | Ember, année 2025, total de la production électrique (§4.1) |
+| `PUE(pays, fournisseur)` | ratio ≥ 1 | cascade de fiabilité mesuré, estimé, régional, global (§4.7) |
+| `WUE(pays, fournisseur)` | L/kWh | WUE régionale publiée ou moyenne globale du fournisseur (§4.8) |
+| `κ_in`, `κ_cache` | ratios sans unité, par modèle/fournisseur | tarifs publics comparables, datés et sourcés (§4.5) |
 
-Le catalogue fournit les modèles et leurs données ; les valeurs non fournies ne sont pas inventées. `P_tot = 37` signifie 37 milliards de paramètres, et non 37 paramètres : une source en unités brutes doit être convertie avant calcul. Les tables environnementales doivent inclure les valeurs de repli « Monde ». Le pays utilisateur sert uniquement à la référence de douche ; le pays d’hébergement sert à l’empreinte du modèle.
+Le catalogue fournit les modèles et leurs données selon les règles de construction du §4. Les facteurs géographiques et leurs replis suivent exclusivement les cascades spécifiées dans la méthodologie ; aucune règle de repli Monde supplémentaire n’est ajoutée ici. `P_tot = 37` signifie 37 milliards de paramètres. Le pays utilisateur sert uniquement à la référence de douche ; le pays d’hébergement sert à l’empreinte du modèle.
 
 ### Constitution des tokens d’un bloc
 
@@ -78,13 +78,13 @@ history(i) = S_tokens
 output(i) = T(R_i) + T(C_i) + T(D_i)
 ```
 
-`S_tokens` est compté au taux du cache dès le premier bloc (§2 de la source) et n’est pas multiplié par le coefficient mots/tokens. Le raisonnement absent vaut zéro. Un résultat d’outil collé dans le message suit le traitement ordinaire du texte (§2.2). Tous les tokens de l’historique sont supposés en cache ; aucun taux de succès réel n’est mesuré.
+`S_tokens` est compté au taux du cache dès le premier bloc (§5.2 de la méthodologie) et n’est pas multiplié par le coefficient mots/tokens. Le raisonnement absent vaut zéro. Un résultat d’outil collé dans le message suit le traitement ordinaire du texte. Tous les tokens de l’historique sont supposés en cache ; aucun taux de succès réel n’est mesuré.
 
 L’historique ne cumule ni les anciennes versions d’artifact ni leurs différences. Le bloc courant produit une différence en sortie ; sa version complète devient la référence des blocs suivants. Des versions identiques produisent zéro token d’artifact en sortie ; une suppression seule n’ajoute aucun texte de sortie. La définition d’un mot, la granularité du diff et les arrondis devront être documentés avant les tests de comptage ; ce contrat ne les invente pas.
 
 ### Valeurs par défaut de l’énergie IT
 
-Les valeurs suivantes reprennent exactement le §3bis.3 de la source.
+Les valeurs suivantes reprennent exactement le §6.1 de la méthodologie. Ce sont des constantes de calcul, pas des paramètres avancés modifiables.
 
 | Paramètre | Valeur | Rôle |
 |---|---:|---|
@@ -120,7 +120,7 @@ r_in = κ_in × r_out
 r_cache = κ_cache × r_in
 ```
 
-Les trois taux sont en **Wh/token**, avant PUE. Ne jamais les multiplier de nouveau par `P_act`. `P_tot` n’intervient que dans la mémoire et le nombre de GPU : tous les experts d’un MoE sont supposés chargés. L’énergie GPU du §3bis.4b n’est pas remultipliée par `gpu_count`. Le PUE Ecologits générique de 1,20 n’est pas inclus ; il est remplacé par le PUE géographique à l’étape suivante.
+Les trois taux sont en **Wh/token**, avant PUE. Ne jamais les multiplier de nouveau par `P_act`. `P_tot` n’intervient que dans la mémoire et le nombre de GPU : tous les experts d’un MoE sont supposés chargés. L’énergie GPU de l’équation (b) du §6.1 n’est pas remultipliée par `gpu_count`. Le PUE Ecologits générique de 1,20 n’est pas inclus ; il est remplacé par le PUE géographique à l’étape suivante.
 
 ### Calibration tarifaire datée
 
@@ -133,7 +133,7 @@ La décision finale du §3ter.2 prévaut sur les mentions antérieures de rendem
 
 La calibration utilise les tarifs publics comparables d’un même modèle et fournisseur, ramenés à la même devise et à la même quantité de tokens. Les ratios ne sont pas universels. Le script de calibration demandé par la source relève de la préparation des données, hors du navigateur : il relève les tarifs à la date d’implémentation et conserve leur date avec les ratios. Ne pas coder les prix dans les formules. La source tarifaire exacte et les valeurs utilisées doivent accompagner les données pour permettre leur vérification et leur actualisation. Aucune valeur tarifaire contemporaine n’est postulée ici.
 
-Les cas de prix absent ou nul, de cache non commercialisé et de grilles multiples demandent un contrat de données avant intégration ; une division par zéro ne produit pas un ratio valide. La fréquence et le responsable de la calibration restent à fixer. Une modification avancée de ratio remplace la valeur de référence uniquement pour la session en cours ; la restauration reprend les valeurs de référence du modèle.
+Une calibration qui ne permet pas de calculer un ratio défini ne fournit pas de valeur valide : ne pas inventer de ratio ni présenter un résultat calculé. Les ratios, leur date et la source tarifaire exacte accompagnent le catalogue selon §4.5.
 
 ### Énergie, carbone et eau
 
@@ -148,9 +148,9 @@ water_request(i) = (nrj_request(i) / 1000)
                    × WUE(pays_hebergement, fournisseur)          [L]
 ```
 
-Conformément aux §0 et §3–7, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO2e → kgCO2e divisent par 1000.
+Conformément aux §2 et §7 de la méthodologie, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO₂e → kgCO₂e divisent par 1000.
 
-Un facteur géographique manquant utilise la valeur « Monde » de ce facteur, signalée à l’utilisateur. Ce repli ne remplace pas les autres valeurs disponibles et n’est pas une règle de remplacement des données modèle ou des prix. Si la valeur « Monde » manque également, la donnée reste indisponible ; elle ne devient jamais implicitement zéro.
+Les valeurs géographiques et les replis sont ceux définis par les cascades des §4.1, 4.7 et 4.8 de la méthodologie. Une donnée indispensable absente ne devient jamais implicitement zéro.
 
 ### Total et exemple d’unités
 
@@ -164,14 +164,12 @@ Ces sommes portent sur tous les blocs renseignés dont les résultats sont à jo
 
 Exemple purement arithmétique, sans valeur de référence fournisseur : avec une énergie IT de 1 Wh, `PUE = 1,2`, `EF = 100 gCO2e/kWh` et `WUE = 0,5 L/kWh`, on obtient 1,2 Wh au datacenter, 0,12 gCO2e et 0,0006 L. Si le facteur utilisateur vaut aussi 100 gCO2e/kWh, la douche de référence émet 34,8 gCO2e/min et l’équivalence est `0,12 / 34,8 × 60 ≈ 0,207 seconde`. Cette illustration vérifie les conversions, pas la fiabilité des hypothèses.
 
-### Limites et divergences explicites avec la source
+### Périmètre et limites de la méthode
 
-- L’empreinte couvre l’usage uniquement : fabrication, amortissement matériel et Scope 3 exclus (§10.8). L’eau correspond au WUE sur site ; l’eau liée à la production électrique est exclue (§6, §10.4).
-- Raisonnement et complétion partagent le taux de sortie. L’augmentation du coût des tokens avec le KV cache n’est pas représentée (§10.1). Les paramètres activés des modèles fermés sont estimés (§10.2).
-- Le cache à 100 %, les hypothèses matérielles, le batch par défaut à 64 et les latences déterministes ne décrivent pas une exécution mesurée (§3bis.1, §10.3, §10.6–7). Les ratios de prix sont un proxy énergétique choisi par la source, pas une mesure physique.
-- Contrairement au §2, la saisie de textes et l’agrégation sont centrales et non optionnelles ; le tokenizer local est inclu mais le distant est exclu. Les artifacts et la comparaison douche étendent la source. Le prompt système provient du catalogue en tokens, sans texte demandé à l’utilisateur.
-- Contrairement au §3bis.2, les constantes sont modifiables en paramètres avancés. Le prompt système fait seul exception. Les bornes de validation des paramètres devront empêcher les calculs non définis ou physiquement incohérents ; leurs valeurs détaillées restent à définir en conception.
-- Les renvois source vers §0.1 et §11 sont invalides : lire respectivement le pipeline §0 et les limites §6/§10.4. Aucun contenu absent n’est supposé.
-- La formulation du §3bis.5 sur la continuité est corrigée : à `P_tot` fixé, donc `gpu_count` fixé, `r_out` est affine en `P_act`. Les sauts proviennent des seuils de GPU lorsque `P_tot` varie ; une continuité globale n’est pas garantie. Implémenter les équations successives du §3bis.4, pas les coefficients affines arrondis.
+- L’empreinte couvre l’usage uniquement : fabrication, amortissement matériel et Scope 3 exclus (§1.2–1.3, §9). L’eau correspond au WUE sur site ; l’eau liée à la production électrique est exclue (§1.2–1.3).
+- Raisonnement et complétion partagent le taux de sortie. L’augmentation du coût des tokens avec le KV cache n’est pas représentée (§6.3, §9.3). Les paramètres activés des modèles fermés sont estimés (§4.3, §9.2).
+- Le cache à 100 %, les hypothèses matérielles, le batch par défaut à 64 et les latences déterministes ne décrivent pas une exécution mesurée (§6.1–6.3, §9). Les ratios de prix sont un proxy énergétique choisi par la méthode, pas une mesure physique.
+- La saisie, l’agrégation par échange, le tokenizer local, les artifacts et l’équivalence douche sont des exigences produit autour de la méthode. Le prompt système provient du catalogue en tokens et n’est pas demandé à l’utilisateur.
+- Les constantes et équations de calcul sont celles de la méthodologie ; elles ne sont pas modifiables dans les paramètres avancés. Les options de session portent uniquement sur les choix produit explicitement prévus, notamment la localisation.
 
-Les résultats restent des valeurs uniques présentées comme incertaines. Aucune marge d’erreur numérique n’est dérivée de ces hypothèses.
+Le résultat est un ordre de grandeur ponctuel ; aucune fourchette chiffrée d’incertitude n’est calculée.

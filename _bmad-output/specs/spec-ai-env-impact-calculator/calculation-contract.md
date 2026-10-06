@@ -1,63 +1,46 @@
 # Contrat de calcul et données
 
-## Données de référence
+> La source de vérité unique pour la méthode, les valeurs, leur provenance et leurs limites est [`docs/methodologie-empreinte-inference-llm.md`](../../../docs/methodologie-empreinte-inference-llm.md). Ce document en donne le résumé opérationnel ; en cas d’écart, la méthodologie prévaut. Les règles d’interface et d’agrégation propres au produit sont dans `SPEC.md` et `functional-contract.md`.
 
-Le catalogue local validé au build porte versions, dates et provenance. Pour chaque modèle/fournisseur, il fournit au minimum `P_tot`, `P_act`, `S_tokens`, pays de référence, ratios `κ_in` et `κ_cache` calibrés à date, ainsi que les facteurs `PUE`, `EF`, `WUE` et leurs valeurs Monde nécessaires. `P_tot` et `P_act` sont exprimés en milliards de paramètres. Les prix ne sont jamais encodés dans les formules : `κ_in = prix_input / prix_output` et `κ_cache = prix_input_en_cache / prix_input`.
+## Données et comptage
 
-## Comptage
+Le catalogue par modèle/fournisseur fournit `P_tot`, `P_act`, `S_tokens`, le pays de référence, `κ_in`, `κ_cache`, ainsi que les facteurs `PUE`, `EF` et `WUE` selon les méthodes et cascades de provenance définies aux §4.1–4.9. `P_tot` et `P_act` sont en milliards de paramètres. Les ratios sont datés et spécifiques au modèle/fournisseur : `κ_in = prix_input / prix_output` et `κ_cache = prix_input_en_cache / prix_input`.
 
-`T(texte)` emploie le tokenizer par défaut ; en fallback, `nombre_de_mots / coefficient_mots_par_token`, avec `0,75` par défaut. Pour le bloc renseigné `i` :
+La tokenisation locale utilise Tiktoken ; en cas d’échec, `T(texte) = nombre_de_mots / 0,75`, avec segmentation aux caractères non alphanumériques. Le texte vide et le raisonnement non fourni valent zéro. Pour les échanges renseignés, dans leur ordre :
 
 ```text
-new_input(i) = T(message_i)
-history(i) = S_tokens + Σ[j<i](T(message_j) + T(raisonnement_j) + T(réponse_j))
-             + T(dernière_version_artifact_avant_i)
-output(i) = T(raisonnement_i) + T(réponse_i) + T(diff_artifact_i)
+A_prec(i) = dernière version complète d’artifact antérieure à i (vide si aucune)
+D_i = ajouts et modifications de A_i par rapport à A_prec(i)
+      (A_i complet lors de la première version ; vide si aucun artifact)
+new_input(i) = T(M_i)
+history(i) = S_tokens + Σ[j<i](T(M_j) + T(R_j) + T(C_j)) + T(A_prec(i))
+output(i) = T(R_i) + T(C_i) + T(D_i)
 ```
 
-Tout l’historique est traité comme cache. Le raisonnement absent vaut zéro. Le repli segmente les mots aux caractères non alphanumériques ; la granularité du diff d’artifact reste libre si les invariants de comptage sont respectés.
+Le prompt système est au taux cache dès le premier échange. Tout l’historique est supposé en cache. Les anciennes versions d’artifact ne sont pas cumulées ; une suppression seule ne produit aucun token de sortie.
 
-## Énergie IT
+## Énergie IT par token
 
-Les constantes par défaut sont modifiables : `BATCH_SIZE=64`, `GPU_INSTALLED_PER_SERVER=8`, `SERVER_POWER_WITHOUT_GPU_W=1200`, `GPU_MEMORY_GB=80`, `QUANTIZATION_BITS=16`, `MEMORY_OVERHEAD=1.2`, `ENERGY_ALPHA=1.17e-6`, `ENERGY_BETA=-1.12e-2`, `ENERGY_GAMMA=4.05e-5`, `LATENCY_ALPHA=6.78e-4`, `LATENCY_BETA=3.12e-4`, `LATENCY_GAMMA=1.94e-2`.
+Les constantes et équations `r_out` de la méthode (§6.1) sont reprises sans modification. Elles ne sont pas des réglages avancés : le catalogue fournit les paramètres modèle et le calcul applique les constantes publiées. `P_tot` détermine la mémoire et le nombre de GPU ; `P_act` intervient dans les équations GPU et latence. Ne pas remultiplier l’énergie GPU par le nombre de GPU ni par `P_act`. Le PUE générique Ecologits de 1,20 est exclu.
 
 ```text
-memory_gb = MEMORY_OVERHEAD × P_tot × QUANTIZATION_BITS / 8
-gpu_count = ceil(memory_gb / GPU_MEMORY_GB)
-gpu_wh_token = ENERGY_ALPHA × exp(ENERGY_BETA × BATCH_SIZE) × P_act + ENERGY_GAMMA
-latency_s_token = LATENCY_ALPHA × P_act + LATENCY_BETA × BATCH_SIZE + LATENCY_GAMMA
-server_wh_token = latency_s_token × (SERVER_POWER_WITHOUT_GPU_W / 3600)
-                  × (gpu_count / GPU_INSTALLED_PER_SERVER) / BATCH_SIZE
-r_out = gpu_wh_token + server_wh_token
 r_in = κ_in × r_out
 r_cache = κ_cache × r_in
 ```
 
-Les taux sont en Wh/token avant PUE. `P_act` n’est pas remultiplié ; `P_tot` intervient seulement dans mémoire et nombre de GPU. Le PUE générique Ecologits est exclu.
+Les taux sont en Wh/token avant PUE. Le taux d’entrée et celui du cache sont des proxys fondés sur les rapports tarifaires, pas des mesures physiques distinctes.
 
-## Impacts et total
-
-```text
-energy_compute = new_input × r_in + history × r_cache + output × r_out       [Wh]
-energy = energy_compute × PUE(pays_hébergement, fournisseur)                 [Wh]
-carbon = (energy / 1000) × EF(pays_hébergement)                              [gCO2e]
-water = (energy / 1000) × WUE(pays_hébergement, fournisseur)                [L]
-total = Σ résultats de blocs renseignés à jour
-```
-
-PUE est appliqué exactement une fois ; carbone et eau réutilisent la même énergie datacenter. L’affichage peut convertir les unités mais ne modifie pas le calcul. Le modèle couvre l’usage uniquement, eau sur site uniquement, sans KV-cache réel, mesure physique de l’exécution ni marge chiffrée d’incertitude.
-
-## Équivalence douche
-
-Par défaut, une douche électrique a débit 15 L/min, de 18 à 38 °C et énergie 0,0232 kWh/L : `0,348 kWh/min`. Pour un carbone `C` et `EF_utilisateur` :
+## Impacts et agrégation
 
 ```text
-carbone_douche_min = débit × énergie_litre × EF_utilisateur
-durée_secondes = 60 × C / carbone_douche_min
+nrj_compute(i) = new_input(i) × r_in + history(i) × r_cache + output(i) × r_out [Wh]
+nrj_request(i) = nrj_compute(i) × PUE(pays_hébergement, fournisseur)             [Wh]
+co2_request(i) = nrj_request(i) / 1000 × EF(pays_hébergement)                    [gCO₂e]
+water_request(i) = nrj_request(i) / 1000 × WUE(pays_hébergement, fournisseur)    [L]
 ```
 
-Le facteur vient du pays utilisateur, indépendamment du pays d’hébergement. Les paramètres sont ajustables, mais la relation températures/énergie par litre doit être définie avant développement pour éviter des valeurs contradictoires.
+Le PUE est appliqué une seule fois ; carbone et eau réutilisent la même énergie datacenter. Agréger les résultats non arrondis des échanges à jour. Le facteur carbone de douche provient du pays utilisateur ; la méthode de douche, ses valeurs par défaut et ses formules sont définies au §8.
 
-## Projection des unités
+## Périmètre et limites
 
-Les résultats par échange et les totaux restent non arrondis en Wh, gCO₂e et L avant présentation. Seul l’affichage applique au plus trois chiffres significatifs et les séries de `EXPERIENCE.md` : carbone µgCO₂e à tCO₂e, eau µL à ML, électricité mWh à GWh, durée de douche ms à j. Il utilise la virgule française et un nom accessible complet pour chaque unité abrégée ; zéro, sous-seuil, bascule d’unité après arrondi et dépassement de l’unité maximale suivent ce contrat UX. Les seuils et extrêmes sont validés sur des données représentatives avant livraison.
+Le calcul estime l’usage d’inférence : Scope 3, entraînement, eau hors site de production électrique, réseau, terminaux, raisonnement invisible, images, audio et vidéo sont exclus. L’eau calculée est l’eau sur site selon WUE. Le résultat est un ordre de grandeur ponctuel, sans fourchette chiffrée d’incertitude. Les hypothèses sur paramètres activés, matériel, cache, localisation et ratios tarifaires ainsi que leurs limites sont celles du §9 de la méthodologie.

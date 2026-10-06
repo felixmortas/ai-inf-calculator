@@ -7,12 +7,13 @@ companions:
   - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
   - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
 sources:
+  - ../../../docs/methodologie-empreinte-inference-llm.md
   - ../../planning-artifacts/prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../planning-artifacts/prds/prd-ai-env-impact-calculator-2026-09-17/addendum.md
   - ../../planning-artifacts/sprint-change-proposal-2026-09-23.md
 ---
 
-> **Contrat canonique.** Cette SPEC et ses compagnons constituent le contrat complet, validé pour la préservation, à construire et tester.
+> **Source de vérité méthodologique.** `docs/methodologie-empreinte-inference-llm.md` est l’unique référence pour le périmètre, les données et les calculs d’impact. Cette SPEC et `calculation-contract.md` en déclinent les exigences produit sans la remplacer ; en cas d’écart, la méthodologie prévaut.
 
 # Calculateur d’empreinte environnementale de l’inférence des LLM
 
@@ -33,7 +34,7 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
   - **success:** Tiktoken par défaut est employé, avec fallback `mots / 0,75` en cas d’échec ; texte vide et raisonnement non fourni comptent zéro.
 - **CAP-4 — Estimer les impacts**
   - **intent:** La personne déclenche le calcul d’un échange ou de toute la conversation et consulte les résultats à l’endroit adapté.
-  - **success:** Après calcul explicite, chaque échange montre carbone et eau avec incertitude ; le bilan valide montre carbone, eau et électricité. Les formules, données et replis suivent `calculation-contract.md` ; le total additionne les valeurs non arrondies à jour.
+  - **success:** Après calcul explicite, chaque échange montre carbone et eau ; le bilan valide montre carbone, eau et électricité, avec les limites et incertitudes qualitatives de la méthode. Aucun intervalle chiffré n’est produit. Les formules, données et replis suivent la méthodologie canonique ; le total additionne les valeurs non arrondies à jour.
 - **CAP-5 — Préserver la validité des résultats**
   - **intent:** La personne peut savoir quels résultats doivent être recalculés avant de consulter un total complet.
   - **success:** Toute modification invalide exactement les résultats dépendants et les signale par un texte ; aucun calcul n’est automatique et aucun total incomplet ou périmé n’est présenté comme actuel.
@@ -42,7 +43,7 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
   - **success:** Les surcharges n’affectent jamais les catalogues ni le prompt système ; appliquer ou restaurer ne calcule rien. Un changement du seul pays utilisateur ne périme que l’équivalence douche ; celui du pays d’hébergement périme les impacts concernés.
 - **CAP-7 — Expliquer les résultats**
   - **intent:** La personne peut interpréter les estimations grâce à une équivalence carbone en douche chaude et des conseils communs de sobriété.
-  - **success:** Le bilan présente incertitude, périmètre usage hors Scope 3, équivalence fondée sur le carbone et le pays utilisateur indicatif et modifiable, ainsi que cinq thèmes de bonnes pratiques.
+  - **success:** Le bilan présente les limites d’une estimation d’usage, le périmètre hors Scope 3, l’équivalence fondée sur le carbone et le pays utilisateur indicatif et modifiable, ainsi que cinq thèmes de bonnes pratiques.
 - **CAP-8 — Entrer dans le parcours**
   - **intent:** La personne choisit dès l’accueil l’import Mistral ou la saisie manuelle et progresse jusqu’au bilan sans perdre ses textes.
   - **success:** Les deux voies sont visibles, import en premier ; la voie manuelle mène au choix du chatbot et du modèle, puis au fil. Les retours gardent les textes et le fil permet de modifier chatbot et modèle.
@@ -70,7 +71,7 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
 
 ## Success signal
 
-- Avant publication, démontrer les deux voies d’accueil ; choix direct des modèles ChatGPT et Mistral ; refus local et à la passerelle d’un lien non Mistral ; consentement avant réseau ; prévisualisation et remplacement confirmé ; calculs individuels et bilan ; péremption, restauration et repli Monde. Vérifier formules et unités sur des valeurs représentatives, focus et annonces, clavier, 320 px et zooms 200 % et 400 %.
+- Avant publication, démontrer les deux voies d’accueil ; choix direct des modèles ChatGPT et Mistral ; refus local et à la passerelle d’un lien non Mistral ; consentement avant réseau ; prévisualisation et remplacement confirmé ; calculs individuels et bilan ; péremption, restauration et le recours au facteur carbone Monde lorsque le facteur pays manque, selon la méthodologie. Vérifier formules et unités sur des valeurs représentatives, focus et annonces, clavier, 320 px et zooms 200 % et 400 %.
 - Après lancement, Felix reçoit des retours positifs par e-mail ou LinkedIn sur la compréhension des résultats et des conseils.
 
 ## Open Questions
