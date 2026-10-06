@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -67,36 +67,6 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByText('Ajouter du contenu (raisonnement, fichiers uploadés, fichiers générés)'));
     expect(screen.getByLabelText('Raisonnement visible')).toBeVisible();
     expect(screen.getByLabelText('Fichier généré')).toBeVisible();
-  });
-
-  it('importe via le registre, conserve les avis de contenus inaccessibles, puis ajoute un échange manuel', async () => {
-    const user = userEvent.setup();
-    const fetch = vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse","attachments":[{"name":"a.csv"}]}]}</script></html>', { headers: { 'content-type': 'text/html' } }));
-    vi.stubGlobal('fetch', fetch);
-
-    try {
-      render(<App />);
-      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
-      fireEvent.change(screen.getByLabelText('Collez le lien de partage'), { target: { value: 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000' } });
-      await user.click(screen.getByRole('button', { name: 'Importer la conversation' }));
-      await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
-      expect(screen.getByText('Événement public non attribué après la réponse finale.')).toBeVisible();
-      await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
-      expect(screen.getByRole('heading', { name: 'Sélectionnez votre chatbot' })).toHaveFocus();
-      await user.selectOptions(screen.getByLabelText('Mode'), 'fast');
-      await user.click(screen.getByRole('button', { name: 'Valider' }));
-      expect(screen.getByLabelText('Votre message')).toHaveValue('Question');
-      await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-      expect(screen.getAllByLabelText('Votre message')).toHaveLength(2);
-      await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
-      expect(await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' })).toBeVisible();
-      await editReference(user);
-      await user.click(screen.getByText('Paramètres avancés'));
-      expect(screen.getByLabelText('PUE (sans unité)')).toBeVisible();
-      await returnToThread(user);
-      expect(screen.getAllByLabelText('Votre message')[0]).toHaveValue('Question');
-      expect(fetch).toHaveBeenCalledTimes(1);
-    } finally { vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
   });
 
   it('signale un bloc vide comme ignoré et conserve le texte renseigné durant la session', async () => {
@@ -334,8 +304,8 @@ describe('composition de la conversation', () => {
     const first = screen.getByRole('region', { name: 'Échange 1' });
     expect(first).toHaveTextContent('Question : Pourquoi ?');
     expect(first).toHaveTextContent('Réponse : Voir sandbox:/mnt/data/rapport.csv');
-    expect(first).toHaveTextContent('Artifact détecté');
-    expect(first).toHaveTextContent('Fichier source détecté');
+    expect(first).toHaveTextContent('Artifact cité');
+    expect(first).toHaveTextContent('Fichier source cité');
     expect(screen.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
     expect(first.querySelector('.block-actions')).not.toBeVisible();
   });

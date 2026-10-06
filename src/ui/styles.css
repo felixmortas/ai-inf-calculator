@@ -42,7 +42,7 @@ h2 { font-size: 1.25rem; margin-top: 0; }
 .thread-reference p { margin: 0; }
 [tabindex="-1"]:focus { outline: 3px solid #184bb2; outline-offset: .25rem; }
 
-.configuration, .conversation-import, .conversation-blocks {
+.configuration, .conversation-blocks {
   margin-top: 1.5rem;
   padding: 1.25rem;
   border: 1px solid #b5c8ba;
@@ -68,28 +68,7 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
 .parameter-form { display: grid; gap: .45rem; margin-top: 1rem; }
 .parameter-form .field { margin-top: .25rem; }
 .parameter-field-error { margin: 0; color: #9d3030; font-size: .9rem; }
-.conversation-import > button { margin-top: 1rem; }
-.import-help { margin-top: 1rem; padding: .8rem; border-left: 4px solid #245535; background: #f3f8f3; }
-.import-help h3 { margin-top: 0; }
-.import-help li + li { margin-top: .45rem; }
-.import-preview { display: grid; gap: .75rem; margin-top: 1rem; }
-.import-preview h3, .import-preview h4 { margin: 0; }
-.import-preview-block, .import-warnings, .import-confirmation, .import-notice, .import-error { padding: .8rem; border-radius: .35rem; }
-.import-preview-block { border: 1px solid #b5c8ba; background: #f3f8f3; }
-.import-preview-block p { white-space: pre-wrap; }
-.import-warnings, .import-notice { border-left: 4px solid #8a5a00; background: #fff7df; }
-.import-error { border: 1px solid #9d3030; background: #fff1f1; }
-.import-confirmation { border: 2px solid #8a5a00; background: #fff7df; }
-.import-confirmation button + button { margin-left: .65rem; }
-.import-consent-backdrop {
-  position: fixed;
-  z-index: 10;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgb(23 32 28 / 62%);
-}
+.content-notice { margin-top: .5rem; padding: .8rem; border-left: 4px solid #8a5a00; border-radius: .35rem; background: #fff7df; }
 .calculation-overlay {
   position: fixed;
   z-index: 20;
@@ -125,22 +104,6 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
 @media (prefers-reduced-motion: reduce) {
   .calculation-spinner { animation: none; border-top-color: #245535; }
 }
-.import-consent {
-  width: min(100%, 42rem);
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
-  padding: 1.25rem;
-  border: 2px solid #245535;
-  border-radius: .75rem;
-  background: #fff;
-  box-shadow: 0 .75rem 2rem rgb(0 0 0 / 28%);
-}
-.import-consent.import-confirmation { border-color: #8a5a00; background: #fff7df; }
-.import-consent h3 { margin-top: 0; }
-.import-consent-url { overflow-wrap: anywhere; }
-.import-consent-links { line-height: 1.7; }
-.import-consent-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-top: 1rem; }
-.import-consent-actions a { font-weight: 700; }
 textarea { min-height: 6rem; resize: vertical; }
 button {
   min-height: 2.75rem;
@@ -218,7 +181,6 @@ button {
 .impact-error { border: 1px solid #9d3030; background: #fff1f1; }
 .impact-stale { border: 2px solid #8a5a00; background: #fff7df; color: #513600; font-weight: 700; }
 .summary-panel, .summary-message { margin: 0 0 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #edf5ee; }
-.import-separator { margin: 1.25rem 0; border: 0; border-top: 1px solid #c7d7c7; }
 .summary-panel h3 { margin: 0 0 .5rem; }
 .summary-panel p { margin: .3rem 0; }
 .summary-panel { background: #fff; }
@@ -235,7 +197,7 @@ button {
 
 @media (max-width: 30rem) {
   .app-shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.25rem; }
-  .configuration, .conversation-import, .conversation-blocks { padding: 1rem; }
+  .configuration, .conversation-blocks { padding: 1rem; }
   .conversation-blocks-header, .conversation-actions { align-items: stretch; flex-direction: column; }
   .conversation-block-heading { align-items: center; flex-direction: row; gap: .5rem; }
   .conversation-actions-after-thread { align-items: center; flex-direction: row; }
@@ -243,6 +205,4 @@ button {
   .block-actions, .remove-confirmation { display: grid; gap: .65rem; }
   .remove-confirmation button + button { margin-left: 0; }
   .source-list li { align-items: stretch; flex-direction: column; }
-  .import-consent { padding: 1rem; }
-  .import-consent-actions { align-items: stretch; flex-direction: column; }
 }

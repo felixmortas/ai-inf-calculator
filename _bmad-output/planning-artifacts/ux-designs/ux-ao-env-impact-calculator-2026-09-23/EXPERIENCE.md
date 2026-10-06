@@ -5,22 +5,19 @@ sources:
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../epics.md
   - ../../architecture/architecture-ai-env-impact-calculator-2026-09-18/ARCHITECTURE-SPINE.md
-  - ../../../implementation-artifacts/spec-remplacer-corsproxy-par-le-worker-import-html.md
 updated: 2026-09-23
 ---
 
 ## Foundation
 
-Page web responsive, en français, sans compte, pour un public curieux et non technique. Le fil représente une conversation **déjà tenue** avec un chatbot : le calculateur guide la reconstruction et estime son impact ; il ne répond pas aux questions collées. Le système visuel est défini par [DESIGN.md](DESIGN.md). Pas de bibliothèque de composants imposée. Les calculs et textes saisis restent locaux ; l'import d'un lien Mistral suit un consentement ponctuel avant chaque requête distante. La session n'est pas conservée après fermeture.
+Page web responsive, en français, sans compte, pour un public curieux et non technique. Le fil représente une conversation **déjà tenue** avec un chatbot : le calculateur guide la reconstruction et estime son impact ; il ne répond pas aux questions collées. Le système visuel est défini par [DESIGN.md](DESIGN.md). Pas de bibliothèque de composants imposée. Les textes saisis, leur tokenisation et les calculs restent locaux. L’accueil propose une seule action pour commencer par saisir ou copier/coller manuellement une conversation. La session n'est pas conservée après fermeture.
 
-Les décisions récentes de Felix font évoluer le PRD : import par lien Mistral uniquement dans l'interface ; modèle ChatGPT prérempli mais directement modifiable ; chaque échange montre carbone et eau, tandis que l'électricité est réservée au bilan. Les exigences de calcul en arrière-plan restent à réconcilier avec ces choix d'affichage. L'architecture AD-8 décrit encore CorsProxy ; la migration implémentée vers le Worker d'import HTML est la source actuelle pour la destination du consentement. Le dialogue doit montrer l'URL canonique transmise et l'endpoint Worker réellement configuré, sans nom d'hôte figé dans le texte.
 
 ### Décisions à reporter dans le produit existant
 
 | Parcours actuel | Décision UX de Felix |
 |---|---|
-| Quatre fournisseurs de liens annoncés | Seul le lien Mistral est proposé et accepté à l'import ; les autres chatbots restent disponibles en saisie manuelle. |
-| Configuration affichée avant toute saisie | Accueil à deux voies, puis choix du chatbot et du modèle dans la voie manuelle. |
+| Configuration affichée avant toute saisie | Une action d’accueil mène au choix du chatbot et du modèle, puis à la saisie manuelle. |
 | Modèle ChatGPT déduit de l'abonnement et non éditable | Valeur de référence préremplie, mais choix direct parmi les modèles ChatGPT du catalogue. |
 | Électricité dans le résultat de chaque échange | Résultat d'échange limité au carbone et à l'eau ; électricité figure dans le bilan. |
 | Valeurs en unités fixes | Unité adaptée à la quantité sur toutes les valeurs numériques affichées. |
@@ -29,18 +26,16 @@ Les décisions récentes de Felix font évoluer le PRD : import par lien Mistral
 
 | Surface | Accès | Besoin couvert |
 |---|---|---|
-| Accueil | Ouverture | Comprendre le rôle de l'outil et choisir import Mistral ou saisie manuelle. [Maquette](mockups/accueil.html). |
-| Consentement d'import | Analyse d'un lien Mistral valide | Savoir quelle URL sera envoyée au Worker et décider avant la requête. [Maquette](mockups/import.html). |
-| Prévisualisation d'import | Après récupération réussie | Vérifier les échanges et avertissements avant de remplacer une conversation en cours. [Maquette](mockups/import.html). |
+| Accueil | Ouverture | Comprendre le rôle de l'outil et commencer une saisie manuelle. [Maquette](mockups/accueil.html). |
 | Choix du chatbot et du modèle | Début de saisie manuelle ; édition depuis le fil | Fixer les hypothèses de toute la conversation, avec modèle prérempli et modifiable. |
-| Fil de conversation | Après choix manuel ou import confirmé | Saisir, relire, modifier, ajouter et supprimer les échanges. [Maquette](mockups/conversation.html). |
+| Fil de conversation | Après le choix du chatbot et du modèle | Saisir, relire, modifier, ajouter et supprimer les échanges. [Maquette](mockups/conversation.html). |
 | Résultat d'échange | Dans la carte d'un échange après « Calculer cet échange » | Lire carbone et eau estimés ; voir la péremption si les données changent. [Maquette](mockups/conversation.html). |
 | Bilan et conseils | Action « Tout calculer » depuis le fil | Lire les totaux et les conseils de sobriété. [Maquette](mockups/bilan.html). |
 | Paramètres avancés | Depuis le fil et le bilan | Corriger pays de référence, pays de la personne et hypothèses mathématiques. |
 
-Accueil, choix manuel, fil et bilan forment une progression dans la même page ; un retour à l'étape précédente ne supprime pas les textes. Le fil reste l'ancre de navigation après le départ. Le consentement et, si le fil contient déjà des textes, la confirmation de remplacement sont les deux dialogues modaux possibles ; ils ne se superposent jamais. La [variante Canopée claire](.working/palettes-guide-calme.html) illustre l'accueil ; `DESIGN.md` et ce document priment sur cette exploration.
+Accueil, choix du chatbot et du modèle, fil et bilan forment une progression dans la même page ; un retour à l'étape précédente ne supprime pas les textes. Le fil reste l'ancre de navigation après le départ. La confirmation de suppression d’un échange est le seul dialogue modal du parcours. La [variante Canopée claire](.working/palettes-guide-calme.html) illustre l'accueil ; `DESIGN.md` et ce document priment sur cette exploration.
 
-Le choix chatbot/modèle, les paramètres avancés et les états périmés sont spécifiés ici sans maquette dédiée, conformément au choix de Felix. Les quatre maquettes promues couvrent l'accueil, l'import, le fil et le bilan ; les spines priment si une maquette montre un état illustratif incomplet.
+Le choix chatbot/modèle, les paramètres avancés et les états périmés sont spécifiés ici sans maquette dédiée, conformément au choix de Felix. Les maquettes promues couvrent l'accueil, le fil et le bilan ; les spines priment si une maquette montre un état illustratif incomplet.
 
 ## Voice and Tone
 
@@ -48,7 +43,7 @@ Le guide parle en phrases courtes et concrètes à l'accueil. Dans le fil, les l
 
 | Situation | Texte indicatif | Éviter |
 |---|---|---|
-| Accueil | « Vous avez un lien de conversation Mistral ? » | « Discutez avec nous » |
+| Accueil | « Collez les messages de votre conversation. » | « Discutez avec nous » |
 | Voie manuelle | « Quel chatbot avez-vous utilisé ? » | « Configurez votre fournisseur » |
 | Champs | « Collez votre question », « Collez la réponse du chatbot » | « Prompt », « Output » seuls |
 | Option | « Ajouter un raisonnement visible ou un artifact » | Donner l'impression que ces contenus sont obligatoires |
@@ -63,15 +58,13 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 | Composant | Comportement |
 |---|---|
 | Guide prompt | Une seule invitation au départ. Disparaît comme guide actif après le choix ; les aides suivantes sont des libellés locaux. |
-| Start choice | Deux actions entièrement visibles : import Mistral en premier, saisie manuelle en second. Choisir l'une ouvre son étape sans effacer l'autre possibilité. |
+| Start choice | Une action visible mène au choix du chatbot et du modèle, puis à la saisie manuelle. |
 | Exchange card | Les échanges antérieurs sont des cartes compactes ordonnées. Résumé de question et réponse, état du calcul et valeurs disponibles ; déplier révèle contenu, modification, suppression et calcul. |
 | Exchange editor | Échange courant ouvert : question puis réponse ; raisonnement visible, artifact et fichiers source dans « Ajouter des contenus facultatifs ». Ajouter un échange ouvre un nouvel éditeur sans imposer de calcul préalable. |
 | Metric pair | Après calcul explicite, affiche carbone et eau avec unités adaptées et indication « estimation ». Ne montre pas l'électricité ici. |
 | Summary panel | Bouton « Calculer toute la conversation » accessible dans le fil. Affiche carbone, eau, électricité, équivalence douche et recommandations après calcul valide. |
 | Button primary | L'action principale correspond à l'étape. Calculer un échange et tout calculer sont des actions distinctes, nommées explicitement. |
-| Status message | Signale import refusé/échoué, données invalides, calcul en cours, résultat périmé et facteurs de repli avec une action de suite lorsque possible. |
-| Import consent | Dialogue nommé avec URL canonique et endpoint Worker courants, données transmises et non transmises. L'action de refus garde la conversation ; aucun réseau avant consentement. Le focus initial va sur « Annuler », reste dans le dialogue et revient au déclencheur. |
-| Import preview | Après import, annoncer seulement « Prévisualisation prête : N échanges, M avertissements », puis placer le focus sur le titre. Les échanges sont parcourables par titres. Confirmer le remplacement seulement après prévisualisation ; si un fil contient du texte, ouvrir une confirmation avec focus initial sur « Conserver ma conversation ». |
+| Status message | Signale données invalides, calcul en cours, résultat périmé et facteurs de repli avec une action de suite lorsque possible. |
 | Model selector | Après choix du chatbot, proposer un modèle du catalogue, modifiable directement, ChatGPT compris. Le chatbot et le modèle restent consultables et modifiables depuis le fil ; un changement signale les calculs devenus périmés. |
 | Advanced settings | Panneau secondaire : pays d'hébergement, pays de la personne, hypothèses de calcul et action de restauration. Chaque champ explique son effet ; appliquer et restaurer ne lancent aucun calcul. |
 
@@ -81,15 +74,7 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 
 | Surface / état | Traitement |
 |---|---|
-| Accueil vide | Deux voies, un texte de contexte court ; aucun paramètre avancé avant le choix. |
-| Lien non reconnu | Expliquer que seul un lien Mistral public est importable ; garder l'URL et proposer la saisie manuelle. |
-| Consentement ouvert | Montrer destination, URL transmise, finalité et données non transmises ; « Continuer » ou « Annuler ». Aucun appel réseau avant « Continuer ». |
-| Import en cours | Désactiver l'action redondante ; annoncer l'attente sans supprimer le fil présent. |
-| Import échoué/refusé | Conserver l'état précédent et le lien, donner une issue manuelle. Aucun import partiel. |
-| Import hors ligne ou délai dépassé | Expliquer l'échec réseau, conserver la saisie et permettre une nouvelle tentative après retour du réseau. |
-| URL ou configuration changée avant consentement | Invalider la demande de consentement précédente ; nouvelle analyse requise, sans requête distante. |
-| Prévisualisation | Lister échanges retenus et avertissements ; remplacement confirmé explicitement si le fil contient déjà du texte. |
-| Prévisualisation vide ou invalide | Ne rien injecter ; signaler qu'aucun échange exploitable n'a été trouvé et proposer la saisie manuelle. |
+| Accueil | Une action pour commencer à saisir ou copier/coller la conversation ; aucun paramètre avancé avant le choix du chatbot et du modèle. |
 | Fil sans échange | Inviter à coller la première question ; ne pas afficher un bilan chiffré. |
 | Échange incomplet | Question seule ou réponse seule reste calculable à la demande ; nommer les champs effectivement pris en compte. Cette règle suit le souhait de calcul « à tout moment ». |
 | Échange vide | Ne pas le compter dans le bilan ; « Tout calculer » explique s'il n'existe aucun échange renseigné. |
@@ -107,8 +92,7 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 - Ajouter, déplier, modifier ou supprimer un échange sans perdre les autres. Le bouton de dépliage dit « Déplier l'échange N » ou « Replier l'échange N », porte `aria-expanded` et `aria-controls`, et garde le focus lors du dépliage. La suppression offre une confirmation si l'échange contient du texte. [ASSUMPTION]
 - Calculer l'échange courant à tout moment après au moins un texte utile ; un échange vide garde « Calculer » indisponible avec explication. « Tout calculer » calcule les échanges renseignés puis le bilan. « Recalculer le total », dans le bilan, réutilise les résultats à jour ; si certains manquent ou sont périmés, il les désigne et renvoie à leur carte sans afficher de total incomplet.
 - Après ajout, placer le focus sur la question du nouvel échange. Après suppression, rendre le focus à l'échange voisin ou à « Ajouter un échange ».
-- Ne jamais déclencher de récupération distante au collage d'un lien : la détection est locale, le consentement précède la requête.
-- Après un changement d'étape, placer le focus sur le nouveau titre ; après import confirmé, sur le titre du fil. Le dialogue de remplacement conserve le focus, se ferme avec Échap et rend le focus au bouton qui l'a ouvert en cas d'annulation.
+- Après un changement d'étape, placer le focus sur le nouveau titre.
 - Garder les actions tactiles et clavier identiques ; aucune commande cachée au survol, aucun glisser-déposer nécessaire.
 
 ### Affichage des quantités
@@ -121,8 +105,6 @@ Chaque unité abrégée possède un nom accessible complet, par exemple « milli
 
 - Ordre de focus et de lecture identique à l'ordre visuel. Boutons et cartes dépliables ont nom, rôle et état (`aria-expanded`) explicites.
 - Les messages de calcul et d'erreur sont annoncés sans relire tout le fil ; les résultats ne déplacent pas le focus de manière inattendue.
-- La prévisualisation d'import n'est pas une région `aria-live` globale : seul un résumé du nombre d'échanges et d'avertissements est annoncé, puis son titre reçoit le focus. Un changement de modèle ou de paramètres n'annonce qu'une fois le nombre de résultats périmés ; les statuts locaux restent consultables dans les cartes.
-- La fenêtre de consentement reçoit le focus, le retient pendant son ouverture, se ferme avec Échap et rend le focus au déclencheur.
 - La confirmation de remplacement suit les mêmes règles de dialogue. Le fond est inerte pendant ces dialogues, qui ne s'empilent jamais.
 - Contrôles tactiles d'au moins 44 × 44 px ; focus visible via `{colors.focus}` ; reflow à 320 px et zoom à 200 % puis 400 % sans perte d'action.
 - Les statuts ne reposent jamais seulement sur une couleur, un pictogramme ou un mouvement. Respect de `prefers-reduced-motion` ; aucune animation nécessaire à la compréhension.
@@ -141,8 +123,8 @@ Sur mobile, une seule colonne : choix d'entrée, puis en-tête chatbot/modèle, 
 
 ### UJ-1 — Camille évalue sa conversation au fil des échanges
 
-1. Camille ouvre le calculateur sur son téléphone et voit l'import Mistral proposé ainsi que « Saisir un échange ».
-2. Elle choisit la saisie manuelle, indique son chatbot et vérifie le modèle proposé ; elle peut en choisir un autre, y compris pour ChatGPT.
+1. Camille ouvre le calculateur sur son téléphone et choisit « Saisir un échange ».
+2. Elle indique son chatbot et vérifie le modèle proposé ; elle peut en choisir un autre, y compris pour ChatGPT.
 3. Elle colle sa question. Le champ de réponse suit directement ; raisonnement visible, artifact et fichiers restent facultatifs.
 4. Elle colle la réponse et lance « Calculer cet échange ». **Climax :** une carte près du texte affiche une estimation lisible du carbone et de l'eau, avec unités adaptées ; Camille comprend le lien entre son échange et ces valeurs.
 5. Elle ajoute un échange. Le premier devient une carte compacte dépliable, le nouveau champ de question reçoit le focus.
@@ -151,17 +133,7 @@ Sur mobile, une seule colonne : choix d'entrée, puis en-tête chatbot/modèle, 
 
 Échec : un paramètre indispensable manque → le calcul explique le blocage près de l'action sans effacer les textes. Si Camille modifie un échange déjà calculé, le résultat et le bilan dépendants deviennent périmés jusqu'au recalcul explicite.
 
-### UJ-2 — Camille évalue une conversation passée à partir de son lien
-
-1. Camille ouvre le calculateur et colle son lien public Mistral dans l'option d'import.
-2. La reconnaissance du lien se fait localement ; elle voit le consentement indiquant l'URL et le Worker destinataire.
-3. Elle accepte la récupération. Le contenu reçu apparaît en prévisualisation avec les avertissements éventuels.
-4. Elle confirme l'ajout ou, si un fil existe, son remplacement. Les échanges apparaissent en cartes ordonnées et dépliables.
-5. Elle lance « Calculer toute la conversation ». **Climax :** le bilan relie la conversation importée à des estimations lisibles et à des gestes de sobriété.
-
-Échec : refus, lien invalide ou récupération impossible → le fil existant reste intact ; Camille peut corriger le lien ou reprendre la saisie manuelle. Aucun échange partiel n'est injecté.
-
-### UJ-3 — Camille corrige un échange déjà calculé
+### UJ-2 — Camille corrige un échange déjà calculé
 
 1. Camille déplie un échange ancien et corrige la réponse collée.
 2. La carte indique « Résultat à recalculer » ; les échanges dépendants et le bilan ne présentent plus leurs anciennes valeurs comme actuelles.

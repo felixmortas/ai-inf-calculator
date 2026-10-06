@@ -38,7 +38,6 @@ export interface ConversationState {
   /** Saisie avancée invalide, non appliquée : bloque les calculs sans perdre la dernière vue valide. */
   readonly parameterValidationInvalid: boolean;
   readonly blocks: readonly ConversationBlock[];
-  readonly blocksReplacementRevision: number;
   readonly tokenizations: Readonly<Record<string, BlockTokenizationState>>;
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
   readonly showerEquivalences: Readonly<Record<string, ShowerEquivalenceState>>;
@@ -113,7 +112,6 @@ export type ConversationAction =
   | { readonly type: 'parametersValidationFailed' }
   | { readonly type: 'parametersRestored' }
   | { readonly type: 'blockAdded'; readonly blockId: string }
-  | { readonly type: 'blocksReplaced'; readonly blocks: readonly ConversationBlock[] }
   | { readonly type: 'blockUpdated'; readonly blockId: string; readonly field: ConversationBlockField; readonly value: string }
   | { readonly type: 'sourceAdded'; readonly blockId: string; readonly source: LocalSource }
   | { readonly type: 'sourceRemoved'; readonly blockId: string; readonly sourceId: string }
@@ -139,7 +137,6 @@ export const initialConversationState: ConversationState = Object.freeze({
   hostingCountry: resolveHostingCountry(chatGptProvider)!,
   userCountry: detectUserCountry(),
   blocks: [],
-  blocksReplacementRevision: 0,
   tokenizations: {},
   impacts: {},
   showerEquivalences: {},
@@ -336,15 +333,6 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'blockAdded':
       if (state.blocks.some((block) => block.blockId === action.blockId)) return state;
       return discardTransientCalculations({ ...state, blocks: [...state.blocks, createConversationBlock(action.blockId)] });
-    case 'blocksReplaced': {
-      const ids = action.blocks.map((block) => block.blockId);
-      if (ids.some((id) => id.trim() === '') || new Set(ids).size !== ids.length) return state;
-      const blocks = action.blocks.map((block) => ({
-        blockId: block.blockId, message: block.message, finalResponse: block.finalResponse,
-        sources: [], visibleReasoning: block.visibleReasoning, artifact: block.artifact,
-      }));
-      return { ...state, blocks, blocksReplacementRevision: state.blocksReplacementRevision + 1, tokenizations: {}, impacts: {}, showerEquivalences: {}, summaryShowerEquivalence: undefined, summary: undefined };
-    }
     case 'blockUpdated': {
       if (!conversationBlockFields.includes(action.field)) return state;
       const index = state.blocks.findIndex((block) => block.blockId === action.blockId);

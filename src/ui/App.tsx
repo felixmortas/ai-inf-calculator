@@ -15,7 +15,6 @@ import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
 import { ConversationConfiguration } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
-import { ConversationImport } from './ConversationImport';
 import { Methodology } from './Methodology';
 import './styles.css';
 
@@ -35,11 +34,10 @@ export function impactTexts(
 export function App() {
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
   const summaryPending = state.summary?.status === 'pending';
-  const [step, setStep] = useState<'home' | 'import' | 'selection' | 'thread' | 'methodology'>('home');
-  const stepBeforeMethodology = useRef<'home' | 'import' | 'selection' | 'thread'>('home');
+  const [step, setStep] = useState<'home' | 'selection' | 'thread' | 'methodology'>('home');
+  const stepBeforeMethodology = useRef<'home' | 'selection' | 'thread'>('home');
   const visibleStep = step === 'methodology' ? stepBeforeMethodology.current : step;
-  const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'import' | 'thread'>('home');
-  const [awaitingImportedMistralMode, setAwaitingImportedMistralMode] = useState(false);
+  const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'thread'>('home');
   const stepTitle = useRef<HTMLHeadingElement>(null);
   const methodologyTitle = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<'summary' | 'reference' | null>(null);
@@ -94,7 +92,7 @@ export function App() {
     }
   }, [state, recalculationNotice]);
 
-  function openSelection(origin: 'home' | 'import' | 'thread', trigger?: HTMLButtonElement) {
+  function openSelection(origin: 'home' | 'thread', trigger?: HTMLButtonElement) {
     const fromSummary = !!trigger?.closest('.summary-panel');
     returnFocus.current = trigger ? (fromSummary ? 'summary' : 'reference') : null;
     setOpenAdvancedOnSelection(fromSummary || !!trigger?.classList.contains('edit-stale-parameters'));
@@ -112,11 +110,6 @@ export function App() {
       if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
     }
     dispatch(action);
-  }
-
-  function openManualSelection(origin: 'home' | 'import') {
-    setAwaitingImportedMistralMode(false);
-    openSelection(origin);
   }
 
   function openMethodology() {
@@ -241,23 +234,13 @@ export function App() {
       {step === 'methodology' ? <Methodology titleRef={methodologyTitle} onReturn={() => setStep(stepBeforeMethodology.current)} /> : null}
       {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths" aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.homeTitle}</h2>
-        <div className="start-choice"><h3>{fr.importPathTitle}</h3><p>{fr.importPathHelp}</p><button className="icon-button" type="button" aria-label={fr.importPathAction} onClick={() => setStep('import')}><Icon>→</Icon></button></div>
-        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button className="icon-button" type="button" aria-label={fr.manualPathAction} onClick={() => openManualSelection('home')}><Icon>→</Icon></button></div>
-      </section> : null}
-      {visibleStep === 'import' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
-        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.importPathTitle}</h2>
-        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>←</Icon></button>
-        <ConversationImport state={state} dispatch={dispatch} onImported={() => {
-          dispatch({ type: 'providerSelected', provider: 'Mistral AI' });
-          setAwaitingImportedMistralMode(true);
-          openSelection('import');
-        }} onManual={() => openManualSelection('import')} />
+        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button className="icon-button" type="button" aria-label={fr.manualPathAction} onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>→</Icon></button></div>
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
-        <button className="icon-button below-title" type="button" aria-label={selectionOrigin === 'thread' ? fr.backThreadAction : selectionOrigin === 'import' ? fr.backImportAction : fr.backHomeAction} onClick={() => setStep(selectionOrigin)}><Icon>←</Icon></button>
-        <ConversationConfiguration state={state} dispatch={configurationDispatch} requireMistralMode={awaitingImportedMistralMode} onMistralModeChosen={() => setAwaitingImportedMistralMode(false)} initialAdvancedOpen={openAdvancedOnSelection} />
-        <button type="button" disabled={awaitingImportedMistralMode} onClick={() => { if (!awaitingImportedMistralMode) setStep('thread'); }}>{fr.continueThreadAction}</button>
+        <button className="icon-button below-title" type="button" aria-label={selectionOrigin === 'thread' ? fr.backThreadAction : fr.backHomeAction} onClick={() => setStep(selectionOrigin)}><Icon>←</Icon></button>
+        <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} />
+        <button type="button" onClick={() => setStep('thread')}>{fr.continueThreadAction}</button>
       </section> : null}
       {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>

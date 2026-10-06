@@ -32,7 +32,6 @@ flowchart LR
   APP --> DOMAIN[Domaine pur : tokens, historique, impacts]
   APP --> CATALOG[Catalogues locaux typés]
   APP --> WORKER[Web Worker : tokenisation locale]
-  APP --> REMOTE[remoteGateway : frontière d'import distant]
 ```
 
 ## Invariants & Rules
@@ -65,7 +64,7 @@ flowchart LR
 
 - **Binds:** FR-1, FR-2, FR-15, FR-17, FR-20, FR-23, FR-24, NFR-6
 - **Prevents:** des constantes dispersées, des prix mêlés aux formules, ou la modification durable des données publiées par les paramètres avancés.
-- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux carbone, eau et énergie, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. La clé fournisseur est normalisée entre modèles et pays d’hébergement ; chaque référence de modèle doit résoudre ses facteurs et son pays avant publication. Une table locale unique propose les références ChatGPT `sans abonnement → gpt-5.6-luna`, `avec abonnement → gpt-5.6-terra`, et Mistral `rapide → mistral-small`, `réflexion → mistral-large` ; si le mode Mistral d’un import est inconnu, la personne le choisit. Ce préremplissage est une estimation : le choix explicite valide de la personne prévaut, et le reducer accepte le choix direct de tout modèle valide du chatbot sélectionné, ChatGPT compris, pour toute la conversation. Une unique fonction de `data/modelCatalog`, appelée par `application`, résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. `domain` reçoit les paramètres résolus, sans dépendre du catalogue concret. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
+- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux carbone, eau et énergie, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. La clé fournisseur est normalisée entre modèles et pays d’hébergement ; chaque référence de modèle doit résoudre ses facteurs et son pays avant publication. Une table locale unique propose les références ChatGPT `sans abonnement → gpt-5.6-luna`, `avec abonnement → gpt-5.6-terra`, et Mistral `rapide → mistral-small`, `réflexion → mistral-large` ; ce préremplissage est une estimation : le choix explicite valide de la personne prévaut, et le reducer accepte le choix direct de tout modèle valide du chatbot sélectionné, ChatGPT compris, pour toute la conversation. Une unique fonction de `data/modelCatalog`, appelée par `application`, résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. `domain` reçoit les paramètres résolus, sans dépendre du catalogue concret. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
 
 ### AD-6 — Localisation indicative sans donnée externe [ADOPTED]
 
@@ -78,14 +77,6 @@ flowchart LR
 - **Binds:** FR-6, FR-22, NFR-5
 - **Prevents:** des textes français dans les calculs ou une seconde locale qui change des nombres de référence.
 - **Rule:** tout texte utilisateur est adressé par clé dans des catalogues de messages typés ; `fr-FR` est la seule locale distribuée au lancement. Les formats d’affichage passent par `Intl`. Les identifiants, unités internes, formules, valeurs de catalogues et empreintes ne dépendent pas de la langue.
-
-### AD-8 — Import distant exceptionnel, consenti et allowlisté [ADOPTED]
-
-- **Binds:** FR-3, FR-8, FR-19, NFR-2, NFR-3, D-4, epic 6.3
-- **Prevents:** l’envoi de données de session, l’import publié d’un autre fournisseur, un consentement adressé au mauvais endpoint et la confusion entre contrôles du navigateur et du Worker.
-- **Rule:** `application/import` possède un registre statique et fermé d’adaptateurs ; les adaptateurs ChatGPT, Claude et Gemini restent isolés dans le code, mais la politique publiée ne peut attester qu’un lien public Mistral. La restriction s’applique avant création du consentement et de nouveau à la frontière `remoteGateway` : un autre fournisseur est refusé localement sans requête. Seul le registre fabrique un `ResolvedShare` opaque, immuable et attesté en mémoire, associé à `{ providerId, canonicalUrl, limits, policyVersion }`. La passerelle refuse toute valeur forgée, clonée, non attestée ou non admise par la politique publiée ; elle retrouve les limites et l’adaptateur par l’identité attestée.
-- **Consentement et destination:** le dialogue montre intégralement l’URL Mistral canonique et l’endpoint Worker actif issu de la configuration allowlistée. Après consentement explicite, ponctuel et à usage unique, lié à l’identité du même `ResolvedShare`, à sa version de politique et à cet endpoint, `remoteGateway` est le seul module autorisé à lancer l’import distant. Refus, annulation, changement d’URL, de politique, de limites ou d’endpoint invalident ce consentement avant trafic. Aucun endpoint libre n’est accepté. Le navigateur envoie au Worker un `POST` JSON dont le seul champ est `shareUrl` canonique, avec `credentials: omit`, `redirect: error`, `cache: no-store` et `referrerPolicy: no-referrer` ; il n’envoie aucun texte local, fichier, résultat ni paramètre de calcul.
-- **Réponse et défaillance:** les plafonds globaux navigateur sont de 10 s pour requête et lecture, 2 Mio lus et 1 000 événements extraits ; les limites d’adaptateur ne peuvent que les resserrer. Le navigateur accepte seulement un HTML complet non exécuté, puis l’extracteur Mistral produit une prévisualisation locale. Rien n’est ajouté au fil avant confirmation ; si le fil contient du texte, le remplacement exige une confirmation distincte. Tout dépassement et toute erreur de politique, de configuration, de réseau ou de format sont typés et laissent la session intacte, sans prévisualisation partielle ; la saisie manuelle reste disponible. Le navigateur refuse les redirections de sa requête vers le Worker ; le suivi éventuel des redirections entre Worker et site de partage et leur contrôle relèvent du contrat du Worker. Le Worker reçoit l’URL, peut traiter la page et des métadonnées de requête selon sa politique documentée ; aucune garantie sur sa conservation interne n’est déduite du code navigateur.
 
 ### AD-9 — Projection des résultats et unités [ADOPTED]
 
@@ -101,7 +92,7 @@ flowchart LR
 | Nombres et unités | Calculs non arrondis en Wh, gCO₂e et L ; seul le formateur partagé adapte l’unité et arrondit à trois chiffres significatifs au plus. Aucun `NaN` ou infini ne franchit la frontière du domaine. |
 | Données | Les fichiers portent `schemaVersion`, `dataVersion`, provenance et date de calibration ; une valeur environnementale absente cherche seulement sa valeur Monde du même facteur. |
 | Mutation | Les actions du reducer sont les seules mutations de session. Une mutation ne lance jamais de calcul sans intention utilisateur explicite. |
-| Confidentialité | Les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. Seule l’URL canonique du partage Mistral admis est transmise au Worker allowlisté après consentement conforme à AD-8 ; aucun contenu local n’est inclus par le calculateur. |
+| Confidentialité | Les messages de conversation ne figurent ni dans une URL, ni dans un log, ni dans un stockage navigateur durable. Aucun texte local, fichier, résultat ou paramètre de calcul n’est transmis à un service distant. La tokenisation et les calculs s’exécutent localement. |
 
 ## Stack
 
@@ -120,8 +111,7 @@ flowchart LR
 ai-inf-calculator/
   src/
     ui/                 # composants React, accessibilité, présentation
-    application/        # reducer, cas d’usage, orchestration du Worker
-      import/           # validation, extracteur local et remoteGateway isolé
+    application/        # reducer, cas d’usage et orchestration locale
     domain/             # règles pures : historique, diff, impacts, validation, fraîcheur
     data/               # catalogues locaux, schémas et métadonnées de sources
     i18n/               # messages fr-FR et formatage
@@ -143,23 +133,14 @@ flowchart TB
 ```mermaid
 sequenceDiagram
   participant U as Personne
-  participant UI as UI d'import
-  participant R as Registre / adaptateur validé
-  participant G as remoteGateway
-  participant W as Worker HTML allowlisté
-  participant X as Extracteur Mistral local
-  U->>UI: Saisir une URL de partage
-  UI->>R: Valider Mistral et canonicaliser l'URL
-  R-->>UI: ResolvedShare Mistral attesté
-  UI->>U: Afficher URL canonique et endpoint Worker actif
-  U->>UI: Consentir pour cette URL et cet endpoint
-  UI->>G: ResolvedShare admis + consentement courant
-  G->>W: POST JSON {shareUrl}, borné
-  W-->>G: HTML complet borné
-  G->>X: Texte HTML non exécutable et borné
-  X-->>UI: Prévisualisation ou erreur typée
-  UI->>U: Confirmer l'ajout ou le remplacement séparé
-  Note over UI,X: Aucun texte local, fichier, résultat ou paramètre n'est transmis
+  participant UI as Interface de saisie
+  participant A as Application locale
+  participant T as Worker de tokenisation local
+  U->>UI: Saisir ou coller les échanges
+  UI->>A: Mettre à jour les blocs et la configuration
+  A->>T: Demander une tokenisation locale
+  T-->>A: Retourner les comptes de tokens
+  A-->>UI: Afficher l’estimation calculée localement
 ```
 
 ## Capability → Architecture Map
@@ -172,14 +153,10 @@ sequenceDiagram
 | Modèles, références initiales, paramètres et calcul | `data/`, `application/`, `domain/` | AD-3, AD-5 |
 | Pays, eau, carbone, douche et affichage | `data/`, `domain/`, `ui/`, `i18n/` | AD-5, AD-6, AD-9 |
 | Français et extensions de langues | `i18n/`, `ui/` | AD-7 |
-| Consentement et import de partage distant | `ui/`, `application/import/` | AD-8 |
 | Publication GitHub Pages | `ai-inf-calculator/` et workflow du repo hôte | AD-1 |
 
 ## Deferred
 
-- Migration de l’epic 6.3 : `ConversationImport.tsx`, `registry.ts` et `remoteGateway.ts` acceptent encore quatre fournisseurs dans le code actuel. Appliquer et vérifier la politique Mistral seul aux trois frontières avant publication ; AD-8 est le contrat cible approuvé.
 - Granularité exacte du diff d’artifact et segmentation des mots de fallback : D-2 du PRD les fixe avant les tests de référence ; ils ne modifient pas les frontières ci-dessus.
 - Schéma concret et contenu du catalogue `models_params`, calibration tarifaire et processus de mise à jour : D-1/D-6 ; ils doivent satisfaire AD-5 avant publication.
-- Garanties internes et exploitation du Worker existant : traitement et conservation du lien, page et métadonnées, politique de redirection entre Worker et fournisseur, limites effectives et observabilité ; documenter et revoir D-4 avant publication de l’epic 6.3. Le navigateur ne peut pas les attester.
-- Alignement amont du PRD et des SPEC historiques avec le périmètre publié de l’epic 6 : Worker, Mistral seul et trois chiffres significatifs. Leurs anciennes exigences restent une trace des epics 1–5 ; la proposition approuvée du 2026-09-23 et l’UX finale gouvernent l’epic 6.
 - Workflow GitHub Actions précis du dépôt hôte : décidé lors de l’intégration ; il doit respecter AD-1 et publier aussi le site racine.

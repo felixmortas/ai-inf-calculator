@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   isIgnoredConversationBlock,
   isImpactCurrent,
@@ -64,7 +64,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   const pendingFocus = useRef<{ kind: 'question' | 'toggle' | 'add'; blockId?: string } | null>(null);
   const pendingCancelFocus = useRef<string | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<ReadonlySet<string>>(() => new Set());
-  const currentReplacementRevision = useRef(state.blocksReplacementRevision);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const sourceImports = useRef(new Map<string, Promise<void>>());
   const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
@@ -77,14 +76,6 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
       {value.equivalence.status === 'available' && value.equivalence.factorSource === 'world' ? <p className="impact-note">{fr.showerWorldFallback}</p> : null}
     </div>
   ) : stale ? <p role="status" className="impact-stale">{fr.staleShower}</p> : null;
-
-  useLayoutEffect(() => {
-    currentReplacementRevision.current = state.blocksReplacementRevision;
-    sourceImports.current.clear();
-    setExpandedBlocks(new Set());
-    setConfirmRemoveId(null);
-    setSourceStatus({});
-  }, [state.blocksReplacementRevision]);
 
   useEffect(() => {
     if (!pendingFocus.current) return;
@@ -102,11 +93,11 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   }, [confirmRemoveId]);
 
   useEffect(() => {
-    const importedHighest = state.blocks.reduce((highest, block) => {
+    const highestBlockNumber = state.blocks.reduce((highest, block) => {
       const match = /^block-(\d+)$/.exec(block.blockId);
       return match ? Math.max(highest, Number(match[1])) : highest;
     }, 0);
-    nextBlockNumber.current = Math.max(nextBlockNumber.current, importedHighest + 1);
+    nextBlockNumber.current = Math.max(nextBlockNumber.current, highestBlockNumber + 1);
   }, [state.blocks]);
 
   function addBlock() {
@@ -151,22 +142,17 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
   function addSources(blockId: string, event: ChangeEvent<HTMLInputElement>) {
     const files = [...(event.currentTarget.files ?? [])];
     event.currentTarget.value = '';
-    const replacementRevision = currentReplacementRevision.current;
     const previous = sourceImports.current.get(blockId) ?? Promise.resolve();
     const batch = previous.then(async () => {
       const rejected: string[] = [];
       for (const file of files) {
-        if (currentReplacementRevision.current !== replacementRevision) return;
         try {
           const source = await readLocalSource(file);
-          if (currentReplacementRevision.current !== replacementRevision) return;
           dispatch({ type: 'sourceAdded', blockId, source: { id: crypto.randomUUID(), ...source } });
         } catch {
-          if (currentReplacementRevision.current !== replacementRevision) return;
           rejected.push(file.name);
         }
       }
-      if (currentReplacementRevision.current !== replacementRevision) return;
       setSourceStatus((current) => ({ ...current, [blockId]: rejected.length ? fr.sourceRejected(rejected.join(', ')) : '' }));
     });
     sourceImports.current.set(blockId, batch);
@@ -189,8 +175,8 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
         const editorId = `conversation-${block.blockId}-editor`;
         const question = block.message.trim();
         const response = block.finalResponse.trim();
-        const importArtifact = /sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse);
-        const importSource = /filecite[^]+/u.test(block.finalResponse);
+        const artifactReference = /sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse);
+        const sourceFileReference = /filecite[^]+/u.test(block.finalResponse);
         const status = ignored ? fr.ignoredBlockStatus : impactIsStale ? fr.staleImpactStatus
           : impactState?.status === 'pending' && isImpactFresh(state, block.blockId) ? fr.pendingEstimate
           : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? fr.failedEstimate
@@ -233,8 +219,8 @@ export function ConversationBlocks({ state, dispatch, onCalculate, onCalculateAl
               <p><strong>{fr.responsePreview} :</strong> {response || fr.noPreview}</p>
             </div> : null}
             <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`} role="status">{status}</p>
-            {importArtifact ? <p role="status" className="import-notice">{fr.importArtifactDetected}</p> : null}
-            {importSource ? <p role="status" className="import-notice">{fr.importSourceFileDetected}</p> : null}
+            {artifactReference ? <p role="status" className="content-notice">{fr.artifactReferenceDetected}</p> : null}
+            {sourceFileReference ? <p role="status" className="content-notice">{fr.sourceFileReferenceDetected}</p> : null}
             {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
             {impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? <p role="alert" className="impact-error">{impactState.code === 'empty-block' ? fr.emptyBlockError : fr.invalidDataError}</p> : null}
             <div id={editorId} hidden={!expanded} className="block-editor">

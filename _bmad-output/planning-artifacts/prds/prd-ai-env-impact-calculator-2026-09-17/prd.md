@@ -9,9 +9,9 @@ updated: 2026-10-06
 
 ## 1. Objet et vision
 
-Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Dès l’accueil, une personne non technique choisit la saisie manuelle ou l’import d’un lien public Mistral. Elle déclenche les calculs, consulte le carbone et l’eau estimés près de chaque échange, puis le bilan de la conversation : carbone, eau, électricité, équivalence carbone en durée de douche chaude et bonnes pratiques.
+Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Dès l’accueil, une personne non technique accède à la saisie manuelle ou au copier/coller de sa conversation. Elle déclenche les calculs, consulte le carbone et l’eau estimés près de chaque échange, puis le bilan de la conversation : carbone, eau, électricité, équivalence carbone en durée de douche chaude et bonnes pratiques.
 
-Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le fil affiche le chatbot et le modèle, directement modifiables ; les réglages mathématiques restent dans une section avancée discrète. Les textes et calculs restent dans le navigateur. Seule l’URL canonique d’un partage Mistral est transmise au Worker d’import après consentement explicite ; la session n’est pas sauvegardée après fermeture.
+Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le fil affiche le chatbot et le modèle, directement modifiables ; les réglages mathématiques restent dans une section avancée discrète. Les textes, leur tokenisation et les calculs restent dans le navigateur. La session n’est pas sauvegardée après fermeture.
 
 Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables.
 
@@ -42,19 +42,9 @@ Camille choisit « Saisir un échange », indique ChatGPT et vérifie le modèle
 
 **Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
 
-### UJ-2 — Camille évalue une conversation passée à partir de son lien
-
-**Contexte et entrée.** Plus tard, Camille souhaite évaluer une conversation récente avec Mistral et choisit l’import depuis l’accueil.
-
-**Déroulement.** Elle colle l’URL publique Mistral. Après validation locale, elle voit l’URL canonique et l’endpoint Worker dans un dialogue de consentement. Si elle accepte, les échanges récupérés et leurs avertissements apparaissent en prévisualisation. Elle confirme leur ajout ; si sa conversation actuelle contient du texte, elle confirme séparément son remplacement. Un refus, un lien non Mistral ou un échec préserve les textes existants et laisse la saisie manuelle accessible.
-
-**Résultat.** Camille déclenche les calculs et consulte carbone et eau par échange, puis le bilan complet.
-
-**Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
-
 ## 3. Périmètre du lancement
 
-**Inclus :** accueil à deux voies, saisie manuelle pour les chatbots du catalogue, import d’un lien public Mistral après consentement et prévisualisation, ajout/modification/suppression d’échanges, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable. Les anciens importeurs ChatGPT, Claude et Gemini restent hors du parcours publié.
+**Inclus :** accueil à une seule action vers la saisie ou le copier/coller manuel pour les chatbots du catalogue, ajout/modification/suppression d’échanges, fichiers texte locaux, calcul individuel et global à la demande, total indépendant, historique et versions d’artifact, estimations et conseils, paramètres avancés réinitialisables, interface française compatible mobile et internationalisable.
 
 **Catalogue :** les chatbots et modèles disponibles, avec la tarification par type de tokens sont ceux du fichier fourni, nommé `models_params`.
 
@@ -94,17 +84,13 @@ La personne peut remplacer directement ce modèle par tout autre modèle ChatGPT
 
 #### FR-2 — Choisir le modèle pour tout fournisseur
 
-Pour tout fournisseur, ChatGPT compris, la personne peut choisir directement un modèle valide de son catalogue. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc. Pour Mistral, le mode indiqué par la personne propose `mistral-small` pour « rapide » et `mistral-large` pour « réflexion » ; ces références sont modifiables. Si le mode d’une conversation importée n’est pas révélé de façon fiable, le calculateur demande ce choix sans l’inférer du texte. Les correspondances de modes sont maintenues dans une table locale unique, facile à modifier.
+Pour tout fournisseur, ChatGPT compris, la personne peut choisir directement un modèle valide de son catalogue. Le fournisseur et le modèle sont définis pour toute la conversation, sans choix distinct par bloc. Pour Mistral, le mode indiqué par la personne propose `mistral-small` pour « rapide » et `mistral-large` pour « réflexion » ; ces références sont modifiables. Les correspondances de modes sont maintenues dans une table locale unique, facile à modifier.
 
 Le catalogue `models_params` détermine les chatbots et modèles proposés. Les modèles absents ne sont pas proposés à la sélection. Ce catalogue fournit également le nombre de tokens du prompt système pour chaque modèle. Un changement de chatbot, de mode ou de modèle signale les résultats devenus périmés sans déclencher de calcul.
 
 #### FR-16 — Garder le chatbot, le modèle et la conversation visibles
 
-Après l’accueil à deux voies et le choix manuel, l’en-tête du fil présente le chatbot et le modèle sélectionné, consultables et modifiables sans ouvrir les paramètres avancés. Le chatbot et le modèle s’appliquent à tous les échanges. Les échanges antérieurs sont des cartes chronologiques compactes et dépliables ; l’éditeur courant reste ouvert. Un retour à l’étape précédente conserve les textes. Les autres paramètres de calcul sont regroupés dans les paramètres avancés.
-
-#### FR-25 — Importer uniquement un partage public Mistral dans le parcours publié
-
-Le parcours publié propose et accepte un lien public Mistral. Une URL d’un autre fournisseur ou non reconnue est refusée localement, sans requête distante ni consentement consommé ; la saisie manuelle reste accessible. L’endpoint d’import publié refuse aussi un `shareUrl` non Mistral lors d’un appel direct. Après consentement ponctuel, les échanges exploitables et les avertissements sont présentés en prévisualisation avant tout ajout. Une conversation existante contenant du texte n’est remplacée qu’après une confirmation distincte. Un refus, une annulation, un échec ou une prévisualisation inexploitable préserve la conversation ; aucun import partiel n’est ajouté.
+Après le choix manuel, l’en-tête du fil présente le chatbot et le modèle sélectionné, consultables et modifiables sans ouvrir les paramètres avancés. Le chatbot et le modèle s’appliquent à tous les échanges. Les échanges antérieurs sont des cartes chronologiques compactes et dépliables ; l’éditeur courant reste ouvert. Un retour à l’étape précédente conserve les textes. Les autres paramètres de calcul sont regroupés dans les paramètres avancés.
 
 ### 5.2 Saisie et comptage
 
@@ -364,19 +350,18 @@ Les conseils seront contextualisés sans être personnalisés : conserver le con
 
 ### NFR-1 — Utilisation sur ordinateur et mobile
 
-La page permet la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. L’accueil présente les deux voies, l’import Mistral en premier et la saisie manuelle en second. Le fil et le bilan suivent [DESIGN.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md) et [EXPERIENCE.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md) du 23 septembre 2026 ; ces documents priment sur les quatre maquettes statiques en cas d’écart.
+La page permet la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. L’accueil propose une seule action pour commencer par saisir ou copier/coller manuellement une conversation. Le fil et le bilan suivent [DESIGN.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md) et [EXPERIENCE.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md) du 23 septembre 2026 ; ces documents priment sur les quatre maquettes statiques en cas d’écart.
 
 ### NFR-2 — Compatibilité avec GitHub Pages
 
 La page livrée doit être hébergeable sur GitHub Pages et s’intégrer au site existant `felixmortas.com`. Le choix du langage et des outils de développement est libre, sous réserve de respecter cette contrainte. Le contexte technique fourni par Felix est conservé dans [addendum.md](addendum.md#intégration-au-site-existant).
 
-La page reste hébergeable statiquement. La récupération distante des liens publics Mistral utilise l’endpoint d’import HTML du Worker du projet, résolu depuis la configuration active ; aucun autre service réseau n’est ajouté pour le calcul.
+La page reste hébergeable statiquement. La tokenisation et les calculs de conversation sont effectués localement ; aucun endpoint d’import distant n’est utilisé.
 
 ### NFR-3 — Garder les conversations dans le navigateur
 
 Par défaut, les messages, réponses, raisonnements, artifacts, fichiers locaux, calculs, tokenisation et comparaisons restent dans le navigateur, en mémoire de session, sans analytics ni journal distant. Le comptage, le calcul des impacts et la comparaison des versions d’artifacts sont réalisés localement.
 
-L’import d’un lien public Mistral constitue une exception strictement limitée. Après validation et canonicalisation locales, la personne consent explicitement, pour chaque requête, à l’envoi de cette URL canonique à l’endpoint Worker actif, affiché intégralement dans le dialogue. Le navigateur transmet un `POST` borné dont le corps ne contient que `shareUrl` ; ni texte local, fichier, résultat ni paramètre de calcul ne sont transmis. Le Worker reçoit l’URL et peut traiter la page ainsi que des métadonnées de requête selon sa politique documentée. L’endpoint est contraint par la configuration autorisée, sans URL libre. Une URL non Mistral, un refus, une annulation, une modification de l’URL ou de la configuration avant consentement, une erreur réseau ou un format inconnu ne déclenchent aucun import et préservent la conversation. Les liens non Mistral sont refusés avant toute requête distante.
 
 ### NFR-4 — Ne pas conserver la session après fermeture
 
@@ -410,7 +395,7 @@ Les données de catalogue indispensables manquantes ne sont pas inventées : le 
 
 Ces critères appliquent les décisions UX approuvées le 23 septembre 2026.
 
-Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Les états périmés, les erreurs et les facteurs de repli portent un texte et ne dépendent pas seulement de la couleur. Le parcours reste utilisable à 320 px, aux zooms 200 % et 400 %, avec des cibles d’au moins 44 × 44 px et sans commande réservée au survol. Les dialogues de consentement et de remplacement sont distincts, avec fond inerte, focus initial sur l’action conservatrice, focus retenu dans le dialogue, fermeture par Échap et restitution au déclencheur. Après prévisualisation, seuls les comptes d’échanges et d’avertissements sont annoncés, puis le focus va au titre ; après ajout d’un échange, il va à la nouvelle question. Les annonces de péremption restent concises.
+Les champs possèdent des libellés explicites, les actions sont accessibles au clavier, le focus est visible et les erreurs sont associées aux champs concernés. Les états périmés, les erreurs et les facteurs de repli portent un texte et ne dépendent pas seulement de la couleur. Le parcours reste utilisable à 320 px, aux zooms 200 % et 400 %, avec des cibles d’au moins 44 × 44 px et sans commande réservée au survol. Après ajout d’un échange, le focus va à la nouvelle question. Les annonces de péremption restent concises.
 
 Ces critères concrétisent l’usage grand public sur ordinateur et mobile ; ils ne constituent pas une déclaration de certification d’accessibilité.
 
@@ -419,7 +404,7 @@ Ces critères concrétisent l’usage grand public sur ordinateur et mobile ; il
 
 **SM-1 — Signal retenu par Felix :** recevoir des retours positifs par email ou sur LinkedIn. Felix apprécie directement ces retours ; aucun volume, échéance ni collecte automatisée n’est imposé. Ce signal concerne l’expérience globale, la compréhension des résultats et les conseils ; il ne prouve pas la justesse scientifique ni une baisse réelle des impacts.
 
-Avant publication, vérifier des scénarios représentatifs : les deux voies d’accueil ; choix de modèle ChatGPT et des modes Mistral ; refus local d’un lien non Mistral et refus par le Worker lors d’un appel direct ; consentement avant réseau, prévisualisation et remplacement confirmé ; premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Vérifier également les unités et seuils sur des valeurs représentatives, le clavier, 320 px et les zooms 200 % et 400 %. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact.
+Avant publication, vérifier des scénarios représentatifs : l’entrée manuelle depuis l’accueil ; choix de modèle ChatGPT et des modes Mistral ; premier échange ; ajout d’un deuxième échange avec artifact modifié ; suppression d’un bloc intermédiaire ; bloc vide ; résultat périmé refusé dans le total ; recalcul du seul total ; changement de modèle ou pays ; restauration des paramètres ; repli « Monde » ; fermeture et nouvelle ouverture. Vérifier également les unités et seuils sur des valeurs représentatives, le clavier, 320 px et les zooms 200 % et 400 %. Les formules sont vérifiées sur des jeux chiffrés avec unités explicites et invariants : PUE appliqué une fois, séparation des deux pays et absence de double comptage des versions d’artifact.
 
 ## 8. Dépendances et points à préciser
 
@@ -430,7 +415,6 @@ Le cadrage produit est établi. Les points ci-dessous relèvent de la conception
 | D-1 | Valider le catalogue, les facteurs et valeurs « Monde », les modèles de référence ChatGPT et Mistral, ainsi que la résolution du pays et des facteurs pour `mistral-small` et `mistral-large` ; aligner les clés fournisseur `MistralAI` / `Mistral AI` et centraliser la correspondance rapide/réflexion. | Felix pour les données ; responsable technique pour la validation | Story 6.1 et publication |
 | D-2 | Conserver segmentation des mots, granularité du diff et bornes avancées ; spécifier le lien entre températures modifiables et énergie par litre de douche ; valider sur des données représentatives les seuils, extrêmes et changements d’unité après arrondi du contrat d’affichage `EXPERIENCE.md`, sans modifier les valeurs internes ni les formules. | Responsable technique | Livraison de l’affichage de l’epic 6 |
 | D-3 | Déterminer une détection du pays compatible avec une page statique et la confidentialité des textes ; saisie manuelle en cas d’échec, sans serveur complémentaire. | Responsable architecture | Développement de la localisation |
-| D-4 | Documenter avant publication l’exception d’import via le Worker actif : endpoint affiché, `POST` borné à `shareUrl`, données et métadonnées traitées, origine, juridiction, politique et rétention déclarées, consentement ponctuel par URL et endpoint, restriction Mistral à la frontière publique et revue des risques. Vérifier ces informations à chaque publication ; toute évolution déclenche une nouvelle revue et, si nécessaire, un retour à la saisie manuelle. | Responsable technique ; Felix pour la validation | Activation ou publication de l’import distant |
 | D-5 | Rédiger et valider les textes français, les limites des conseils, les messages d’incertitude et l’état « non calculable » ; appliquer les spines `DESIGN.md` et `EXPERIENCE.md` et vérifier l’affichage adapté des unités sur des exemples réels. | Responsable UX ; Felix pour la validation éditoriale | Publication |
 | D-6 | Préparer la calibration des ratios tarifaires et la provenance datée des données ; choisir le processus de maintenance du catalogue. | Responsable technique ; Felix pour la maintenance | Publication, puis toute mise à jour de données |
 

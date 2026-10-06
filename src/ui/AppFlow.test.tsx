@@ -20,13 +20,13 @@ describe('parcours de départ', () => {
     if (viewportDescriptor) Object.defineProperty(window, 'innerHeight', viewportDescriptor);
   });
 
-  it('propose les deux voies dans l’ordre et place le focus sur chaque étape', async () => {
+  it('propose une seule entrée manuelle et place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
-    const actions = within(screen.getByRole('region', { name: 'Choisissez votre méthode de calcul :' })).getAllByRole('button');
-    expect(actions.map((action) => action.getAttribute('aria-label'))).toEqual(['Importer un lien Mistral', 'Saisir un échange']);
-    expect(screen.getByRole('heading', { name: 'Choisissez votre méthode de calcul :' })).toHaveFocus();
-    await user.click(actions[1]);
+    const actions = within(screen.getByRole('region', { name: 'Commencez par copier/coller ou saisir une conversation :' })).getAllByRole('button');
+    expect(actions.map((action) => action.getAttribute('aria-label'))).toEqual(['Saisir un échange']);
+    expect(screen.getByRole('heading', { name: 'Commencez par copier/coller ou saisir une conversation :' })).toHaveFocus();
+    await user.click(actions[0]);
     expect(screen.getByRole('heading', { name: 'Sélectionnez votre chatbot' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Valider' }));
     expect(screen.getByRole('heading', { name: 'Copiez/collez les messages de votre conversation' })).toHaveFocus();
@@ -69,97 +69,6 @@ describe('parcours de départ', () => {
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
   });
 
-  it('refuse localement une URL non Mistral et conserve la voie manuelle', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
-    expect(screen.getByRole('heading', { name: 'Importer une conversation depuis Mistral AI', level: 2 })).toHaveFocus();
-    await user.type(screen.getByLabelText('Collez le lien de partage'), 'https://chatgpt.com/share/123e4567-e89b-12d3-a456-426614174000');
-    await user.click(screen.getByRole('button', { name: 'Importer la conversation' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Seuls les liens publics Mistral');
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Importer manuellement' }));
-    expect(screen.getByRole('heading', { name: 'Sélectionnez votre chatbot' })).toHaveFocus();
-  });
-
-  it('fait vérifier la référence avant le fil après un import Mistral', async () => {
-    const user = userEvent.setup();
-    const fetcher = vi.fn().mockResolvedValue(new Response('<!doctype html><html><body><script data-mistral-share>{"messages":[{"role":"user","content":"Question importée"},{"role":"assistant","content":"Réponse importée"}]}</script></body></html>', { headers: { 'content-type': 'text/html' } }));
-    vi.stubGlobal('fetch', fetcher);
-    try {
-      render(<App />);
-      await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-      await user.selectOptions(screen.getByLabelText('Chatbot'), 'Mistral AI');
-      await user.selectOptions(screen.getByLabelText('Mode'), 'reasoning');
-      await user.click(screen.getByRole('button', { name: 'Valider' }));
-      await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
-      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
-      await user.type(screen.getByLabelText('Collez le lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
-      await user.click(screen.getByRole('button', { name: 'Importer la conversation' }));
-      await user.click((await screen.findAllByRole('button', { name: 'Remplacer les échanges par l’import' }))[0]);
-      expect(screen.getByRole('heading', { name: 'Sélectionnez votre chatbot' })).toHaveFocus();
-      expect(screen.getByLabelText('Chatbot')).toHaveValue('Mistral AI');
-      expect(screen.getByLabelText('Mode')).toHaveValue('');
-      expect(screen.getByLabelText('Modèle')).toHaveValue('');
-      expect(screen.queryByRole('option', { name: 'mistral-medium-3.1' })).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Chatbot')).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Valider' })).toBeDisabled();
-      expect(screen.queryByRole('button', { name: 'Calculer l’impact de cet échange uniquement' })).not.toBeInTheDocument();
-      await user.selectOptions(screen.getByLabelText('Mode'), 'reasoning');
-      expect(screen.getByLabelText('Chatbot')).toBeEnabled();
-      expect(screen.getByRole('button', { name: 'Valider' })).toBeEnabled();
-      await user.click(screen.getByRole('button', { name: 'Valider' }));
-      expect(screen.getByRole('heading', { name: 'Copiez/collez les messages de votre conversation' })).toHaveFocus();
-      expect(screen.getByText(/Modèle sélectionné : Mistral AI — mistral-medium-3.1/)).toBeVisible();
-      await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
-      expect(screen.getByDisplayValue('Question importée')).toBeVisible();
-      expect(fetcher).toHaveBeenCalledOnce();
-    } finally { vi.unstubAllGlobals(); }
-  });
-
-  it('isole le fond et le bouton Retour pendant la confirmation de remplacement', async () => {
-    const user = userEvent.setup();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse"}]}</script></html>', { headers: { 'content-type': 'text/html' } })));
-    try {
-      render(<App />);
-      await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-      await user.click(screen.getByRole('button', { name: 'Valider' }));
-      await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-      await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Texte local');
-      await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
-      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
-      const background = document.querySelector('.app-shell');
-      const back = screen.getByRole('button', { name: 'Retour à l’accueil' });
-      await user.type(screen.getByLabelText('Collez le lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
-      await user.click(screen.getByRole('button', { name: 'Importer la conversation' }));
-      await screen.findByRole('heading', { name: 'Prévisualisation de l’import' });
-      await user.click(screen.getAllByRole('button', { name: 'Remplacer les échanges par l’import' })[0]);
-      expect(screen.getByRole('alertdialog')).toBeVisible();
-      expect(background).toHaveProperty('inert', true);
-      expect(back.closest('.app-shell')).toHaveProperty('inert', true);
-      await user.keyboard('{Escape}');
-      expect(background).toHaveProperty('inert', false);
-      expect(back.closest('.app-shell')).toHaveProperty('inert', false);
-    } finally { vi.unstubAllGlobals(); }
-  });
-
-  it('libère le choix de mode importé en repartant par la saisie manuelle', async () => {
-    const user = userEvent.setup();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html><script data-mistral-share>{"messages":[{"role":"user","content":"Question"},{"role":"assistant","content":"Réponse"}]}</script></html>', { headers: { 'content-type': 'text/html' } })));
-    try {
-      render(<App />);
-      await user.click(screen.getByRole('button', { name: 'Importer un lien Mistral' }));
-      await user.type(screen.getByLabelText('Collez le lien de partage'), 'https://chat.mistral.ai/chat/123e4567-e89b-12d3-a456-426614174000');
-      await user.click(screen.getByRole('button', { name: 'Importer la conversation' }));
-      await user.click((await screen.findAllByRole('button', { name: 'Remplacer les échanges par l’import' }))[0]);
-      expect(screen.getByRole('button', { name: 'Valider' })).toBeDisabled();
-      await user.click(screen.getByRole('button', { name: 'Retour à l’import' }));
-      await user.click(screen.getByRole('button', { name: 'Retour à l’accueil' }));
-      await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-      expect(screen.getByRole('button', { name: 'Valider' })).toBeEnabled();
-      expect(screen.getByLabelText('Mode')).toHaveValue('fast');
-    } finally { vi.unstubAllGlobals(); }
-  });
 });
 
 describe('fil et estimations', () => {

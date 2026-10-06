@@ -45,36 +45,30 @@ Le grand public manque d’un moyen compréhensible et respectueux de sa vie pri
   - **intent:** La personne peut interpréter les estimations grâce à une équivalence carbone en douche chaude et des conseils communs de sobriété.
   - **success:** Le bilan présente les limites d’une estimation d’usage, le périmètre hors Scope 3, l’équivalence fondée sur le carbone et le pays utilisateur indicatif et modifiable, ainsi que cinq thèmes de bonnes pratiques.
 - **CAP-8 — Entrer dans le parcours**
-  - **intent:** La personne choisit dès l’accueil l’import Mistral ou la saisie manuelle et progresse jusqu’au bilan sans perdre ses textes.
-  - **success:** Les deux voies sont visibles, import en premier ; la voie manuelle mène au choix du chatbot et du modèle, puis au fil. Les retours gardent les textes et le fil permet de modifier chatbot et modèle.
-- **CAP-9 — Importer un partage Mistral**
-  - **intent:** La personne reconstruit une conversation depuis un lien public Mistral avec contrôle sur l’envoi et l’ajout des échanges.
-  - **success:** Un lien non Mistral est refusé localement sans requête ; un lien Mistral exige un consentement ponctuel montrant URL canonique et endpoint Worker actifs, puis une prévisualisation. Le remplacement d’une conversation contenant du texte demande une confirmation distincte ; refus, erreur et prévisualisation inexploitable conservent la session.
+  - **intent:** La personne accède au choix du chatbot et du modèle, puis saisit ou colle manuellement une conversation.
+  - **success:** L’accueil propose une seule action vers la saisie manuelle ; les retours gardent les textes et le fil permet de modifier chatbot et modèle.
 
 ## Constraints
 
 - Application monopage française, accessible au clavier et sur mobile, publiée statiquement à `/ai-inf-calculator/` sur GitHub Pages, sans compte ni serveur applicatif de calcul.
-- Les textes, résultats et choix restent dans la session navigateur : aucun stockage durable, analytics, contenu dans URL ou API de tokenisation. Seule l’URL canonique d’un partage Mistral admis est envoyée à l’endpoint d’import HTML du Worker configuré, après consentement explicite ; aucun contenu local ni paramètre de calcul n’est transmis.
-- La politique publiée refuse les liens ChatGPT, Claude et Gemini avant le consentement, à la passerelle et lors d’un appel direct au Worker, sans récupération du partage. L’endpoint reste soumis à l’allowlist ; la récupération est bornée et tout échec préserve la session. Le contrat réseau détaillé suit l’architecture adoptée.
-- Les références de modèles sont centralisées ; les clés fournisseur Mistral et les facteurs de `mistral-small` et `mistral-large` doivent se résoudre avant publication. Si un import ne révèle pas fiablement le mode Mistral, la personne le choisit.
+- Les textes, résultats et choix restent dans la session navigateur : aucun stockage durable, analytics, contenu dans URL ou API de tokenisation. La tokenisation et les calculs restent locaux.
+- Les références de modèles sont centralisées ; les clés fournisseur Mistral et les facteurs de `mistral-small` et `mistral-large` doivent se résoudre avant publication. La personne choisit le mode Mistral lors de la configuration manuelle.
 - Le noyau fonctionnel pur, le Worker local de tokenisation, les catalogues immuables versionnés et la séparation des couches suivent l’architecture adoptée.
 - Les valeurs internes en Wh, gCO₂e et L restent non arrondies ; seul l’affichage choisit les unités et arrondit à trois chiffres significatifs au plus selon `EXPERIENCE.md`. Les totaux partent des valeurs internes ; zéro, sous-seuil, changement d’unité après arrondi et dépassement de l’unité maximale sont traités.
 - Aucune valeur invalide, donnée indispensable absente ou division indéfinie ne produit un résultat présenté comme calculé.
-- `DESIGN.md` et `EXPERIENCE.md` gouvernent l’expérience Canopée claire et priment sur les quatre maquettes statiques. Dialogues, annonces, focus, états textuels, cibles de 44 × 44 px, reflow à 320 px et zooms 200 % et 400 % suivent `EXPERIENCE.md`. Sa mention de CorsProxy décrit l’ancien état d’AD-8 ; l’architecture actualisée du 23 septembre fixe le Worker comme destination.
+- `DESIGN.md` et `EXPERIENCE.md` gouvernent l’expérience Canopée claire et priment sur les trois maquettes statiques. Annonces, focus, états textuels, cibles de 44 × 44 px, reflow à 320 px et zooms 200 % et 400 % suivent `EXPERIENCE.md`.
 
 ## Non-goals
 
 - Compte, connexion, persistance de session, clé API, tokenisation distante ou télémétrie.
-- Import publié d’un partage ChatGPT, Claude ou Gemini ; ces chatbots restent disponibles en saisie manuelle.
 - Estimation du raisonnement invisible, fourchette d’incertitude, Scope 3, fabrication/amortissement des équipements, eau de production électrique ou équivalence de volume d’eau.
 - Traitement natif d’images, audio ou vidéo, plusieurs artifacts distincts dans un échange, déplacement des blocs ou conseils personnalisés.
 
 ## Success signal
 
-- Avant publication, démontrer les deux voies d’accueil ; choix direct des modèles ChatGPT et Mistral ; refus local et à la passerelle d’un lien non Mistral ; consentement avant réseau ; prévisualisation et remplacement confirmé ; calculs individuels et bilan ; péremption, restauration et le recours au facteur carbone Monde lorsque le facteur pays manque, selon la méthodologie. Vérifier formules et unités sur des valeurs représentatives, focus et annonces, clavier, 320 px et zooms 200 % et 400 %.
+- Avant publication, démontrer l’entrée manuelle depuis l’accueil ; choix direct des modèles ChatGPT et Mistral ; calculs individuels et bilan ; péremption, restauration et le recours au facteur carbone Monde lorsque le facteur pays manque, selon la méthodologie. Vérifier formules et unités sur des valeurs représentatives, focus et annonces, clavier, 320 px et zooms 200 % et 400 %.
 - Après lancement, Felix reçoit des retours positifs par e-mail ou LinkedIn sur la compréhension des résultats et des conseils.
 
 ## Open Questions
 
 - Les seuils et cas extrêmes du formatage définis dans `EXPERIENCE.md` sont-ils validés sur les données réelles avant livraison ?
-- Les conditions de traitement, de métadonnées et de conservation du Worker sont-elles documentées et revues avant publication de l’import Mistral (D-4) ?

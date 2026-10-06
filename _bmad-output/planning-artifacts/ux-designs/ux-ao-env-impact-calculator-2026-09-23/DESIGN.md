@@ -46,8 +46,6 @@ components:
   summary-panel: {background: '{colors.surface-raised}', border: '{colors.accent}'}
   button-primary: {background: '{colors.accent}', text: '{colors.on-accent}', radius: '{rounded.sm}'}
   status-message: {warning-background: '{colors.warning-surface}', error-background: '{colors.error-surface}'}
-  import-consent: {background: '{colors.surface-raised}', border: '{colors.border-interactive}', radius: '{rounded.md}'}
-  import-preview: {background: '{colors.surface-raised}', border: '{colors.border}', radius: '{rounded.md}'}
   model-selector: {background: '{colors.surface-raised}', border: '{colors.border-interactive}', radius: '{rounded.sm}'}
   advanced-settings: {background: '{colors.surface-soft}', border: '{colors.border}', radius: '{rounded.md}'}
 ---
@@ -68,11 +66,11 @@ La famille système sans empattements sert tous les rôles. `{typography.display
 
 ## Layout & Spacing
 
-Une colonne de lecture plafonne à `{spacing.content-max}` et conserve `{spacing.margin-mobile}` de marge sur téléphone. Les écarts suivent `{spacing.1}` à `{spacing.6}`. L'accueil montre l'import Mistral et la saisie manuelle sans défilement horizontal. Dans le parcours, les échanges précédents se replient et l'éditeur courant reste proche du bas du fil. Les résultats restent près de l'échange qu'ils décrivent. Sur grand écran, le bilan peut occuper une zone latérale si l'ordre de lecture reste explicite. À 320 px et à 400 % de zoom, boutons, libellés et métriques passent à la ligne sans troncature ; les URL longues reviennent à la ligne dans leur conteneur, sans défilement horizontal global.
+Une colonne de lecture plafonne à `{spacing.content-max}` et conserve `{spacing.margin-mobile}` de marge sur téléphone. Les écarts suivent `{spacing.1}` à `{spacing.6}`. L'accueil propose une seule action vers la saisie manuelle, sans défilement horizontal. Dans le parcours, les échanges précédents se replient et l'éditeur courant reste proche du bas du fil. Les résultats restent près de l'échange qu'ils décrivent. Sur grand écran, le bilan peut occuper une zone latérale si l'ordre de lecture reste explicite. À 320 px et à 400 % de zoom, boutons, libellés et métriques passent à la ligne sans troncature ; les textes longs reviennent à la ligne dans leur conteneur, sans défilement horizontal global.
 
 ## Elevation & Depth
 
-Les surfaces se séparent par leur teinte et une bordure `{colors.border}`. Une ombre très légère peut signaler la carte active. Le consentement d'import forme la seule couche modale.
+Les surfaces se séparent par leur teinte et une bordure `{colors.border}`. Une ombre très légère peut signaler la carte active. Les confirmations de suppression sont présentées dans une couche modale.
 
 ## Shapes
 
@@ -83,15 +81,13 @@ Les surfaces se séparent par leur teinte et une bordure `{colors.border}`. Une 
 | Composant | Règle visuelle |
 |---|---|
 | Guide prompt | Phrase courte, règle `{colors.accent}` et fond `{colors.surface-base}` ; une seule demande visible à l'accueil. Voir [accueil](mockups/accueil.html). |
-| Start choice | Deux cartes accessibles, import Mistral en premier et saisie manuelle entièrement visible. Voir [accueil](mockups/accueil.html). |
+| Start choice | Une carte accessible mène au choix du chatbot et du modèle puis à la saisie manuelle. Voir [accueil](mockups/accueil.html). |
 | Exchange card | Carte compacte : numéro, aperçu, état textuel et, si calculé, carbone et eau. Dépliage dans la page. Voir [conversation](mockups/conversation.html). |
 | Exchange editor | Carte active avec question, réponse, puis options facultatives ; actions après le contenu. Voir [conversation](mockups/conversation.html). |
 | Metric pair | Deux valeurs en `{typography.metric.fontSize}` avec libellé et unité, par échange. |
 | Summary panel | Bilan séparé : carbone, eau, électricité, équivalence douche et recommandations. Voir [bilan](mockups/bilan.html). |
 | Button primary | Une action principale par étape, fond `{colors.accent}` et texte `{colors.on-accent}`. |
 | Status message | Erreur et résultat périmé ont un texte explicite sur `{colors.error-surface}` ou `{colors.warning-surface}`. |
-| Import consent | Panneau clair à contour `{colors.border-interactive}` ; URL et destination complètes, sans ellipse ; actions consentir/annuler distinctes. Voir [import](mockups/import.html). |
-| Import preview | Liste d'échanges sous titres numérotés ; avertissements hors du contenu des échanges, avec texte et non couleur seule. Voir [import](mockups/import.html). |
 | Model selector | Contrôle visible à contour `{colors.border-interactive}` ; modèle prérempli clairement présenté comme estimation modifiable. |
 | Advanced settings | Groupe secondaire `{colors.surface-soft}` ; sections et libellés distincts, sans concurrence visuelle avec le fil. |
 

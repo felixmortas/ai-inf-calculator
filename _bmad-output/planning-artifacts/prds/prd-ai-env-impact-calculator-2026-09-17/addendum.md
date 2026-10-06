@@ -4,7 +4,7 @@
 
 Felix indique que son site `felixmortas.com` est réalisé en HTML/CSS/JavaScript purs. Le calculateur y constituera une page, utilisable sans compte depuis un ordinateur ou un mobile.
 
-Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages et compatible avec le site actuel. La récupération d’un partage public Mistral utilise l’endpoint HTML du Worker du projet configuré pour la page ; elle n’exige pas de serveur de calcul. Les autres liens restent hors du parcours d’import publié.
+Il autorise tout langage de réalisation pour cette page, à condition que le livrable soit hébergeable sur GitHub Pages et compatible avec le site actuel. La reconstitution d’une conversation passe par la saisie ou le copier-coller manuel ; aucune URL de partage n’est récupérée à distance.
 
 ## Choix de comptage
 
