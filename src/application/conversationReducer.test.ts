@@ -19,7 +19,7 @@ describe('conversationReducer', () => {
     const state = conversationReducer(initialConversationState, {
       type: 'subscriptionSelected', subscription: 'with-paid-subscription',
     });
-    expect(state.modelId).toBe('gpt-5.6-terra');
+    expect(state.modelId).toBe('gpt-4o');
   });
 
   it('garde les textes et périme les résultats pour chaque choix de référence sans lancer de calcul', () => {
@@ -30,7 +30,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     const choices = [
       { type: 'subscriptionSelected', subscription: 'with-paid-subscription' },
-      { type: 'modelSelected', modelId: 'gpt-5.6-terra' },
+      { type: 'modelSelected', modelId: 'gpt-4o' },
       { type: 'providerSelected', provider: 'Mistral AI' },
       { type: 'mistralModeSelected', mode: 'reasoning' },
       { type: 'modelSelected', modelId: 'mistral-medium-3.1' },
@@ -43,11 +43,11 @@ describe('conversationReducer', () => {
       expect(changed.tokenizations).toEqual({});
       state = changed;
     }
-    expect(conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-5.6-luna' })).toBe(state);
+    expect(conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-4o-mini' })).toBe(state);
   });
 
   it('périme un résultat après changement de formule de référence même si le modèle choisi reste identique', () => {
-    let state = conversationReducer(initialConversationState, { type: 'modelSelected', modelId: 'gpt-5.6-terra' });
+    let state = conversationReducer(initialConversationState, { type: 'modelSelected', modelId: 'gpt-4o' });
     state = conversationReducer(state, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Texte' });
     const fingerprint = impactFingerprint(state, 'one');
@@ -55,7 +55,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     expect(isImpactCurrent(state, 'one')).toBe(true);
     const changed = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
-    expect(changed.modelId).toBe('gpt-5.6-terra');
+    expect(changed.modelId).toBe('gpt-4o');
     expect(isImpactCurrent(changed, 'one')).toBe(false);
   });
 
@@ -78,13 +78,13 @@ describe('conversationReducer', () => {
     let state = conversationReducer(initialConversationState, { type: 'hostingCountrySelected', country: 'FR' });
     state = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
     expect(state.hostingCountry).toBe('FR');
-    state = conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-5.6-luna' });
+    state = conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-4o-mini' });
     expect(state.hostingCountry).toBe('FR');
   });
 
   it('choisit le premier modèle valide lors du changement de fournisseur', () => {
     const state = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'Gemini' });
-    expect(state).toMatchObject({ provider: 'Gemini', modelId: 'gemini-3.5-pro' });
+    expect(state).toMatchObject({ provider: 'Gemini', modelId: 'gemini-2.5-pro' });
   });
 
   it('initialise le pays fournisseur, accepte seulement un pays catalogué et périme les impacts sans calculer', () => {

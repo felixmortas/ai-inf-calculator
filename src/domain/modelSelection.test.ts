@@ -4,13 +4,13 @@ import { detectUserCountry, hasModel, modelCatalog, resolveDroughtRisk, resolveE
 
 describe('sélection de modèle', () => {
   const models = [
-    { provider: 'ChatGPT', id: 'gpt-5.6-luna' },
-    { provider: 'Gemini', id: 'gemini-3.5-pro' },
+    { provider: 'ChatGPT', id: 'gpt-4o-mini' },
+    { provider: 'Gemini', id: 'gemini-2.5-pro' },
   ] as const;
 
   it('résout le modèle ChatGPT selon l’abonnement', () => {
-    expect(resolveChatGptModel('without-paid-subscription')).toBe('gpt-5.6-luna');
-    expect(resolveChatGptModel('with-paid-subscription')).toBe('gpt-5.6-terra');
+    expect(resolveChatGptModel('without-paid-subscription')).toBe('gpt-4o-mini');
+    expect(resolveChatGptModel('with-paid-subscription')).toBe('gpt-4o');
   });
 
   it('résout les deux modes Mistral avec pays et facteurs complets', () => {
@@ -22,13 +22,13 @@ describe('sélection de modèle', () => {
   });
 
   it('ne retourne et n’accepte que les modèles du fournisseur', () => {
-    expect(selectableModels(models, 'Gemini')).toEqual([{ provider: 'Gemini', id: 'gemini-3.5-pro' }]);
-    expect(canSelectModel(models, 'Gemini', 'gpt-5.6-luna')).toBe(false);
+    expect(selectableModels(models, 'Gemini')).toEqual([{ provider: 'Gemini', id: 'gemini-2.5-pro' }]);
+    expect(canSelectModel(models, 'Gemini', 'gpt-4o-mini')).toBe(false);
   });
 
   it('charge les modèles de référence ChatGPT depuis le catalogue local', () => {
-    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-luna')).toBe(true);
-    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-5.6-terra')).toBe(true);
+    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-4o-mini')).toBe(true);
+    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-4o')).toBe(true);
   });
 
   it('détecte le pays utilisateur localement puis replie sur Monde', () => {
@@ -42,19 +42,19 @@ describe('sélection de modèle', () => {
   });
 
   it('résout les paramètres d’impact locaux du modèle et de son pays d’hébergement', () => {
-    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna')).toMatchObject({
-      totalParameters: 100, activatedParameters: 10, systemPromptCacheTokens: 1500,
-      pue: 1.15, wue: .15, carbonIntensity: 384.403,
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini')).toMatchObject({
+      totalParameters: 92, activatedParameters: 12.325116, systemPromptCacheTokens: 1469,
+      pue: 1.14, wue: .1, carbonIntensity: 384.403,
     });
   });
 
   it('fusionne les surcharges sans muter le catalogue, dérive la douche et refuse les constantes hors domaine', () => {
     const before = structuredClone(modelCatalog.models);
-    const resolved = resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { inputRatio: .4, constants: { batchSize: 32 }, shower: { inletTemperatureC: 15, outletTemperatureC: 35 } });
-    expect(resolved).toMatchObject({ inputRatio: .4, systemPromptCacheTokens: 1500, constants: { batchSize: 32 }, shower: { energyKwhPerLitre: .0232 } });
+    const resolved = resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { inputRatio: .4, constants: { batchSize: 32 }, shower: { inletTemperatureC: 15, outletTemperatureC: 35 } });
+    expect(resolved).toMatchObject({ inputRatio: .4, systemPromptCacheTokens: 1469, constants: { batchSize: 32 }, shower: { energyKwhPerLitre: .0232 } });
     expect(modelCatalog.models).toEqual(before);
-    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-5.6-luna', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
   });
 
   it('expose le pays d’hébergement et distingue un risque absent', () => {

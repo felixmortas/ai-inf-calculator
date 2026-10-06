@@ -13,21 +13,21 @@ describe('configuration de conversation', () => {
   it('affiche et résout le modèle ChatGPT selon l’abonnement', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    expect(screen.getByText('gpt-5.6-luna')).toBeVisible();
-    await user.selectOptions(screen.getByLabelText('Abonnement ChatGPT'), 'with-paid-subscription');
-    expect(screen.getByText('gpt-5.6-terra')).toBeVisible();
+    expect(screen.getByText('gpt-4o-mini')).toBeVisible();
+    await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
+    expect(screen.getByText('gpt-4o')).toBeVisible();
   });
 
   it('masque l’abonnement et limite les modèles pour un autre fournisseur', async () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.selectOptions(screen.getByLabelText('Chatbot'), 'Gemini');
-    expect(screen.queryByLabelText('Abonnement ChatGPT')).not.toBeInTheDocument();
-    const model = screen.getByLabelText('Modèle applicable à la conversation');
-    expect(model).toHaveValue('gemini-3.5-pro');
-    expect(screen.queryByRole('option', { name: 'gpt-5.6-luna' })).not.toBeInTheDocument();
-    await user.selectOptions(model, 'gemini-3.6-flash');
-    expect(model).toHaveValue('gemini-3.6-flash');
+    expect(screen.queryByLabelText('Abonnement')).not.toBeInTheDocument();
+    const model = screen.getByLabelText('Modèle');
+    expect(model).toHaveValue('gemini-2.5-pro');
+    expect(screen.queryByRole('option', { name: 'gpt-4o-mini' })).not.toBeInTheDocument();
+    await user.selectOptions(model, 'gemini-2.5-flash');
+    expect(model).toHaveValue('gemini-2.5-flash');
   });
 
   it('reste opérable au clavier avec un focus visible natif', async () => {
@@ -49,7 +49,7 @@ describe('configuration de conversation', () => {
     await user.click(summary);
     expect(details).toHaveAttribute('open');
     expect(details.querySelector('summary')).toHaveAttribute('aria-expanded', 'true');
-    const country = screen.getByLabelText('Pays d’hébergement');
+    const country = screen.getByLabelText('Localisation du modèle (hébergement)');
     expect(country).toHaveValue('US');
     await user.selectOptions(country, 'FR');
     expect(country).toHaveValue('FR');
@@ -59,20 +59,19 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByText('Paramètres avancés'));
-    const country = screen.getByLabelText('Pays de la personne');
-    expect(screen.getByText(/Proposition indicative/)).toBeVisible();
+    const country = screen.getByLabelText('Votre localisation');
     await user.selectOptions(country, 'ID');
     expect(country).toHaveValue('ID');
-    expect(screen.getByLabelText('Pays d’hébergement')).toHaveValue('US');
+    expect(screen.getByLabelText('Localisation du modèle (hébergement)')).toHaveValue('US');
   });
 
   it('repart des valeurs initiales après un nouveau montage', async () => {
     const user = userEvent.setup();
     const first = await startSelection(user);
-    await user.selectOptions(screen.getByLabelText('Abonnement ChatGPT'), 'with-paid-subscription');
+    await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     first.unmount();
     await startSelection(user);
-    expect(screen.getByText('gpt-5.6-luna')).toBeVisible();
+    expect(screen.getByText('gpt-4o-mini')).toBeVisible();
   });
 
   it('ne persiste pas les sélections dans le navigateur', async () => {
@@ -82,7 +81,7 @@ describe('configuration de conversation', () => {
     const replaceState = vi.spyOn(History.prototype, 'replaceState');
     await startSelection(user);
 
-    await user.selectOptions(screen.getByLabelText('Abonnement ChatGPT'), 'with-paid-subscription');
+    await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
 
     expect(storageWrite).not.toHaveBeenCalled();
     expect(pushState).not.toHaveBeenCalled();
@@ -93,17 +92,17 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByText('Paramètres avancés'));
-    expect(screen.getByLabelText('Paramètres totaux (milliards)')).toHaveValue(100);
-    expect(screen.getByLabelText('Débit de douche (L/min)')).toHaveValue(15);
-    await user.clear(screen.getByLabelText('PUE (ratio)'));
-    await user.type(screen.getByLabelText('PUE (ratio)'), '0.9');
+    expect(screen.getByLabelText('Paramètres totaux du modèle (en milliards)')).toHaveValue(92);
+    expect(screen.getByLabelText('Débit de votre douche (L/min)')).toHaveValue(15);
+    await user.clear(screen.getByLabelText('PUE (sans unité)'));
+    await user.type(screen.getByLabelText('PUE (sans unité)'), '0.9');
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
-    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('PUE (ratio)')).toHaveAttribute('aria-describedby', 'parameter-error parameter-error-pue');
-    await waitFor(() => expect(screen.getByLabelText('PUE (ratio)')).toHaveFocus());
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveAttribute('aria-describedby', 'parameter-error parameter-error-pue');
+    await waitFor(() => expect(screen.getByLabelText('PUE (sans unité)')).toHaveFocus());
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
-    expect(screen.getByLabelText('PUE (ratio)')).toHaveValue(1.15);
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
   });
 
   it('refuse une valeur vide, même pour un paramètre dont zéro est autorisé', async () => {
@@ -119,18 +118,19 @@ describe('configuration de conversation', () => {
   it('bloque les calculs tant qu’une saisie avancée invalide n’est pas corrigée', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Question de la personne'), 'Bonjour');
+    await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Paramètres avancés'));
-    await user.clear(screen.getByLabelText('PUE (ratio)'));
-    await user.type(screen.getByLabelText('PUE (ratio)'), '0.9');
+    await user.clear(screen.getByLabelText('PUE (sans unité)'));
+    await user.type(screen.getByLabelText('PUE (sans unité)'), '0.9');
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
-    await user.click(screen.getByRole('button', { name: 'Continuer vers le fil' }));
-    expect(screen.getByRole('button', { name: 'Calculer cet échange' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Calculer toute la conversation' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
+    expect(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' })).toBeDisabled();
   });
 });
