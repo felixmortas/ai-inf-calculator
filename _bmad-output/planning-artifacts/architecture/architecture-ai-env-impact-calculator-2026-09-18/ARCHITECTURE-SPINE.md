@@ -7,7 +7,7 @@ paradigm: application monopage client-side, en couches et noyau fonctionnel pur
 scope: Sous-projet portable `ai-inf-calculator/`, intégré au chemin `/ai-inf-calculator/` de felixmortas.com
 status: final
 created: 2026-09-18
-updated: 2026-09-23
+updated: 2026-10-06
 binds: [FR-1, FR-2, FR-3, FR-4, FR-7, FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-20, FR-21, FR-23, FR-24, NFR-1, NFR-2, NFR-3, NFR-4, NFR-5, NFR-6, NFR-7]
 sources:
   - ../../prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
@@ -65,13 +65,13 @@ flowchart LR
 
 - **Binds:** FR-1, FR-2, FR-15, FR-17, FR-20, FR-23, FR-24, NFR-6
 - **Prevents:** des constantes dispersées, des prix mêlés aux formules, ou la modification durable des données publiées par les paramètres avancés.
-- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux, risques, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. La clé fournisseur est normalisée entre modèles et pays d’hébergement ; chaque référence de modèle doit résoudre ses facteurs et son pays avant publication. Une table locale unique propose les références ChatGPT `sans abonnement → gpt-5.6-luna`, `avec abonnement → gpt-5.6-terra`, et Mistral `rapide → mistral-small`, `réflexion → mistral-large` ; si le mode Mistral d’un import est inconnu, la personne le choisit. Ce préremplissage est une estimation : le choix explicite valide de la personne prévaut, et le reducer accepte le choix direct de tout modèle valide du chatbot sélectionné, ChatGPT compris, pour toute la conversation. Une unique fonction de `data/modelCatalog`, appelée par `application`, résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. `domain` reçoit les paramètres résolus, sans dépendre du catalogue concret. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
+- **Rule:** modèles, tarifs et calibration, constantes, facteurs environnementaux carbone, eau et énergie, valeurs Monde et correspondances fuseau-pays sont des catalogues locaux versionnés, validés avant build et accompagnés de provenance. La clé fournisseur est normalisée entre modèles et pays d’hébergement ; chaque référence de modèle doit résoudre ses facteurs et son pays avant publication. Une table locale unique propose les références ChatGPT `sans abonnement → gpt-5.6-luna`, `avec abonnement → gpt-5.6-terra`, et Mistral `rapide → mistral-small`, `réflexion → mistral-large` ; si le mode Mistral d’un import est inconnu, la personne le choisit. Ce préremplissage est une estimation : le choix explicite valide de la personne prévaut, et le reducer accepte le choix direct de tout modèle valide du chatbot sélectionné, ChatGPT compris, pour toute la conversation. Une unique fonction de `data/modelCatalog`, appelée par `application`, résout chaque paramètre : clé normalisée, valeur du pays choisi, repli Monde du même facteur, puis surcharge de session autorisée ; elle renvoie un statut de repli ou d’indisponibilité. `domain` reçoit les paramètres résolus, sans dépendre du catalogue concret. Une donnée indispensable absente sans repli ni surcharge valide bloque le résultat dépendant. Le prompt système provient exclusivement du catalogue et ne peut pas être surchargé. Les réglages avancés créent une vue de paramètres résolus en mémoire ; ils ne mutent jamais les catalogues.
 
 ### AD-6 — Localisation indicative sans donnée externe [ADOPTED]
 
 - **Binds:** FR-5, FR-23, NFR-3
 - **Prevents:** une localisation IP/GPS contraire à la confidentialité ou la présentation d’un pays comme certain.
-- **Rule:** les pays sont des codes ISO 3166-1 alpha-2. Le pays utilisateur proposé vient d’abord d’une table locale déterministe fuseau IANA → pays probable, puis de la région de la locale navigateur, puis de Monde. Il est qualifié d’indicatif, visible et modifiable. Le pays utilisateur ne peut alimenter que l’équivalence douche ; le pays d’hébergement alimente les impacts et le risque de sécheresse.
+- **Rule:** les pays sont des codes ISO 3166-1 alpha-2. Le pays utilisateur proposé vient d’abord d’une table locale déterministe fuseau IANA → pays probable, puis de la région de la locale navigateur, puis de Monde. Il est qualifié d’indicatif, visible et modifiable. Le pays utilisateur ne peut alimenter que l’équivalence douche ; le pays d’hébergement alimente énergie, carbone et eau.
 
 ### AD-7 — Internationalisation par messages, non par branchements métier [ADOPTED]
 
@@ -91,7 +91,7 @@ flowchart LR
 
 - **Binds:** FR-10, FR-22, epic 6.2, epic 6.4
 - **Prevents:** des formules ou agrégations différentes selon la vue et un total construit à partir de nombres arrondis.
-- **Rule:** le domaine garde par échange et au total les valeurs non arrondies en Wh, gCO₂e et L ; la présentation seule choisit les métriques et unités. La carte d’échange montre carbone et eau après calcul explicite, avec incertitude et état de fraîcheur ; le bilan valide montre carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations. Un formateur partagé suit les séries, seuils et cas extrêmes de `EXPERIENCE.md` : au plus trois chiffres significatifs, unité adaptée, virgule française et nom accessible complet. Le risque de sécheresse reste qualitatif. Replis et indisponibilités sont signalés près du résultat concerné.
+- **Rule:** le domaine garde par échange et au total les valeurs non arrondies en Wh, gCO₂e et L ; la présentation seule choisit les métriques et unités. La carte d’échange montre carbone et eau après calcul explicite, avec incertitude et état de fraîcheur ; le bilan valide montre carbone, eau, électricité, équivalence douche et recommandations. Un formateur partagé suit les séries, seuils et cas extrêmes de `EXPERIENCE.md` : au plus trois chiffres significatifs, unité adaptée, virgule française et nom accessible complet. Les replis et indisponibilités sont signalés près du résultat concerné.
 
 ## Consistency Conventions
 
@@ -170,7 +170,7 @@ sequenceDiagram
 | Historique, artifact et total | `domain/` | AD-2, AD-3 |
 | Comptage local et fallback | `workers/`, `domain/` | AD-2, AD-4 |
 | Modèles, références initiales, paramètres et calcul | `data/`, `application/`, `domain/` | AD-3, AD-5 |
-| Pays, eau, carbone, sécheresse, douche et affichage | `data/`, `domain/`, `ui/`, `i18n/` | AD-5, AD-6, AD-9 |
+| Pays, eau, carbone, douche et affichage | `data/`, `domain/`, `ui/`, `i18n/` | AD-5, AD-6, AD-9 |
 | Français et extensions de langues | `i18n/`, `ui/` | AD-7 |
 | Consentement et import de partage distant | `ui/`, `application/import/` | AD-8 |
 | Publication GitHub Pages | `ai-inf-calculator/` et workflow du repo hôte | AD-1 |

@@ -22,6 +22,7 @@ context: []
 - Retiré les données et leur script de génération, la résolution locale, leur transit dans le bilan, l’affichage et les tests associés.
 - Mis à jour la note méthodologique, les contrats canoniques et la documentation UX/formules. Les mentions dans les documents BMAD datés sont des exigences et décisions historiques ; leur réconciliation documentaire reste à faire.
 - Vérification par recherche textuelle : aucune référence fonctionnelle restante dans `src/`, `data/` hors note de décision, `docs/`, contrat canonique ou UX courante. Les artefacts BMAD historiques contiennent encore des références explicites. Tests automatisés non lancés.
+- Réconciliation BMAD réalisée le 2026-10-06 : architecture, PRD, addendum, epics et UX actualisés ; les extraits et comptes rendus fidèles, propositions approuvées et stories déjà livrées portent désormais une note de statut historique/supersédé.
 
 ## Review Triage Log
 

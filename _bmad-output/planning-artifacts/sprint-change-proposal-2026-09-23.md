@@ -17,6 +17,8 @@ sources:
 
 # Proposition de changement — expérience Canopée claire
 
+> **Mise à jour du périmètre — 2026-10-06 :** cette proposition approuvée décrit l’alignement UX de septembre. Son inclusion du risque de sécheresse ci-dessous est supersédée par le retrait de l’indicateur. Pour toute nouvelle implémentation, suivre la SPEC canonique et ses contrats compagnons.
+
 ## 1. Déclencheur et constat
 
 La conception UX validée le 23 septembre 2026 décrit une entrée à deux voies, un fil compact, un import public Mistral, une sélection de modèle directement modifiable et une répartition précise des métriques entre échange et bilan. Les epics 1 à 5 sont marqués `done` dans `implementation-artifacts/sprint-status.yaml` ; leur exécution précède cette conception. Il n’existe donc pas de story déclencheuse en cours : le déclencheur est une nouvelle décision de Felix après la livraison des stories 1.1 à 5.4.
@@ -85,7 +87,7 @@ Les propositions ci-dessous ont été examinées individuellement avec Felix le 
 
 **Actuel :** « La consommation électrique, la consommation d’eau et les émissions carbone sont affichées [...] pour chaque bloc et pour le total » ; FR-10 actualise aussi l’équivalence douche individuelle.
 
-**Proposé :** « Après un calcul explicite, chaque échange présente près de ses textes le carbone et l’eau estimés, avec unité et incertitude. Le bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche et recommandations. Le moteur conserve les valeurs d’énergie, d’eau et de carbone non arrondies pour chaque échange et leur total ; la répartition visuelle ne change pas les formules ni la règle de péremption. L’équivalence douche est présentée dans le bilan. »
+**Proposé à l’époque (élément sécheresse supersédé le 2026-10-06) :** « Après un calcul explicite, chaque échange présente près de ses textes le carbone et l’eau estimés, avec unité et incertitude. Le bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche et recommandations. Le moteur conserve les valeurs d’énergie, d’eau et de carbone non arrondies pour chaque échange et leur total ; la répartition visuelle ne change pas les formules ni la règle de péremption. L’équivalence douche est présentée dans le bilan. »
 
 **Raison :** rendre lisible l’effet de chaque échange tout en réservant les indicateurs de synthèse au bilan.
 

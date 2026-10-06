@@ -2,7 +2,7 @@
 title: Epics et stories — Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-18
-updated: 2026-09-23
+updated: 2026-10-06
 stepsCompleted: [1, 2, 3, 4]
 previousWorkflowCompleted: [1, 2, 3, 4]
 targetedValidations:
@@ -33,6 +33,8 @@ inputDocuments:
 ---
 
 # Calculateur d’empreinte environnementale des LLM — Epic Breakdown
+
+> **Périmètre courant — 2026-10-06 :** le risque de sécheresse a été supprimé. Les FR-22/FR-24, UX-DR7 et critères d’acceptation ont été réconciliés avec cette décision ; suivre la SPEC canonique pour les travaux futurs.
 
 ## Overview
 
@@ -82,11 +84,11 @@ FR-20: Utiliser exclusivement le volume de prompt système fourni par le catalog
 
 FR-21: Exclure entièrement un bloc dont les quatre champs sont vides ou ne contiennent que des espaces.
 
-FR-22: Présenter chaque impact comme une estimation unique avec incertitude et périmètre d’usage hors Scope 3 ; afficher carbone et eau par échange, puis carbone, eau, électricité, risque de sécheresse, équivalence douche et conseils dans le bilan valide ; adapter les unités à trois chiffres significatifs au plus sans arrondir les valeurs internes.
+FR-22: Présenter chaque impact comme une estimation unique avec incertitude et périmètre d’usage hors Scope 3 ; afficher carbone et eau par échange, puis carbone, eau, électricité, équivalence douche et conseils dans le bilan valide ; adapter les unités à trois chiffres significatifs au plus sans arrondir les valeurs internes.
 
 FR-23: Utiliser et signaler la valeur « Monde » pour le seul facteur environnemental manquant; bloquer le résultat si ce repli est absent.
 
-FR-24: Calculer énergie, eau, carbone et risque de sécheresse selon les formules et unités définies, avec risque uniquement au total.
+FR-24: Calculer énergie, eau et carbone selon les formules et unités définies.
 
 FR-25: Proposer et accepter uniquement un partage public Mistral dans le parcours publié ; refuser localement toute autre URL sans requête, demander un consentement ponctuel avant réseau, prévisualiser avant ajout et confirmer séparément le remplacement d’une conversation contenant du texte ; préserver la session sur refus ou échec.
 
@@ -141,7 +143,7 @@ UX-DR5: Organiser l’éditeur courant avec question puis réponse et un groupe 
 
 UX-DR6: Afficher après calcul explicite une paire carbone/eau près des textes de l’échange, avec unité et mention d’estimation ; présenter les erreurs, péremptions, replis Monde et indisponibilités par des messages locaux et des actions de suite.
 
-UX-DR7: Construire un bilan après « Calculer toute la conversation » : carbone, eau, électricité, risque de sécheresse qualitatif, équivalence douche et recommandations ; sur « Recalculer le total », nommer les échanges non calculés ou périmés et fournir un accès à leurs cartes sans montrer un total ancien comme actuel.
+UX-DR7: Construire un bilan après « Calculer toute la conversation » : carbone, eau, électricité, équivalence douche et recommandations ; sur « Recalculer le total », nommer les échanges non calculés ou périmés et fournir un accès à leurs cartes sans montrer un total ancien comme actuel.
 
 UX-DR8: Fournir un panneau de paramètres avancés secondaire avec pays d’hébergement, pays utilisateur, hypothèses mathématiques, unités, erreurs liées aux champs et restauration ; appliquer ou restaurer annonce une fois les résultats à recalculer sans déclencher de calcul.
 
@@ -205,7 +207,7 @@ FR-22: Epic 2 (historique), Epic 6 — Répartition actuelle des métriques, inc
 
 FR-23: Epic 4, Epic 6 — Repli environnemental « Monde » signalé près du résultat concerné.
 
-FR-24: Epic 3, Epic 6 — Impacts complets sans changement de formule ; risque de sécheresse visible au bilan seulement.
+FR-24: Epic 3, Epic 6 — Impacts énergie, eau et carbone complets sans changement de formule.
 
 FR-25: Epic 6 — Import publié Mistral uniquement, consenti, prévisualisé et ajouté atomiquement.
 
@@ -480,8 +482,8 @@ So that j’obtiens leur impact individuel et un bilan global cohérent.
 **Then** ils réutilisent cette même énergie, dans les unités gCO2e et litres, et l’eau couvre uniquement la consommation sur site.
 
 **Given** un total disponible
-**When** le risque de sécheresse est présenté
-**Then** il est recherché pour le pays d’hébergement retenu, affiché uniquement avec le total et traité comme une catégorie non additive, non proportionnelle au volume d’eau.
+**When** le bilan est présenté après un calcul complet
+**Then** il affiche énergie, carbone, eau, équivalence douche et recommandations, sans indicateur de risque de sécheresse.
 
 **Given** un affichage de résultats individuels
 **When** je consulte l’eau
@@ -549,7 +551,7 @@ So that j’adapte les facteurs environnementaux appliqués à ma conversation.
 
 **Given** les paramètres avancés
 **When** je choisis un autre pays d’hébergement valide
-**Then** ce pays s’applique à tous les blocs de la conversation pour l’énergie, le carbone, l’eau et le risque de sécheresse.
+**Then** ce pays s’applique à tous les blocs de la conversation pour l’énergie, le carbone et l’eau.
 
 **Given** une modification du pays d’hébergement
 **When** elle est appliquée
@@ -637,7 +639,7 @@ So that je dispose d’un repère concret pour l’estimation.
 
 **Given** le pays utilisateur ou les paramètres de douche
 **When** je les modifie
-**Then** seule l’équivalence concernée devient périmée, sans modifier énergie, eau, carbone ni risque de sécheresse.
+**Then** seule l’équivalence concernée devient périmée, sans modifier énergie, eau ni carbone.
 
 **Given** un facteur d’émission utilisateur absent
 **When** l’équivalence est calculée
@@ -888,7 +890,7 @@ afin de voir le carbone et l’eau estimés près des textes concernés.
 
 **Étant donné** un échange calculé et actuel,
 **quand** son résultat est affiché,
-**alors** seuls le carbone et l’eau sont présentés près des textes, avec leurs unités et une mention d’estimation ; l’électricité, le risque de sécheresse et l’équivalence douche ne figurent pas sur cette carte. (FR-10, FR-22, UX-DR6)
+**alors** seuls le carbone et l’eau sont présentés près des textes, avec leurs unités et une mention d’estimation ; l’électricité et l’équivalence douche ne figurent pas sur cette carte. (FR-10, FR-22, UX-DR6)
 
 **Étant donné** le fil actif,
 **quand** la personne ajoute un échange,
@@ -952,7 +954,7 @@ afin de savoir ce que les estimations couvrent et quand les recalculer.
 
 **Étant donné** une conversation avec des échanges renseignés,
 **quand** la personne actionne « Calculer toute la conversation »,
-**alors** ces échanges sont calculés explicitement et un bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche et recommandations. Le risque reste qualitatif et l’équivalence ne compare pas les volumes d’eau. (FR-5, FR-6, FR-11, FR-22, FR-24, UX-DR7)
+**alors** ces échanges sont calculés explicitement et un bilan valide présente carbone, eau, électricité, équivalence carbone en durée de douche et recommandations. L’équivalence ne compare pas les volumes d’eau. (FR-5, FR-6, FR-11, FR-22, FR-24, UX-DR7)
 
 **Étant donné** des résultats d’échanges actuels, manquants ou périmés,
 **quand** la personne actionne « Recalculer le total »,

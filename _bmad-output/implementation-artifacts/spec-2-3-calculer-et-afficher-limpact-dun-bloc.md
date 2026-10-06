@@ -10,6 +10,8 @@ context:
   - '_bmad-output/implementation-artifacts/epic-2-context.md'
 ---
 
+> **Note de supersession — 2026-10-06 :** cette story terminée décrit les critères applicables à sa livraison. L’exclusion individuelle du risque de sécheresse est devenue sans objet puisque l’indicateur a été supprimé ; pour la portée actuelle, suivre la SPEC canonique.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

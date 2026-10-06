@@ -16,7 +16,6 @@ Permettre à la personne de calculer explicitement tous les échanges renseigné
 - L’action « Tout calculer » traite les blocs renseignés dans leur ordre de conversation, ignore totalement les blocs dont tous les champs sont vides ou composés d’espaces, puis expose les impacts individuels et le total. Si aucun bloc n’est renseigné, inviter à saisir un échange et ne pas afficher de bilan calculé.
 - Chaque résultat individuel fournit des estimations d’énergie, d’eau et de carbone. Le total additionne les valeurs internes non arrondies des seuls résultats à jour ; le formatage et les arrondis sont exclusivement une responsabilité d’affichage.
 - L’énergie informatique est majorée une unique fois du PUE résolu pour le pays d’hébergement et le fournisseur. Cette même énergie datacenter est réemployée pour dériver le carbone en gCO2e et l’eau en litres. L’eau couvre la consommation sur site, sans eau liée à la production d’électricité.
-- Le risque de sécheresse est une catégorie liée au pays d’hébergement : il apparaît seulement avec le total, sans somme, produit ni proportion au volume d’eau. Aucune équivalence de volume d’eau ne doit être affichée pour les résultats individuels.
 - Un facteur environnemental absent est recherché dans la référence « Monde » du même facteur et le repli est signalé ; une valeur numérique zéro est valide. Si aucune valeur utilisable n’existe, le résultat dépendant est bloqué explicitement, jamais inventé ou assimilé à zéro.
 - Une action séparée « Recalculer le total » agrège les résultats de blocs existants sans relancer leurs impacts. Elle est refusée si un bloc renseigné est absent, jamais calculé ou périmé : identifier alors les blocs à recalculer, sans calcul implicite ni total partiel. Les blocs vides ne bloquent pas le total.
 - Toute modification d’un texte, suppression d’un bloc renseigné, changement de sélection ou paramètre d’impact rend périmés les résultats qui en dépendent, y compris les blocs ultérieurs affectés par l’historique ou les versions d’artifact. Ajouter ou supprimer un bloc vide ne périme rien. Aucun de ces changements ne lance un calcul automatiquement.
@@ -31,7 +30,7 @@ Permettre à la personne de calculer explicitement tous les échanges renseigné
 
 ## UX & Interaction Patterns
 
-- Rendre les actions de calcul, les résultats et les messages de blocage accessibles au clavier et sur petit écran, avec libellés français explicites et focus visible ; un résultat périmé ou le risque de sécheresse ne peut pas être communiqué uniquement par la couleur.
+- Rendre les actions de calcul, les résultats et les messages de blocage accessibles au clavier et sur petit écran, avec libellés français explicites et focus visible ; un résultat périmé ne peut pas être communiqué uniquement par la couleur.
 - Afficher l’incertitude dans le parcours courant. Masquer un résultat périmé plutôt que de le montrer comme actuel ; expliquer les blocs empêchant le total et proposer le recalcul adéquat.
 
 ## Cross-Story Dependencies

@@ -10,6 +10,8 @@ context:
   - '_bmad-output/implementation-artifacts/epic-4-context.md'
 ---
 
+> **Note de supersession — 2026-10-06 :** story terminée conservée comme trace de livraison. Les critères et notes relatifs au risque de sécheresse et à sa provenance dans les résultats sont supersédés ; le pays d’hébergement ne s’applique désormais qu’aux calculs énergie, carbone et eau décrits dans la SPEC canonique.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

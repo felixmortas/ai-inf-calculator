@@ -10,6 +10,8 @@ context:
   - '_bmad-output/implementation-artifacts/epic-3-context.md'
 ---
 
+> **Note de supersession — 2026-10-06 :** story terminée conservée comme trace de livraison. Tous ses critères et notes concernant l’indicateur de sécheresse, sa résolution ou `country_drought_risk.csv` sont supersédés par la SPEC canonique et le retrait de la feature.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

@@ -1,5 +1,7 @@
 # Clôture des relectures — 2026-09-18
 
+> **Trace historique :** cette clôture rapporte les décisions de revue du 18 septembre. Toute mention de sécheresse décrit l’état documentaire de cette date ; le PRD a été actualisé le 2026-10-06 et la SPEC canonique fait foi pour le périmètre courant.
+
 Les deux relectures demandées par Felix ne relèvent aucun défaut critique ou majeur empêchant de commencer l’UX et l’architecture. Les dépendances de données et les détails de conception restent explicitement à résoudre avant le développement ou la publication des fonctions concernées.
 
 ## Réconciliation et qualité

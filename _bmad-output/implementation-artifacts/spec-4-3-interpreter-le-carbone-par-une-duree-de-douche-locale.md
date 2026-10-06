@@ -11,6 +11,8 @@ context:
   - '_bmad-output/specs/spec-ai-env-impact-calculator/calculation-contract.md'
 ---
 
+> **Note de supersession — 2026-10-06 :** cette story terminée reste une trace historique. Sa contrainte de préserver le risque de sécheresse n’est plus applicable, l’indicateur ayant été retiré ; suivre la SPEC canonique pour l’état courant.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

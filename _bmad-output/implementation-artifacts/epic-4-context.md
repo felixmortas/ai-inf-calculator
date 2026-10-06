@@ -15,7 +15,7 @@ Permettre à la personne d’adapter en session les hypothèses qui déterminent
 
 ## Requirements & Constraints
 
-Le pays d’hébergement par défaut est défini par le fournisseur et le modèle sélectionnés. L’utilisateur peut le modifier dans les paramètres avancés ; il s’applique à toute la conversation pour l’énergie, le carbone, l’eau et le risque de sécheresse. Il est strictement distinct du pays utilisateur, lequel ne sert qu’à l’équivalence douche. Tout changement d’hébergement rend périmés les impacts et totaux dépendants sans recalcul automatique.
+Le pays d’hébergement par défaut est défini par le fournisseur et le modèle sélectionnés. L’utilisateur peut le modifier dans les paramètres avancés ; il s’applique à toute la conversation pour l’énergie, le carbone et l’eau. Il est strictement distinct du pays utilisateur, lequel ne sert qu’à l’équivalence douche. Tout changement d’hébergement rend périmés les impacts et totaux dépendants sans recalcul automatique.
 
 Une donnée environnementale manquante pour un pays utilise uniquement la valeur « Monde » du même facteur, et ce repli doit être signalé avec le résultat concerné sans modifier le pays choisi. Une valeur numérique zéro est valide. Si ni la valeur pays ni le repli Monde, une donnée catalogue indispensable, ou une surcharge valide ne sont disponibles, bloquer le résultat dépendant avec un message explicite et ne rien inventer.
 

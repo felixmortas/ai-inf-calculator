@@ -9,6 +9,8 @@ review_loop_iteration: 0
 context: []
 ---
 
+> **Note de supersession — 2026-10-06 :** story terminée conservée comme trace de livraison. Ses mentions du risque de sécheresse dans le bilan, les explications et les paramètres ne sont plus applicables ; suivre la SPEC canonique.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

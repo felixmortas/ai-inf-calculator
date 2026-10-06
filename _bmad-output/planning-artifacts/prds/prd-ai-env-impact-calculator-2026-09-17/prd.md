@@ -2,18 +2,22 @@
 title: Calculateur d’empreinte environnementale des LLM
 status: final
 created: 2026-09-17
-updated: 2026-09-23
+updated: 2026-10-06
 ---
 
 # PRD — Calculateur d’empreinte environnementale des LLM
 
 ## 1. Objet et vision
 
-Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Dès l’accueil, une personne non technique choisit la saisie manuelle ou l’import d’un lien public Mistral. Elle déclenche les calculs, consulte le carbone et l’eau estimés près de chaque échange, puis le bilan de la conversation : carbone, eau, électricité, risque de sécheresse, équivalence carbone en durée de douche chaude et bonnes pratiques.
+Une page de `felixmortas.com` permet au grand public de comprendre l’empreinte environnementale estimée d’un échange ou d’une conversation avec un chatbot IA. Dès l’accueil, une personne non technique choisit la saisie manuelle ou l’import d’un lien public Mistral. Elle déclenche les calculs, consulte le carbone et l’eau estimés près de chaque échange, puis le bilan de la conversation : carbone, eau, électricité, équivalence carbone en durée de douche chaude et bonnes pratiques.
 
 Le produit vise un lancement public, en français, sans compte, sur ordinateur et mobile. Le fil affiche le chatbot et le modèle, directement modifiables ; les réglages mathématiques restent dans une section avancée discrète. Les textes et calculs restent dans le navigateur. Seule l’URL canonique d’un partage Mistral est transmise au Worker d’import après consentement explicite ; la session n’est pas sauvegardée après fermeture.
 
 Ce PRD est destiné à Felix et aux responsables UX, architecture et développement. Il définit les capacités et comportements attendus. L’[addendum](addendum.md) rassemble les formules, constantes et contraintes techniques. La source initiale est `spec-formules-calculateur-empreinte-llm.md` à la racine ; les décisions recueillies auprès de Felix priment sur ses dispositions explicitement modifiées. Les identifiants d’exigences sont stables.
+
+### Évolution du périmètre — 2026-10-06
+
+L’indicateur de risque de sécheresse et son jeu de données sont retirés. Pour comparer les modèles, la méthode retient l’hypothèse simplificatrice que les centres de données des fournisseurs de LLM se trouvent aux États-Unis ; selon cette hypothèse, une donnée nationale de sécheresse ne différencie pas utilement les modèles et ajoute une charge de données et d’interface. Le pays d’hébergement reste configurable pour les facteurs d’énergie, de carbone et d’eau. Le contrat de référence à suivre est `_bmad-output/specs/spec-ai-env-impact-calculator/SPEC.md` et ses contrats compagnons.
 
 ## 2. Public et parcours
 
@@ -32,9 +36,9 @@ Camille choisit « Saisir un échange », indique ChatGPT et vérifie le modèle
 3. Elle déclenche le calcul de l’échange et découvre près de ses textes le carbone et l’eau estimés, avec unité adaptée et mention d’incertitude.
 4. Après un deuxième échange, elle ajoute une carte : l’échange précédent se replie, le nouvel éditeur s’ouvre et le focus va sur sa question. Elle y colle son message, la réponse, le raisonnement visible et l’artifact éventuel.
 5. Elle colle la nouvelle version complète de l’artifact. Le calculateur détecte automatiquement les passages ajoutés ou modifiés par rapport à la version précédente et ne comptabilise que ceux-ci en tokens de sortie.
-6. Elle peut lancer le calcul d’un bloc individuellement ou calculer tous les blocs et leur total en un clic. Le total s'accompagne d'un indicateur du risque de sécheresse associé au pays d’hébergement retenu pour le calcul. Celui-ci est prérempli avec le pays de référence du fournisseur ; Camille peut le modifier dans les paramètres avancés. Elle peut aussi recalculer uniquement le total à partir des résultats déjà disponibles, sans relancer le calcul des blocs.
+6. Elle peut lancer le calcul d’un bloc individuellement ou calculer tous les blocs et leur total en un clic. Le pays d’hébergement est prérempli avec le pays de référence du fournisseur ; Camille peut le modifier dans les paramètres avancés. Elle peut aussi recalculer uniquement le total à partir des résultats déjà disponibles, sans relancer le calcul des blocs.
 
-**Résultat.** Camille voit carbone et eau près de chaque échange. Après une action explicite, le bilan valide présente carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations. Cette équivalence utilise le facteur d’émission du pays où elle se trouve, déterminé séparément de celui retenu pour le modèle. La quantité d’eau ne fait pas l’objet d’une comparaison.
+**Résultat.** Camille voit carbone et eau près de chaque échange. Après une action explicite, le bilan valide présente carbone, eau, électricité, équivalence douche et recommandations. Cette équivalence utilise le facteur d’émission du pays où elle se trouve, déterminé séparément de celui retenu pour le modèle. La quantité d’eau ne fait pas l’objet d’une comparaison.
 
 **Suite attendue.** Après consultation des résultats, Camille découvre une liste de bonnes pratiques simples et en retient les gestes à appliquer lors de ses prochaines utilisations (FR-6).
 
@@ -199,7 +203,7 @@ Cette donnée constitue une exception explicite à la règle du seul texte fourn
 
 ### 5.3 Calculs et validité des résultats
 
-#### FR-24 — Calculer l’énergie, le carbone, l’eau et le risque de sécheresse
+#### FR-24 — Calculer l’énergie, le carbone et l’eau
 
 Pour chaque bloc renseigné, le calculateur distingue tokens d’entrée nouvelle, d’historique en cache et de sortie, puis applique les formules de la spécification source reprises dans l’addendum.
 
@@ -210,7 +214,6 @@ Pour chaque bloc renseigné, le calculateur distingue tokens d’entrée nouvell
 - Le PUE du pays/fournisseur est appliqué exactement une fois à l’énergie informatique ; le PUE générique Ecologits n’est pas ajouté.
 - Le carbone et l’eau sont dérivés de cette même énergie datacenter. Les unités restent cohérentes : Wh, gCO₂e et litres ; les conversions d’affichage ne modifient pas les valeurs de calcul.
 - L’eau représente uniquement l’eau consommée sur site, hors eau liée à la production électrique.
-- Le risque de sécheresse est affiché à côté de l’eau selon le pays retenu. Il n’est ni sommé ni multiplié par le volume d’eau. Il est présent uniquement comme indicateur du total, et non de chaque bloc.
 - Le total additionne les valeurs non arrondies des blocs valides ; les arrondis relèvent uniquement de l’affichage.
 - Une mention visible précise que les résultats couvrent l’usage, hors fabrication et amortissement des équipements (Scope 3).
 
@@ -259,7 +262,7 @@ Le calculateur utilise un pays d’hébergement de référence défini pour chaq
 **Conséquences vérifiables :**
 
 - Sans intervention de Camille, le pays de référence du fournisseur est utilisé.
-- Le pays choisi dans les paramètres avancés sert à sélectionner les facteurs environnementaux applicables et l’indicateur de risque de sécheresse pour le modèle.
+- Le pays choisi dans les paramètres avancés sert à sélectionner les facteurs environnementaux applicables au modèle : PUE, intensité carbone et WUE.
 - Ce pays est distinct du pays de l’utilisateur : modifier l’un ne modifie pas l’autre.
 - Une modification du pays d’hébergement invalide les résultats des blocs concernés et le total ; Camille doit relancer les calculs selon FR-10 à FR-13.
 
@@ -314,11 +317,10 @@ Chaque résultat numérique est présenté sous la forme d’une valeur estimée
 
 **Conséquences vérifiables :**
 
-- Chaque échange affiche le carbone et l’eau estimés près de ses textes. Le bilan valide affiche carbone, eau, électricité, risque de sécheresse, équivalence douche et recommandations après une action explicite.
+- Chaque échange affiche le carbone et l’eau estimés près de ses textes. Le bilan valide affiche carbone, eau, électricité, équivalence douche et recommandations après une action explicite.
 - L’équivalence carbone en durée de douche, affichée uniquement dans le bilan, reste présentée comme une estimation.
 - L’information sur l’incertitude est accessible dans le parcours courant, sans ouvrir les paramètres avancés.
 - Aucun intervalle de confiance ni précision garantie n’est ajouté sans méthode définie.
-- Le risque de sécheresse reste un indicateur catégoriel associé au pays retenu, et non une grandeur à sommer.
 - Les valeurs internes d’énergie, d’eau et de carbone restent non arrondies par échange et pour le total. Seul l’affichage adapte l’unité et utilise au plus trois chiffres significatifs, une virgule décimale française et le groupement des milliers selon `EXPERIENCE.md` : carbone de µgCO₂e à tCO₂e, eau de µL à ML, électricité de mWh à GWh et durée de douche de ms à j. Zéro, valeur sous la plus petite unité, changement d’unité après arrondi et dépassement de l’unité maximale sont traités explicitement ; les unités abrégées ont un nom accessible complet.
 
 #### FR-5 — Comparer le carbone à une durée de douche chaude locale

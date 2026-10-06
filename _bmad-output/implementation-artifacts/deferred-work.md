@@ -64,3 +64,4 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-supprimer-indicateur-risque-secheresse.md`
   summary: Réconcilier les anciennes mentions du risque de sécheresse dans les artefacts de planification BMAD, notamment architecture, PRD, epics, propositions de sprint et revue UX.
   evidence: La recherche globale retrouve encore l’indicateur comme exigence dans des documents BMAD datés ; ils ont été conservés comme traces des décisions antérieures et doivent être explicitement mis à jour ou marqués comme supersédés avant de servir à de futurs travaux.
+  resolution: Terminé le 2026-10-06 : exigences courantes réconciliées, récits livrés conservés avec notes de supersession, traces de revue et extraction fidèle marquées comme historiques.

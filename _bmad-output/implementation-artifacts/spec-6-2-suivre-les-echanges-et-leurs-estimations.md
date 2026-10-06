@@ -9,6 +9,8 @@ baseline_commit: 'a0ddd4f6ddd5e2ee641a5113d0b385d60089e5ef'
 context: []
 ---
 
+> **Note de supersession — 2026-10-06 :** story terminée conservée comme historique. Sa mention du risque de sécheresse comme indicateur à exclure des cartes est sans objet depuis le retrait de cette feature ; l’exclusion de l’électricité des cartes reste applicable. Pour le périmètre courant, suivre la SPEC canonique.
+
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
 
 ## Intent

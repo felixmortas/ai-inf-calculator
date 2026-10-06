@@ -1,5 +1,7 @@
 # Extraction fidèle — spécification des formules
 
+> **Document historique — 2026-10-06 :** cette extraction restitue la spécification source du 17 septembre et conserve fidèlement ses mentions du risque de sécheresse. Elles sont supersédées par la décision de retrait et la SPEC canonique `_bmad-output/specs/spec-ai-env-impact-calculator/SPEC.md`; ne pas utiliser cette extraction comme contrat courant.
+
 Source : `spec-formules-calculateur-empreinte-llm.md`, lue intégralement le 17 septembre 2026. Les références ci-dessous renvoient à ses sections. Les lacunes sont constatées, sans décision produit ajoutée.
 
 ## Périmètre et expérience explicitement définis

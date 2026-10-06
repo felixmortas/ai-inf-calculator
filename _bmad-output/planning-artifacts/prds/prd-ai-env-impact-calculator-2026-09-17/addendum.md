@@ -52,7 +52,6 @@ Ce contrat reprend les §1–10 de `spec-formules-calculateur-empreinte-llm.md` 
 | `EF(pays)` | gCO2e/kWh | `carbon_emissions_intensity_2025.csv`, `Area`, `Emissions intensity (gCO2e/kWh)` (§1) |
 | `PUE(pays, fournisseur)` | ratio ≥ 1 | données fournisseurs et extrapolation (§1) |
 | `WUE(pays, fournisseur)` | L/kWh | données fournisseurs et extrapolation (§1) |
-| `dry_risk(pays, fournisseur)` | `low`, `med`, `high`, `extreme` | `country_drought_risk.csv`, `Area`, `drought_risk_level` ; WRI Aqueduct annoncé (§1, §7) |
 | `κ_in`, `κ_cache` | ratios sans unité, par modèle/fournisseur | calibration tarifaire datée à partir des tarifs dans `models_params` (§3ter.2) |
 
 Le catalogue fournit les modèles et leurs données ; les valeurs non fournies ne sont pas inventées. `P_tot = 37` signifie 37 milliards de paramètres, et non 37 paramètres : une source en unités brutes doit être convertie avant calcul. Les tables environnementales doivent inclure les valeurs de repli « Monde ». Le pays utilisateur sert uniquement à la référence de douche ; le pays d’hébergement sert à l’empreinte du modèle.
@@ -136,7 +135,7 @@ La calibration utilise les tarifs publics comparables d’un même modèle et fo
 
 Les cas de prix absent ou nul, de cache non commercialisé et de grilles multiples demandent un contrat de données avant intégration ; une division par zéro ne produit pas un ratio valide. La fréquence et le responsable de la calibration restent à fixer. Une modification avancée de ratio remplace la valeur de référence uniquement pour la session en cours ; la restauration reprend les valeurs de référence du modèle.
 
-### Énergie, carbone, eau et sécheresse
+### Énergie, carbone et eau
 
 ```text
 nrj_compute(i) = new_input(i) × r_in
@@ -147,10 +146,9 @@ nrj_request(i) = nrj_compute(i) × PUE(pays_hebergement, fournisseur) [Wh]
 co2_request(i) = (nrj_request(i) / 1000) × EF(pays_hebergement)      [gCO2e]
 water_request(i) = (nrj_request(i) / 1000)
                    × WUE(pays_hebergement, fournisseur)          [L]
-dry_risk_request(i) = lookup(pays_hebergement, fournisseur)        [catégorie]
 ```
 
-Conformément aux §0 et §3–7, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO2e → kgCO2e divisent par 1000. Le risque de sécheresse n’est ni une émission ni une grandeur additive. La source annonce une recherche par pays et fournisseur mais décrit une table de risque par pays ; le contrat de données devra préciser cette correspondance sans inventer une granularité par datacenter.
+Conformément aux §0 et §3–7, calculer l’énergie datacenter une seule fois, appliquer le PUE une seule fois, puis réutiliser cette même énergie pour le carbone et l’eau. Les conversions Wh → kWh et gCO2e → kgCO2e divisent par 1000.
 
 Un facteur géographique manquant utilise la valeur « Monde » de ce facteur, signalée à l’utilisateur. Ce repli ne remplace pas les autres valeurs disponibles et n’est pas une règle de remplacement des données modèle ou des prix. Si la valeur « Monde » manque également, la donnée reste indisponible ; elle ne devient jamais implicitement zéro.
 
