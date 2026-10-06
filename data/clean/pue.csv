@@ -1,6 +1,271 @@
-Area,pue,source,version,date
-France,1.2,AWS,0,18/09/2026
-Brazil,1.5,AWS,0,18/09/2026
-India,2,AWS,0,18/09/2026
-United States,1.15,AWS,0,18/09/2026
-Switzerland,1.08,AWS,0,18/09/2026
+Area,source,pue,Data_Status
+Albania,AWS,1.14,global
+Albania,Azure,1.17,global
+Albania,GCP,1.1,global
+Argentina,AWS,1.14,regional
+Argentina,Azure,1.16,regional
+Argentina,GCP,1.09,regional
+Armenia,AWS,1.24,regional
+Armenia,Azure,1.16,regional
+Armenia,GCP,1.08,regional
+Australia,AWS,1.07,measured
+Australia,Azure,1.28,regional
+Australia,GCP,1.12,measured
+Austria,AWS,1.16,estimated
+Austria,Azure,1.16,estimated
+Austria,GCP,1.08,measured
+Azerbaijan,AWS,1.24,regional
+Azerbaijan,Azure,1.16,regional
+Azerbaijan,GCP,1.12,regional
+Bangladesh,AWS,1.4,regional
+Bangladesh,Azure,1.28,regional
+Bangladesh,GCP,1.13,regional
+Belarus,AWS,1.24,regional
+Belarus,Azure,1.16,regional
+Belarus,GCP,1.12,regional
+Belgium,AWS,1.07,measured
+Belgium,Azure,1.16,estimated
+Belgium,GCP,1.07,measured
+Bolivia,AWS,1.14,regional
+Bolivia,Azure,1.16,regional
+Bolivia,GCP,1.09,regional
+Bosnia Herzegovina,AWS,1.24,regional
+Bosnia Herzegovina,Azure,1.16,regional
+Bosnia Herzegovina,GCP,1.12,regional
+Brazil,AWS,1.14,measured
+Brazil,Azure,1.16,estimated
+Brazil,GCP,1.09,regional
+Bulgaria,AWS,1.24,estimated
+Bulgaria,Azure,1.16,estimated
+Bulgaria,GCP,1.12,regional
+Cambodia,AWS,1.4,regional
+Cambodia,Azure,1.28,regional
+Cambodia,GCP,1.13,regional
+Canada,AWS,1.16,measured
+Canada,Azure,1.16,measured
+Canada,GCP,1.09,measured
+Chile,AWS,1.17,measured
+Chile,Azure,1.16,estimated
+Chile,GCP,1.08,measured
+China,AWS,1.25,measured
+China,Azure,1.28,regional
+China,GCP,1.12,regional
+Colombia,AWS,1.14,regional
+Colombia,Azure,1.16,regional
+Colombia,GCP,1.09,regional
+Costa Rica,AWS,1.17,regional
+Costa Rica,Azure,1.16,regional
+Costa Rica,GCP,1.09,regional
+Croatia,AWS,1.24,estimated
+Croatia,Azure,1.16,estimated
+Croatia,GCP,1.12,regional
+Cyprus,AWS,1.16,estimated
+Cyprus,Azure,1.16,estimated
+Cyprus,GCP,1.12,regional
+Czechia,AWS,1.16,estimated
+Czechia,Azure,1.16,estimated
+Czechia,GCP,1.08,measured
+Denmark,AWS,1.09,estimated
+Denmark,Azure,1.16,estimated
+Denmark,GCP,1.08,measured
+Dominican Republic,AWS,1.17,regional
+Dominican Republic,Azure,1.16,regional
+Dominican Republic,GCP,1.09,regional
+Ecuador,AWS,1.14,regional
+Ecuador,Azure,1.16,regional
+Ecuador,GCP,1.09,regional
+Egypt,AWS,1.24,regional
+Egypt,Azure,1.16,regional
+Egypt,GCP,1.12,regional
+El Salvador,AWS,1.17,regional
+El Salvador,Azure,1.16,regional
+El Salvador,GCP,1.09,regional
+Estonia,AWS,1.24,estimated
+Estonia,Azure,1.16,estimated
+Estonia,GCP,1.12,regional
+Ethiopia,AWS,1.24,regional
+Ethiopia,Azure,1.16,regional
+Ethiopia,GCP,1.12,regional
+Finland,AWS,1.11,estimated
+Finland,Azure,1.16,estimated
+Finland,GCP,1.08,measured
+France,AWS,1.35,measured
+France,Azure,1.16,estimated
+France,GCP,1.08,measured
+Georgia,AWS,1.24,regional
+Georgia,Azure,1.16,regional
+Georgia,GCP,1.08,regional
+Germany,AWS,1.24,measured
+Germany,Azure,1.16,estimated
+Germany,GCP,1.07,measured
+Greece,AWS,1.16,estimated
+Greece,Azure,1.16,estimated
+Greece,GCP,1.08,measured
+Hungary,AWS,1.16,estimated
+Hungary,Azure,1.16,estimated
+Hungary,GCP,1.08,measured
+Iceland,AWS,1.11,regional
+Iceland,Azure,1.16,regional
+Iceland,GCP,1.08,measured
+India,AWS,1.4,measured
+India,Azure,1.28,regional
+India,GCP,1.12,regional
+Iran,AWS,1.24,regional
+Iran,Azure,1.16,regional
+Iran,GCP,1.12,regional
+Ireland,AWS,1.1,measured
+Ireland,Azure,1.16,measured
+Ireland,GCP,1.08,measured
+Israel,AWS,1.27,measured
+Israel,Azure,1.16,regional
+Israel,GCP,1.12,regional
+Italy,AWS,1.18,measured
+Italy,Azure,1.16,estimated
+Italy,GCP,1.08,measured
+Japan,AWS,1.25,measured
+Japan,Azure,1.28,regional
+Japan,GCP,1.12,measured
+Kazakhstan,AWS,1.24,regional
+Kazakhstan,Azure,1.28,regional
+Kazakhstan,GCP,1.12,regional
+Kenya,AWS,1.24,regional
+Kenya,Azure,1.16,regional
+Kenya,GCP,1.12,regional
+Kosovo,AWS,1.24,regional
+Kosovo,Azure,1.16,regional
+Kosovo,GCP,1.12,regional
+Kuwait,AWS,1.31,regional
+Kuwait,Azure,1.16,regional
+Kuwait,GCP,1.12,regional
+Kyrgyzstan,AWS,1.24,regional
+Kyrgyzstan,Azure,1.28,regional
+Kyrgyzstan,GCP,1.12,regional
+Latvia,AWS,1.24,estimated
+Latvia,Azure,1.16,estimated
+Latvia,GCP,1.12,regional
+Lithuania,AWS,1.24,estimated
+Lithuania,Azure,1.16,estimated
+Lithuania,GCP,1.12,regional
+Luxembourg,AWS,1.16,estimated
+Luxembourg,Azure,1.16,estimated
+Luxembourg,GCP,1.08,measured
+Malaysia,AWS,1.4,regional
+Malaysia,Azure,1.28,regional
+Malaysia,GCP,1.13,regional
+Malta,AWS,1.16,estimated
+Malta,Azure,1.16,estimated
+Malta,GCP,1.12,regional
+Mexico,AWS,1.17,estimated
+Mexico,Azure,1.16,estimated
+Mexico,GCP,1.09,measured
+Moldova,AWS,1.24,regional
+Moldova,Azure,1.16,regional
+Moldova,GCP,1.12,regional
+Montenegro,AWS,1.24,regional
+Montenegro,Azure,1.16,regional
+Montenegro,GCP,1.12,regional
+Morocco,AWS,1.24,regional
+Morocco,Azure,1.16,regional
+Morocco,GCP,1.12,regional
+Netherlands,AWS,1.07,measured
+Netherlands,Azure,1.16,estimated
+Netherlands,GCP,1.07,measured
+New Zealand,AWS,1.14,regional
+New Zealand,Azure,1.28,regional
+New Zealand,GCP,1.12,measured
+Nigeria,AWS,1.24,regional
+Nigeria,Azure,1.16,regional
+Nigeria,GCP,1.12,regional
+North Macedonia,AWS,1.24,regional
+North Macedonia,Azure,1.16,regional
+North Macedonia,GCP,1.12,regional
+Norway,AWS,1.11,estimated
+Norway,Azure,1.16,estimated
+Norway,GCP,1.08,measured
+Oman,AWS,1.25,regional
+Oman,Azure,1.16,regional
+Oman,GCP,1.12,regional
+Pakistan,AWS,1.4,regional
+Pakistan,Azure,1.28,regional
+Pakistan,GCP,1.12,regional
+Paraguay,AWS,1.14,regional
+Paraguay,Azure,1.16,regional
+Paraguay,GCP,1.09,regional
+Peru,AWS,1.14,regional
+Peru,Azure,1.16,regional
+Peru,GCP,1.09,regional
+Poland,AWS,1.16,estimated
+Poland,Azure,1.16,estimated
+Poland,GCP,1.08,measured
+Portugal,AWS,1.16,estimated
+Portugal,Azure,1.16,estimated
+Portugal,GCP,1.08,measured
+Puerto Rico,AWS,1.14,regional
+Puerto Rico,Azure,1.16,regional
+Puerto Rico,GCP,1.09,regional
+Qatar,AWS,1.33,regional
+Qatar,Azure,1.16,regional
+Qatar,GCP,1.12,regional
+Romania,AWS,1.16,estimated
+Romania,Azure,1.16,estimated
+Romania,GCP,1.08,measured
+Russia,AWS,1.24,regional
+Russia,Azure,1.16,regional
+Russia,GCP,1.12,regional
+Serbia,AWS,1.24,regional
+Serbia,Azure,1.16,regional
+Serbia,GCP,1.12,regional
+Singapore,AWS,1.3,measured
+Singapore,Azure,1.28,measured
+Singapore,GCP,1.13,measured
+Slovenia,AWS,1.24,estimated
+Slovenia,Azure,1.16,estimated
+Slovenia,GCP,1.12,regional
+South Africa,AWS,1.19,measured
+South Africa,Azure,1.16,regional
+South Africa,GCP,1.12,regional
+South Korea,AWS,1.25,measured
+South Korea,Azure,1.28,regional
+South Korea,GCP,1.12,measured
+Spain,AWS,1.06,measured
+Spain,Azure,1.16,estimated
+Spain,GCP,1.08,measured
+Sri Lanka,AWS,1.4,regional
+Sri Lanka,Azure,1.28,regional
+Sri Lanka,GCP,1.13,regional
+Sweden,AWS,1.09,measured
+Sweden,Azure,1.16,estimated
+Sweden,GCP,1.08,measured
+Switzerland,AWS,1.16,estimated
+Switzerland,Azure,1.16,estimated
+Switzerland,GCP,1.08,measured
+Taiwan,AWS,1.13,measured
+Taiwan,Azure,1.28,regional
+Taiwan,GCP,1.13,measured
+Tajikistan,AWS,1.24,regional
+Tajikistan,Azure,1.28,regional
+Tajikistan,GCP,1.12,regional
+Thailand,AWS,1.38,measured
+Thailand,Azure,1.28,regional
+Thailand,GCP,1.13,regional
+The Philippines,AWS,1.4,regional
+The Philippines,Azure,1.28,regional
+The Philippines,GCP,1.13,regional
+Tunisia,AWS,1.24,regional
+Tunisia,Azure,1.16,regional
+Tunisia,GCP,1.12,regional
+United Kingdom,AWS,1.23,estimated
+United Kingdom,Azure,1.16,estimated
+United Kingdom,GCP,1.08,measured
+United States,AWS,1.14,measured
+United States,Azure,1.16,measured
+United States,GCP,1.09,measured
+Uruguay,AWS,1.14,regional
+Uruguay,Azure,1.16,regional
+Uruguay,GCP,1.09,regional
+Uzbekistan,AWS,1.24,regional
+Uzbekistan,Azure,1.28,regional
+Uzbekistan,GCP,1.12,regional
+Vietnam,AWS,1.4,regional
+Vietnam,Azure,1.28,regional
+Vietnam,GCP,1.12,regional

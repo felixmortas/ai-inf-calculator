@@ -28,7 +28,7 @@ Gemini est forcément chez Google, probablement aux Etats-Unis pour les utilisat
 Et Anthropic peut être chez les 3 cloud provider. Nous allons sélectionner AWS car il est le fournisseur le plus concurrentiel. Les modèles sont probablement hébergés aux Etats-Unis pour les utilisateurs gratuits.
 
 # PUE par pays et fournisseur
-
+Les valeurs PUE ont été collectées selon quatre niveaux de fiabilité décroissante : (1) measured : données mesurées publiées directement par AWS, Azure et GCP pour le pays/région spécifique ; (2) estimated : interpolation régionale pour pays sans datacenter connu mais situés dans une zone avec PUE publiée ; (3) regional : utilisation des PUE régionales agrégées (ex. Asia-Pacific, EMEA) quand aucune zone spécifique n'existe ; (4) global : fallback sur PUE mondiale moyenne du fournisseur pour pays isolés. Cette stratégie en cascade garantit une couverture complète de tous les pays tout en traçabilité de la source. Les données AWS (2025) offrent la meilleure granularité (~25 régions), suivies d'Azure (4 régions officielles, FY25) et GCP (données par datacenter, 2024). À noter : ces valeurs ne reflètent pas les variations climatiques locales (température/humidité ambiante), qui peuvent écarter le PUE réel de ±5-10% par rapport aux estimations régionales.
 
 # WUE par pays et fournisseur
 
