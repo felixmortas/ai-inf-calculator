@@ -158,9 +158,9 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Mode avancé'));
@@ -171,7 +171,7 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toBeVisible();
     expect(screen.getAllByText(/à recalculer/)).toHaveLength(1);
-    expect(screen.getByLabelText('Votre message')).toHaveValue('Bonjour');
+    expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Bonjour');
   });
 
   it('applique une puissance LED modifiée par Continuer', async () => {
@@ -193,8 +193,8 @@ describe('configuration de conversation', () => {
     await startSelection(user);
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Votre message'), 'Texte conservé');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByLabelText('Collez ici votre message'), 'Texte conservé');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Mode avancé'));
     await user.click(screen.getByText('Mode expert'));
@@ -210,7 +210,7 @@ describe('configuration de conversation', () => {
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
     expect(screen.getByText('gpt-4o')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    expect(screen.getByLabelText('Votre message')).toHaveValue('Texte conservé');
+    expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Texte conservé');
   });
 
   it('signale le repli Monde près du champ sans changer le pays', async () => {
@@ -226,8 +226,8 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Mode avancé'));
     await user.click(screen.getByText('Mode expert'));

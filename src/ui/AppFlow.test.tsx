@@ -40,18 +40,18 @@ describe('parcours de départ', () => {
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Mon texte');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Mon texte');
     await user.click(screen.getByRole('button', { name: 'Méthodologie' }));
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'Méthodologie d’estimation' })).toBeVisible();
     expect(screen.getAllByRole('heading', { name: 'Méthodologie d’estimation' })).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(screen.getByRole('textbox', { name: 'Votre message' })).toHaveValue('Mon texte');
+    expect(screen.getByRole('textbox', { name: 'Collez ici votre message' })).toHaveValue('Mon texte');
     await user.click(screen.getByRole('button', { name: 'Retour' }));
     expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Mon texte');
+    expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('Mon texte');
     expect(screen.queryByRole('button', { name: '?' })).not.toBeInTheDocument();
   });
 
@@ -83,7 +83,7 @@ describe('parcours de départ', () => {
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    expect(screen.queryByLabelText('Votre message')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Collez ici votre message')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByRole('button', { name: 'Retour' }));
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
@@ -98,34 +98,34 @@ describe('fil et estimations', () => {
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
   }
 
-  it('calcule seulement l’échange demandé et laisse le bilan à son action explicite', async () => {
+  it('calcule les seuls échanges renseignés en un clic depuis la barre collante', async () => {
     const user = userEvent.setup();
     await openThread(user);
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Première question');
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByRole('textbox', { name: 'Réponse du chatbot' }), 'Seconde réponse');
-    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Première question');
-    expect(screen.getByRole('button', { name: 'Déplier l’échange 1' })).toHaveAttribute('aria-expanded', 'false');
-    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' }));
-    expect(await screen.findByLabelText('Impact pour cet échange')).toBeVisible();
-    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Impact à calculer');
-    expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Première question');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici la réponse de l’IA' }), 'Seconde réponse');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('Première question');
+    expect(screen.getByRole('button', { name: 'Déplier la question / réponse 1' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Calculer' }).closest('.sticky-actions')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    expect(await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' })).toBeVisible();
+    expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
+    expect(screen.getByRole('region', { name: 'Question / réponse 3' })).not.toHaveTextContent(/Vide|À calculer/);
+    expect(screen.queryByRole('button', { name: /Calculer cet échange|Recalculer/ })).not.toBeInTheDocument();
   });
 
-  it('annonce la péremption en chaîne après édition sans remplacer les textes ni recalculer', async () => {
+  it('annonce la péremption après édition sans remplacer les textes ni recalculer', async () => {
     const user = userEvent.setup();
     await openThread(user);
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Question initiale');
-    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' }));
-    await screen.findByLabelText('Impact pour cet échange');
-    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Suite');
-    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' }));
-    expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
-    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Question initiale');
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Suite');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
+    expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     const exchanges = document.querySelectorAll('.conversation-blocks .conversation-block');
     const lastExchange = exchanges[exchanges.length - 1];
     const actions = document.querySelector('.conversation-actions-after-thread')!;
@@ -134,15 +134,16 @@ describe('fil et estimations', () => {
     expect(lastExchange.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(actions.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(summary.compareDocumentPosition(reference) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
-    await user.type(screen.getAllByRole('textbox', { name: 'Votre message' })[0], ' modifiée');
-    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Question initiale modifiée');
-    expect(screen.getByRole('region', { name: 'Échange 2' })).toHaveTextContent('Suite');
-    expect(screen.getAllByText(/Ce résultat est périmé/)).toHaveLength(2);
-    expect(screen.getByText(/Le bilan précédent est périmé/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Déplier la question / réponse 1' }));
+    await user.type(screen.getAllByRole('textbox', { name: 'Collez ici votre message' })[0], ' modifiée');
+    expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('Question initiale modifiée');
+    expect(screen.getByRole('region', { name: 'Question / réponse 2' })).toHaveTextContent('Suite');
+    expect(document.querySelectorAll('.exchange-status.impact-stale')).toHaveLength(2);
+    expect(screen.getAllByText(/à recalculer\./)).toHaveLength(1);
+    expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toHaveAttribute('role', 'status');
     expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Replier l’échange 1' })).toBeVisible();
-    expect(screen.getAllByRole('button', { name: 'Recalculer cet échange' })).toHaveLength(2);
+    expect(document.querySelectorAll('.compact-impact')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Replier la question / réponse 1' })).toBeVisible();
   });
 });
 

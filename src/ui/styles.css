@@ -24,11 +24,12 @@ h2 { font-size: 1.25rem; margin-top: 0; }
 .back-button { margin: 0 0 .5rem -.35rem; }
 .step-justification { margin-top: 0; color: #4e665a; }
 .primary-action { background: #245a40; color: #fff; }
-html { scroll-padding-bottom: 6rem; }
+html { scroll-padding-bottom: 9rem; }
 .sticky-actions { position: sticky; bottom: 0; z-index: 10; display: flex; margin-top: 1rem; padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom)); background: #eff4e8; border-top: 1px solid #c7d7c7; }
 .sticky-actions { flex-wrap: wrap; align-items: center; gap: .5rem; }
 .sticky-actions button { flex: 1; }
 .continue-blocked { flex: 1 1 100%; margin: 0; color: #7a1f1f; font-weight: 700; }
+button[aria-disabled="true"] { opacity: .85; cursor: not-allowed; }
 .primary-action[aria-disabled="true"] { background: #e3e8e0; color: #3d4d43; border: 2px dashed #577160; cursor: not-allowed; }
 .estimate-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .estimate { margin: 0; }
@@ -173,10 +174,18 @@ button {
 .optional-contents summary { cursor: pointer; font-weight: 700; padding: .35rem; }
 .optional-contents summary:focus-visible { outline: 3px solid #184bb2; outline-offset: 2px; }
 .block-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
-.block-actions button:first-child { background: #245a40; color: #fff; }
-.remove-confirmation { margin-top: 1rem; padding: .8rem; border: 2px solid #704900; border-radius: .5rem; background: #fff7df; }
-.remove-confirmation p { margin-top: 0; }
-.remove-confirmation button + button { margin-left: .65rem; }
+.calculation-status { flex: 1 1 100%; margin: 0; font-weight: 700; }
+.calculation-status:empty { display: none; }
+.calculation-error { flex: 1 1 100%; margin: 0; color: #7a1f1f; font-weight: 700; }
+.exchange-status { display: inline-block; margin: 0; padding: .15rem .5rem; border: 1px solid #577160; border-radius: 1rem; font-size: .9rem; }
+.exchange-status.impact-stale { border-width: 2px; border-style: dashed; }
+.remove-block { background: #fff; }
+.modal-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(32 59 50 / 55%); }
+.modal-dialog { width: min(100%, 26rem); padding: 1.25rem; border: 2px solid #245535; border-radius: .75rem; background: #fff; color: #203b32; }
+.modal-dialog p { margin-top: 0; font-weight: 700; }
+.modal-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.modal-actions button { flex: 1 1 8rem; }
+.danger-action { background: #7a1f1f; border-color: #7a1f1f; color: #fff; }
 .field-help, .source-rejected { margin: .35rem 0; font-size: .9rem; }
 .source-rejected { color: #8a2f2f; }
 .source-list { margin: .5rem 0 0; padding-left: 1.25rem; }
@@ -216,7 +225,6 @@ button {
   .conversation-block-heading { align-items: center; flex-direction: row; gap: .5rem; }
   .conversation-actions-after-thread { align-items: center; flex-direction: row; }
   .summary-panel button, .thread-reference button { max-width: 100%; white-space: normal; }
-  .block-actions, .remove-confirmation { display: grid; gap: .65rem; }
-  .remove-confirmation button + button { margin-left: 0; }
+  .block-actions { display: grid; gap: .65rem; }
   .source-list li { align-items: stretch; flex-direction: column; }
 }

@@ -18,3 +18,10 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
   summary: `ledPowerW` n'a pas encore de consommateur (équivalence LED à brancher en 7.4).
   evidence: Aucune référence dans le domaine d'équivalence ; la durée LED est hors périmètre de la 7.2.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic.md`
+  summary: Élaguer le code `no-exchanges` (et textes `empty-block`) devenu inatteignable depuis l'interface dans le reducer et `summaryFingerprint`.
+  evidence: `calculateAll` retourne silencieusement sans blocs renseignés ; plus aucun dispatch ni texte associé.
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic.md`
+  summary: Le statut « Calcul en cours… » de la barre collante est dans `.app-shell` rendu inerte pendant le calcul, donc non annoncé ; seul l'overlay annonce.
+  evidence: rapport d'implémentation 7.3 et revue ; à traiter avec la section résultat de 7.4.

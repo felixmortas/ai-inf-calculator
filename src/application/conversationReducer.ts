@@ -98,7 +98,7 @@ export type BlockImpactState =
 export type ConversationSummaryState =
   | { readonly status: 'pending'; readonly fingerprint: string }
   | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] };
+  | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' };
 export interface ShowerEquivalenceState { readonly fingerprint: string; readonly equivalence: ShowerEquivalence; }
 
 export type ConversationAction =
@@ -122,9 +122,8 @@ export type ConversationAction =
   | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block'; readonly async?: true }
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
-  | { readonly type: 'summaryRecalculationRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results'; readonly blockingBlockIds?: readonly string[] }
+  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
 const initialSubscription: ChatGptSubscription = defaultChatGptSubscription;
@@ -268,11 +267,6 @@ export function currentImpact(state: Pick<ConversationState, 'provider' | 'model
   return isImpactCurrent(state, blockId) && impact?.status === 'result' ? impact.impact : undefined;
 }
 
-export function summaryBlockingBlockIds(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>): readonly string[] {
-  return state.blocks.filter((block) => !isIgnoredConversationBlock(block) && !isImpactCurrent(state, block.blockId))
-    .map((block) => block.blockId);
-}
-
 export function isSummaryCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'summary' | 'parameterOverrides' | 'parameterValidationInvalid'>): boolean {
   return !state.parameterValidationInvalid && state.summary?.status === 'result' && state.summary.fingerprint === summaryFingerprint(state);
 }
@@ -282,7 +276,7 @@ export function isSummaryFresh(state: Pick<ConversationState, 'provider' | 'mode
 }
 
 export function conversationReducer(state: ConversationState, action: ConversationAction): ConversationState {
-  if (state.parameterValidationInvalid && ['tokenizationRequested', 'tokenizationResponded', 'impactRequested', 'impactResolved', 'impactBlocked', 'summaryRequested', 'summaryRecalculationRequested', 'summaryResolved', 'summaryUnavailable'].includes(action.type)) return state;
+  if (state.parameterValidationInvalid && ['tokenizationRequested', 'tokenizationResponded', 'impactRequested', 'impactResolved', 'impactBlocked', 'summaryRequested', 'summaryResolved', 'summaryUnavailable'].includes(action.type)) return state;
   switch (action.type) {
     case 'providerSelected': {
       if (action.provider === state.provider) return state;
@@ -419,16 +413,6 @@ export function conversationReducer(state: ConversationState, action: Conversati
       return summaryFingerprint(state) === action.fingerprint
         ? { ...state, summary: { status: 'pending', fingerprint: action.fingerprint } }
         : state;
-    case 'summaryRecalculationRequested': {
-      if (summaryFingerprint(state) !== action.fingerprint) return state;
-      if (!state.blocks.some((block) => !isIgnoredConversationBlock(block))) {
-        return { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: 'no-exchanges' } };
-      }
-      const blockingBlockIds = summaryBlockingBlockIds(state);
-      return blockingBlockIds.length === 0
-        ? { ...state, summary: { status: 'pending', fingerprint: action.fingerprint } }
-        : { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: 'invalid-results', blockingBlockIds } };
-    }
     case 'summaryResolved':
       return state.summary?.status === 'pending'
         && state.summary.fingerprint === action.fingerprint
@@ -439,7 +423,7 @@ export function conversationReducer(state: ConversationState, action: Conversati
       return state.summary?.status === 'pending'
         && state.summary.fingerprint === action.fingerprint
         && summaryFingerprint(state) === action.fingerprint
-        ? { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: action.code, blockingBlockIds: action.blockingBlockIds } }
+        ? { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: action.code } }
         : state;
     case 'showerEquivalenceResolved': {
       if (action.blockId) {

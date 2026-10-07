@@ -9,7 +9,6 @@ import {
   showerFingerprint,
   isSummaryCurrent,
   summaryFingerprint,
-  summaryBlockingBlockIds,
   type ConversationBlock,
 } from './conversationReducer';
 import { tokenizationEncoding, tokenizationFingerprint } from '../domain/tokenization';
@@ -396,7 +395,6 @@ describe('conversationReducer', () => {
     expect(isImpactCurrent(edited, 'one')).toBe(true);
     expect(isImpactCurrent(edited, 'two')).toBe(false);
     expect(isImpactCurrent(edited, 'three')).toBe(false);
-    expect(summaryBlockingBlockIds(edited)).toEqual(['two', 'three']);
   });
 
   it('ne périme pas les résultats en ajoutant ou supprimant un bloc vide', () => {
@@ -411,32 +409,6 @@ describe('conversationReducer', () => {
     expect(isImpactCurrent(removed, 'one')).toBe(true);
   });
 
-  it('refuse atomiquement le recalcul du bilan et identifie chaque échange bloquant', () => {
-    let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
-    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'un' });
-    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'two', field: 'message', value: 'deux' });
-    const fingerprint = summaryFingerprint(state);
-    const refused = conversationReducer(state, { type: 'summaryRecalculationRequested', fingerprint });
-    expect(refused.summary).toMatchObject({ status: 'unavailable', code: 'invalid-results', blockingBlockIds: ['one', 'two'] });
-  });
-
-  it('autorise un recalcul de bilan seulement lorsque chaque impact renseigné est courant', () => {
-    let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
-    for (const [blockId, value] of [['one', 'un'], ['two', 'deux']] as const) {
-      state = conversationReducer(state, { type: 'blockUpdated', blockId, field: 'message', value });
-      const fingerprint = impactFingerprint(state, blockId);
-      state = conversationReducer(state, { type: 'impactRequested', blockId, fingerprint });
-      state = conversationReducer(state, { type: 'impactResolved', blockId, fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
-    }
-    const fingerprint = summaryFingerprint(state);
-    const requested = conversationReducer(state, { type: 'summaryRecalculationRequested', fingerprint });
-    expect(requested.summary).toEqual({ status: 'pending', fingerprint });
-    const resolved = conversationReducer(requested, {
-      type: 'summaryResolved', fingerprint, total: { energyWh: 2, carbonGco2e: 4, waterL: 6 },
-    });
-    expect(resolved.summary).toMatchObject({ status: 'result', total: { energyWh: 2, carbonGco2e: 4, waterL: 6 } });
-  });
-
   it('périme les échanges dépendants après la suppression d’un échange renseigné', () => {
     let state = ['one', 'two'].reduce((current, blockId) => conversationReducer(current, { type: 'blockAdded', blockId }), initialConversationState);
     for (const [blockId, value] of [['one', 'un'], ['two', 'deux']] as const) {
@@ -447,7 +419,6 @@ describe('conversationReducer', () => {
     }
     const removed = conversationReducer(state, { type: 'blockRemoved', blockId: 'one' });
     expect(isImpactCurrent(removed, 'two')).toBe(false);
-    expect(summaryBlockingBlockIds(removed)).toEqual(['two']);
   });
 
   it('périme un résultat résolu après le changement de modèle', () => {
@@ -458,7 +429,6 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     const changed = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
     expect(isImpactCurrent(changed, 'one')).toBe(false);
-    expect(summaryBlockingBlockIds(changed)).toEqual(['one']);
     const returned = conversationReducer(changed, { type: 'subscriptionSelected', subscription: 'without-paid-subscription' });
     expect(isImpactCurrent(returned, 'one')).toBe(false);
   });
@@ -472,12 +442,6 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Salut' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
     expect(isImpactCurrent(state, 'one')).toBe(false);
-  });
-
-  it('signale l’absence d’échange lors du recalcul de bilan', () => {
-    const fingerprint = summaryFingerprint(initialConversationState);
-    const state = conversationReducer(initialConversationState, { type: 'summaryRecalculationRequested', fingerprint });
-    expect(state.summary).toEqual({ status: 'unavailable', fingerprint, code: 'no-exchanges' });
   });
 
   it('dérive une empreinte de douche canonique des résultats et paramètres qui la déterminent', () => {

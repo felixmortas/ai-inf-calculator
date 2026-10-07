@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import {
-  conversationReducer, currentImpact, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
-  showerFingerprint, summaryBlockingBlockIds, summaryFingerprint, type ConversationState,
+  conversationReducer, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
+  showerFingerprint, summaryFingerprint, type ConversationState,
   isImpactCurrent, isShowerEquivalenceCurrent, isSummaryCurrent, isSummaryShowerEquivalenceCurrent, type ConversationAction,
 } from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
@@ -15,6 +15,7 @@ import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
 import { ConversationConfiguration, type ConfigurationHandle } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
+import { CalculationBar } from './CalculationBar';
 import { Methodology } from './Methodology';
 import './styles.css';
 
@@ -98,7 +99,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (recalculationNotice && summaryBlockingBlockIds(state).length === 0
+    if (recalculationNotice && state.blocks.every((block) => isIgnoredConversationBlock(block) || isImpactCurrent(state, block.blockId))
       && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state)) {
       setRecalculationNotice('');
     }
@@ -110,6 +111,16 @@ export function App() {
     setOpenAdvancedOnSelection(fromSummary || !!trigger?.classList.contains('edit-stale-parameters'));
     setSelectionOrigin(origin);
     setStep('selection');
+  }
+
+  function blocksDispatch(action: ConversationAction) {
+    if (['blockUpdated', 'sourceAdded', 'sourceRemoved', 'blockRemoved'].includes(action.type)) {
+      const next = conversationReducer(state, action);
+      const staleCards = next.blocks.filter((block) => next.impacts[block.blockId]?.status === 'result' && !isImpactCurrent(next, block.blockId)).length;
+      const staleCount = staleCards || Number(next.summary?.status === 'result' && !isSummaryCurrent(next));
+      if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
+    }
+    dispatch(action);
   }
 
   function configurationDispatch(action: ConversationAction) {
@@ -186,13 +197,10 @@ export function App() {
     const activeElement = document.activeElement;
     calculationReturnFocus.current = activeElement instanceof HTMLElement ? activeElement : null;
     const snapshot = state;
-    const fingerprint = summaryFingerprint(snapshot);
     const blocks = snapshot.blocks.filter((block) => !isIgnoredConversationBlock(block));
+    if (blocks.length === 0 || snapshot.parameterValidationInvalid || snapshot.summary?.status === 'pending') return;
+    const fingerprint = summaryFingerprint(snapshot);
     dispatch({ type: 'summaryRequested', fingerprint });
-    if (blocks.length === 0) {
-      dispatch({ type: 'summaryUnavailable', fingerprint, code: 'no-exchanges' });
-      return;
-    }
     const impacts: ImpactResult[] = [];
     for (const block of blocks) {
       const impact = await calculate(block.blockId, snapshot, impactFingerprint(snapshot, block.blockId), true);
@@ -202,30 +210,6 @@ export function App() {
       }
       impacts.push(impact);
     }
-    const aggregation = aggregateImpacts(impacts);
-    if (!aggregation.ok) {
-      dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
-      return;
-    }
-    const parameters = resolveImpactParameters(snapshot.provider, snapshot.modelId, snapshot.hostingCountry, snapshot.parameterOverrides);
-    dispatch({
-      type: 'summaryResolved', fingerprint, total: aggregation.total,
-      factorSources: parameters?.factorSources,
-    });
-    const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
-    dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
-  }
-
-  function recalculateSummary() {
-    const snapshot = state;
-    const fingerprint = summaryFingerprint(snapshot);
-    const blockingBlockIds = summaryBlockingBlockIds(snapshot);
-    dispatch({ type: 'summaryRecalculationRequested', fingerprint });
-    if (blockingBlockIds.length > 0) return;
-    const impacts = snapshot.blocks
-      .filter((block) => !isIgnoredConversationBlock(block))
-      .map((block) => currentImpact(snapshot, block.blockId))
-      .filter((impact): impact is ImpactResult => impact !== undefined);
     const aggregation = aggregateImpacts(impacts);
     if (!aggregation.ok) {
       dispatch({ type: 'summaryUnavailable', fingerprint, code: 'invalid-results' });
@@ -270,8 +254,9 @@ export function App() {
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
         <p className="step-justification">{fr.threadJustification}</p>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}
-        <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} onEditParameters={(trigger) => openSelection('thread', trigger)} />
+        <ConversationBlocks state={state} dispatch={blocksDispatch} onEditParameters={(trigger) => openSelection('thread', trigger)} />
         <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{fr.editReferenceAction}</button></div>
+        <CalculationBar state={state} onCalculate={() => void calculateAll()} />
       </section> : null}
     </main>
     {summaryPending ? <div className="calculation-overlay">
