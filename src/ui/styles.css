@@ -163,7 +163,6 @@ button {
 }
 .conversation-block.is-expanded { border-color: #5c7866; border-radius: 1.25rem; }
 .conversation-block-heading h3 { margin: 0; font-size: 1.1rem; }
-.conversation-block-heading h3 { flex: 1; }
 .conversation-preview { margin-top: .75rem; }
 .conversation-preview p { margin: .35rem 0; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.4; max-height: 4.2em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .conversation-preview p + p { color: #405349; }
@@ -179,7 +178,13 @@ button {
 .calculation-error { flex: 1 1 100%; margin: 0; color: #7a1f1f; font-weight: 700; }
 .exchange-status { display: inline-block; margin: 0; padding: .15rem .5rem; border: 1px solid #577160; border-radius: 1rem; font-size: .9rem; }
 .exchange-status.impact-stale { border-width: 2px; border-style: dashed; }
-.remove-block { background: #fff; }
+.conversation-block { position: relative; }
+.conversation-block-heading { justify-content: center; min-height: 2.75rem; padding: 0 2.75rem; }
+.conversation-block-heading h3 { flex: 0 0 auto; }
+.impact-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-top: .7rem; }
+.impact-row .compact-impact { margin-top: 0; }
+.impact-row .exchange-status { margin-left: auto; }
+.remove-block { position: absolute; top: 0; right: 0; min-width: 2.75rem; min-height: 2.75rem; padding: 0; background: #fff; color: #b3261e; border-radius: 0 .875rem 0 .5rem; }
 .modal-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(32 59 50 / 55%); }
 .modal-dialog { width: min(100%, 26rem); padding: 1.25rem; border: 2px solid #245535; border-radius: .75rem; background: #fff; color: #203b32; }
 .modal-dialog p { margin-top: 0; font-weight: 700; }

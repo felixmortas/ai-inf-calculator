@@ -162,7 +162,7 @@ describe('configuration de conversation', () => {
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Résultat' });
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     const flow = screen.getByLabelText('Débit de votre douche (L/min)');
     await user.clear(flow);
@@ -183,7 +183,7 @@ describe('configuration de conversation', () => {
     await user.type(led, '9');
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     expect(screen.getByLabelText(/Puissance de l’ampoule LED/)).toHaveValue(9);
   });
@@ -195,14 +195,14 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Texte conservé');
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     await user.click(screen.getByText('Mode expert'));
     const pue = screen.getByLabelText('PUE (sans unité)');
     await user.clear(pue);
     await user.type(pue, '1.3');
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     await user.click(screen.getByText('Mode expert'));
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.3);
@@ -228,7 +228,7 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     await user.click(screen.getByText('Mode expert'));
     await user.clear(screen.getByLabelText('PUE (sans unité)'));

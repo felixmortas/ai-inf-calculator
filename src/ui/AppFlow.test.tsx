@@ -31,7 +31,7 @@ describe('parcours de départ', () => {
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toHaveFocus();
     expect(screen.getByText(/Modèle sélectionné : ChatGPT — gpt-4o-mini/)).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
   });
 
@@ -84,9 +84,9 @@ describe('parcours de départ', () => {
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.queryByLabelText('Collez ici votre message')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Modifier' })).toHaveFocus();
   });
 
 });
@@ -146,7 +146,7 @@ describe('fil et estimations', () => {
     expect(screen.getAllByText(/à recalculer\./)).toHaveLength(1);
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toHaveAttribute('role', 'status');
     expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
-    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(0);
     expect(screen.getByRole('button', { name: 'Replier la question / réponse 1' })).toBeVisible();

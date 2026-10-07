@@ -184,18 +184,24 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
           : impactState?.status === 'pending' && isImpactFresh(state, block.blockId) ? ['…', fr.pendingEstimate] as const
           : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? ['✕', fr.failedEstimate] as const
           : impactIsCurrent ? ['✓', fr.currentEstimate] as const : ['', ''] as const;
+        const impactRow = (status || impactIsCurrent) ? (<div className="impact-row">
+              {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={fr.estimatedImpact}>
+                {(['carbon', 'water'] as const).map((kind) => {
+                  const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
+                  return <span key={kind} aria-label={`${kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
+                })}
+              </div> : null}
+              {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
+            </div>) : null;
         return (
           <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockLabel(index + 1)} tabIndex={-1}>
             <div className="conversation-block-heading">
               <h3>{fr.blockTitle(index + 1)}</h3>
-              {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
+              <button ref={(element) => {
+                if (element) removeButtonRefs.current.set(block.blockId, element);
+                else removeButtonRefs.current.delete(block.blockId);
+              }} className="remove-block" type="button" aria-label={fr.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><span aria-hidden="true">🗑️</span></button>
             </div>
-            {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={fr.estimatedImpact}>
-              {(['carbon', 'water'] as const).map((kind) => {
-                const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
-                return <span key={kind} aria-label={`${kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
-              })}
-            </div> : null}
             {!expanded ? <div className="conversation-preview">
               <p><strong>{fr.questionPreview} :</strong> {question || fr.noPreview}</p>
               <p><strong>{fr.responsePreview} :</strong> {response || fr.noPreview}</p>
@@ -219,11 +225,8 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                   });
                 }}
               ><span aria-hidden="true" className="chevron">⌄</span> {expanded ? fr.collapseAction : fr.expandAction}</button>
-              <button ref={(element) => {
-                if (element) removeButtonRefs.current.set(block.blockId, element);
-                else removeButtonRefs.current.delete(block.blockId);
-              }} className="remove-block" type="button" aria-label={fr.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><span aria-hidden="true">× </span>{fr.removeAction}</button>
             </div>
+            {!expanded ? impactRow : null}
             <div id={editorId} hidden={!expanded} className="block-editor">
               {fields.map(({ name, label }) => {
                 const id = `conversation-${block.blockId}-${name}`;
@@ -255,6 +258,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                 </div>
               </details>
             </div>
+            {expanded ? impactRow : null}
           </section>
         );
       })}

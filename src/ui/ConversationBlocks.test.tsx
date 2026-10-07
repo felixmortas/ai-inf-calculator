@@ -23,7 +23,7 @@ async function startThread(user: ReturnType<typeof userEvent.setup>) {
 }
 
 async function editReference(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+  await user.click(screen.getByRole('button', { name: 'Modifier' }));
 }
 
 async function returnToThread(user: ReturnType<typeof userEvent.setup>) {
@@ -187,7 +187,7 @@ describe('composition de la conversation', () => {
     await user.type(screen.getByLabelText('Collez ici votre message'), ' encore');
     expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('À recalculer');
     expect(screen.queryByLabelText('Impact pour cette question / réponse')).not.toBeInTheDocument();
-    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
     expect(screen.getAllByText(/à recalculer\./)).toHaveLength(1);
   });
@@ -452,7 +452,7 @@ describe('composition de la conversation', () => {
     renderBlocks(state);
     expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
-    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.result-section')).not.toHaveTextContent(/\d+(,\d+)? (g|mg|Wh|L)/);
     expect(document.querySelectorAll('.exchange-status.impact-stale')).toHaveLength(2);
   });
@@ -492,7 +492,7 @@ describe('composition de la conversation', () => {
     render(<ConversationBlocks state={state} dispatch={() => undefined} />);
     expect(screen.getByText('Comparaison non calculable')).toBeVisible();
     expect(document.querySelector('.metric-hero')).toBeInTheDocument();
-    expect(screen.getByText('Électricité').closest('li')).toHaveTextContent('1 Wh');
+    expect(screen.getByText('⚡️ Électricité').closest('li')).toHaveTextContent('1 Wh');
   });
 
   it('ne périme que la ligne LED quand seule la puissance de l’ampoule change', () => {
@@ -510,8 +510,8 @@ describe('composition de la conversation', () => {
     render(<ConversationBlocks state={state} dispatch={() => undefined} />);
     expect(screen.getByText(/Ampoule LED allumée/).closest('li')).toHaveTextContent('À recalculer');
     expect(document.querySelector('.metric-hero')).toHaveTextContent('1,5 min');
-    expect(screen.getByText('Carbone').closest('li')).toHaveTextContent('2 gCO₂e');
-    expect(screen.queryByText(/Le résultat est à recalculer/)).not.toBeInTheDocument();
+    expect(screen.getByText('🪨 Carbone').closest('li')).toHaveTextContent('2 gCO₂e');
+    expect(screen.queryByText(/pour afficher un résultat à jour/)).not.toBeInTheDocument();
   });
 
   it('affiche carte repliée à jour avec « ✓ » et sans action de calcul', () => {
@@ -550,7 +550,7 @@ describe('composition de la conversation', () => {
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bilan conservé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Résultat' });
-    const summaryEnergy = screen.getByText('Électricité').closest('li')!.textContent;
+    const summaryEnergy = screen.getByText('⚡️ Électricité').closest('li')!.textContent;
 
     await editReference(user);
     await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'FR');
@@ -561,7 +561,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
 
     expect(document.querySelector('.metric-hero')).toHaveTextContent(/Environ .* de douche chaude/);
-    expect(screen.getByText('Électricité').closest('li')!.textContent).toBe(summaryEnergy);
+    expect(screen.getByText('⚡️ Électricité').closest('li')!.textContent).toBe(summaryEnergy);
   });
 
   it('ouvre les hypothèses depuis le bilan, conserve la session et annonce leur péremption après application puis restauration', async () => {
@@ -581,9 +581,9 @@ describe('composition de la conversation', () => {
     await returnToThread(user);
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Question conservée');
     expect(screen.getAllByText(/résultats dépendants sont à recalculer/)).toHaveLength(1);
-    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Modifier' })).toHaveFocus();
 
     await editReference(user);
     await user.click(screen.getByText('Mode avancé'));
@@ -593,7 +593,7 @@ describe('composition de la conversation', () => {
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
     await returnToThread(user);
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Question conservée');
-    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
   });
 
