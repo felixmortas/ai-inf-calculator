@@ -10,6 +10,7 @@ Estimer l'énergie électrique, les émissions de gaz à effet de serre (gCO₂e
 - Émissions associées, via l'intensité carbone du réseau du **pays d'hébergement** du centre de données.
 - Eau **sur site** (refroidissement), via le WUE.
 - Équivalence carbone en durée de douche chaude électrique.
+- Comparaison de l'électricité en durée d'allumage d'une ampoule LED.
 
 ### 1.3 Périmètre exclu
 Scope 3 (fabrication et amortissement des GPU, serveurs, bâtiments) ; entraînement du modèle ; eau hors site liée à la production d'électricité ; extraction des métaux ; réseau et terminaux ; raisonnement invisible ; image, audio, vidéo ; fourchette d'incertitude chiffrée. 
@@ -33,7 +34,7 @@ Modèle (P_tot, P_act, κ_in, κ_cache, S_tokens, pays/fournisseur)  +  textes d
    ▼ [4] nrj_request(i) = nrj_compute(i) × PUE(pays, fournisseur)          [Wh]
         ├─► co2_request(i)   = nrj_request/1000 × EF(pays)                 [gCO₂e]
         └─► water_request(i) = nrj_request/1000 × WUE(pays, fournisseur)   [L]
-   ▼ [5] Agrégation : Σ sur les échanges à jour ; équivalence douche       (§8, §9)
+   ▼ [5] Agrégation : Σ sur les échanges à jour ; équivalences douche et LED  (§8, §9)
 ```
 
 ---
@@ -196,12 +197,10 @@ water_request(i) = (nrj_request(i)/1000) × WUE(pays_hébergement, fournisseur) 
 
 ---
 
-## 8. Équivalence douche
+## 8. Équivalences
 
-### 8.1 Référence de douche électrique
+### 8.1 Douche électrique
 Débit 15 L/min ; 18 → 38 °C (élévation de 20 °C selon la thermodynamique) ; 0,0232 kWh/L ⇒ **0,348 kWh/min**. Paramètres par défaut, modifiables.
-
-### 8.2 Formules
 ```
 carbone_douche_min = débit × énergie_par_litre × EF_utilisateur      [gCO₂e/min]
 durée_minutes      = C / (0,348 × EF_utilisateur)
@@ -210,6 +209,16 @@ durée_secondes     = 60 × C / carbone_douche_min
 - `EF_utilisateur` est le pays de l'**utilisateur** (détecté ou corrigé).
 - Comparaison **carbone uniquement** ; aucun volume d'eau équivalent n'est calculé.
 
+### 8.2 Ampoule LED
+Comparaison de l'**électricité** de la conversation, exprimée en durée d'allumage d'une ampoule LED.
+```
+E_total   = Σ nrj_request(i)    [Wh]   échanges renseignés à jour, PUE inclus
+P_LED     = 5 W                 [W]    par défaut, modifiable
+durée_LED = E_total / P_LED     [h]    (secondes : 3 600 × E_total / P_LED)
+```
+- `P_LED` doit être strictement positive ; sinon la durée est non calculable.
+- Le carbone et l'eau ne sont pas concernés ; `P_LED` n'intervient dans aucune équation d'impact.
+- La valeur de 5 W est une convention d'illustration, non une mesure.
 ---
 
 ## 9. Limites

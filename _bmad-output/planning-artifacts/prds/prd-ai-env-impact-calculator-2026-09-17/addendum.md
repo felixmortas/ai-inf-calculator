@@ -38,6 +38,17 @@ Ces formules de durée s’appliquent lorsque le facteur d’émission de l’ut
 
 La comparaison porte uniquement sur les émissions carbone. Aucun volume d’eau équivalent n’est calculé pour l’affichage.
 
+### Équivalence en durée d’ampoule LED (FR-25)
+
+```text
+E_total = Σ nrj_request(i)  [Wh]    (blocs renseignés à jour, PUE inclus)
+P_LED = 5 W par défaut, modifiable dans le Mode avancé (FR-17)
+duree_LED_heures = E_total / P_LED
+duree_LED_secondes = 3600 × E_total / P_LED
+```
+
+`P_LED` doit être strictement positive ; sinon la durée est non calculable, sans division par zéro. Cette comparaison porte sur l’électricité uniquement ; elle ne modifie aucun impact et le changement de `P_LED` ne périme que les équivalences. La valeur de 5 W reste à valider (D-4). Exemple : avec `E_total = 1,2 Wh` et `P_LED = 5 W`, la durée est 0,24 h, soit 864 s. La source de vérité reste la méthodologie §8.3.
+
 ## Référence méthodologique
 
 La source de vérité unique pour la méthode, ses données, leurs provenances et leurs limites est [`docs/methodologie-empreinte-inference-llm.md`](../../../../docs/methodologie-empreinte-inference-llm.md). Ce résumé ne la remplace pas ; en cas d’écart, elle prévaut. Les exigences produit ci-dessous ne doivent pas modifier les règles de calcul. Les constantes de la méthode sont appliquées telles que publiées, sans réglage utilisateur ; `S_tokens` provient du catalogue et reste masqué.
@@ -160,7 +171,7 @@ co2_total = Σ co2_request(i)       [gCO2e]
 water_total = Σ water_request(i)  [L]
 ```
 
-Ces sommes portent sur tous les blocs renseignés dont les résultats sont à jour. Le recalcul des seuls totaux réutilise les résultats existants, sans réexécuter l’estimation des blocs. Un bloc renseigné non calculé ou périmé empêche l’affichage d’un total complet ; un bloc vide ne le bloque pas.
+Ces sommes portent sur tous les blocs renseignés dont les résultats sont à jour. Un seul « Calculer » estime tous les blocs renseignés puis agrège ; il n’existe pas de recalcul des seuls totaux. Un bloc renseigné non calculé ou périmé empêche l’affichage d’un total complet ; un bloc vide ne le bloque pas.
 
 Exemple purement arithmétique, sans valeur de référence fournisseur : avec une énergie IT de 1 Wh, `PUE = 1,2`, `EF = 100 gCO2e/kWh` et `WUE = 0,5 L/kWh`, on obtient 1,2 Wh au datacenter, 0,12 gCO2e et 0,0006 L. Si le facteur utilisateur vaut aussi 100 gCO2e/kWh, la douche de référence émet 34,8 gCO2e/min et l’équivalence est `0,12 / 34,8 × 60 ≈ 0,207 seconde`. Cette illustration vérifie les conversions, pas la fiabilité des hypothèses.
 

@@ -41,6 +41,19 @@ water_request(i) = nrj_request(i) / 1000 × WUE(pays_hébergement, fournisseur) 
 
 Le PUE est appliqué une seule fois ; carbone et eau réutilisent la même énergie datacenter. Agréger les résultats non arrondis des échanges à jour. Le facteur carbone de douche provient du pays utilisateur ; la méthode de douche, ses valeurs par défaut et ses formules sont définies au §8.
 
+## Équivalence en durée d’ampoule LED
+
+La comparaison d’électricité exprime l’énergie totale de la conversation en durée d’allumage d’une ampoule LED. Elle porte sur l’électricité uniquement, jamais sur l’eau ni sur le carbone.
+
+```text
+E_total   = Σ nrj_request(i)   (échanges renseignés à jour, non arrondis)   [Wh]
+P_LED     = puissance de l’ampoule, 5 W par défaut, modifiable en session    [W]
+durée_LED = E_total / P_LED                                                  [h]
+          = 3 600 × E_total / P_LED                                          [s]
+```
+
+`E_total` inclut le PUE, comme l’électricité affichée. `P_LED` est un paramètre de comparaison, hors équations d’impact : le modifier ne périme que les équivalences, jamais les impacts. `P_LED` doit être strictement positive ; sinon la durée est non calculable et aucune division par zéro n’est affichée. Seul l’affichage arrondit et choisit l’unité de durée (`EXPERIENCE.md`). Les valeurs par défaut et la formule sont à reporter au §8 de la méthodologie, qui prévaut en cas d’écart.
+
 ## Périmètre et limites
 
 Le calcul estime l’usage d’inférence : Scope 3, entraînement, eau hors site de production électrique, réseau, terminaux, raisonnement invisible, images, audio et vidéo sont exclus. L’eau calculée est l’eau sur site selon WUE. Le résultat est un ordre de grandeur ponctuel, sans fourchette chiffrée d’incertitude. Les hypothèses sur paramètres activés, matériel, cache, localisation et ratios tarifaires ainsi que leurs limites sont celles du §9 de la méthodologie.
