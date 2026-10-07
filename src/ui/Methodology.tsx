@@ -8,8 +8,8 @@ export function Methodology({ titleRef, onReturn }: {
 }) {
   return (
     <section className="methodology" aria-labelledby="methodology-title">
-      <h2 id="methodology-title" ref={titleRef} tabIndex={-1}>{fr.methodologyTitle}</h2>
-      <button className="icon-button below-title" type="button" aria-label={fr.methodologyReturnAction} onClick={onReturn}>←</button>
+      <button className="back-button" type="button" onClick={onReturn}><span aria-hidden="true">←</span> {fr.backAction}</button>
+      <h1 id="methodology-title" ref={titleRef} tabIndex={-1}>{fr.methodologyTitle}</h1>
       <article className="methodology-content" dangerouslySetInnerHTML={{ __html: methodologyHtml }} />
     </section>
   );

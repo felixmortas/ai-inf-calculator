@@ -19,7 +19,7 @@ function methodologyContent() {
       renderer.html = ({ text }) => text.replace(/[&<>"']/g, (character) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
       })[character]!);
-      const html = marked.parse(markdown, { async: false, renderer })
+      const html = marked.parse(markdown.replace(/^# .*\n+/, ''), { async: false, renderer })
         .replace(/<(\/?)h([1-6])>/g, (_tag, closing: string, depth: string) => `<${closing}h${Math.min(Number(depth) + 2, 6)}>`);
       return `export default ${JSON.stringify(html)};`;
     },

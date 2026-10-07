@@ -86,6 +86,14 @@ export function App() {
   }, [step]);
 
   useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return undefined;
+    const update = () => document.documentElement.classList.toggle('keyboard-open', viewport.height < window.innerHeight * 0.75);
+    viewport.addEventListener('resize', update);
+    return () => { viewport.removeEventListener('resize', update); document.documentElement.classList.remove('keyboard-open'); };
+  }, []);
+
+  useEffect(() => {
     if (recalculationNotice && summaryBlockingBlockIds(state).length === 0
       && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state)) {
       setRecalculationNotice('');
@@ -224,30 +232,32 @@ export function App() {
   return (
     <>
     <main className="app-shell" inert={summaryPending} aria-busy={summaryPending}>
-      <header className="app-header">
-        <div className="app-header-copy">
-          <h1>{fr.title}</h1>
-          <p>{fr.introduction}</p>
-        </div>
-        {step !== 'methodology' ? <button className="icon-button methodology-help" type="button" aria-label={fr.methodologyAction} onClick={openMethodology}><Icon>?</Icon></button> : null}
-      </header>
-      {step === 'methodology' ? <Methodology titleRef={methodologyTitle} onReturn={() => setStep(stepBeforeMethodology.current)} /> : null}
-      {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths" aria-labelledby="step-title">
-        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.homeTitle}</h2>
-        <div className="start-choice"><h3>{fr.manualPathTitle}</h3><p>{fr.manualPathHelp}</p><button className="icon-button" type="button" aria-label={fr.manualPathAction} onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>→</Icon></button></div>
+      {step === 'methodology'
+        ? <Methodology titleRef={methodologyTitle} onReturn={() => setStep(stepBeforeMethodology.current)} />
+        : <header className="app-header">
+          <div className="app-header-copy">
+            <h1>{fr.title}</h1>
+            {step === 'home' ? <p>{fr.introduction}</p> : null}
+          </div>
+          <button className="link-button methodology-help" type="button" onClick={openMethodology}>{fr.methodologyAction}</button>
+        </header>}
+      {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths" aria-label={fr.startAction}>
+        <button type="button" className="primary-action" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}>{fr.startAction}</button>
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
+        <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {fr.backAction}</button>
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
-        <button className="icon-button below-title" type="button" aria-label={selectionOrigin === 'thread' ? fr.backThreadAction : fr.backHomeAction} onClick={() => setStep(selectionOrigin)}><Icon>←</Icon></button>
+        <p className="step-justification">{fr.selectionJustification}</p>
         <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} />
-        <button type="button" onClick={() => setStep('thread')}>{fr.continueThreadAction}</button>
+        <div className="sticky-actions"><button type="button" className="primary-action" onClick={() => setStep('thread')}>{fr.continueThreadAction}</button></div>
       </section> : null}
       {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
+        <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>←</Icon> {fr.backAction}</button>
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
-        <button className="icon-button below-title" type="button" aria-label={fr.homeIconAction} onClick={() => setStep('home')}><Icon>⌂</Icon></button>
+        <p className="step-justification">{fr.threadJustification}</p>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}
         <ConversationBlocks state={state} dispatch={dispatch} onCalculate={calculate} onCalculateAll={calculateAll} onRecalculateSummary={recalculateSummary} onEditParameters={(trigger) => openSelection('thread', trigger)} />
-        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button className="icon-button" type="button" aria-label={fr.editReferenceAction} onClick={(event) => openSelection('thread', event.currentTarget)}><Icon>✎</Icon></button></div>
+        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{fr.editReferenceAction}</button></div>
       </section> : null}
     </main>
     {summaryPending ? <div className="calculation-overlay">

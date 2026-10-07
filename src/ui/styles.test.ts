@@ -22,4 +22,11 @@ describe('styles d’accessibilité et responsive', () => {
     expect(styleSource).toContain('.conversation-block-heading { align-items: center; flex-direction: row;');
     expect(styleSource).toContain('.conversation-actions-after-thread { align-items: center; flex-direction: row;');
   });
+
+  it('rend la barre d’action collante statique à fort zoom, en hauteur réduite ou clavier ouvert', () => {
+    expect(styleSource).toContain('.sticky-actions { position: sticky;');
+    expect(styleSource).toContain('scroll-padding-bottom');
+    expect(styleSource).toContain('@media (max-height: 30rem)');
+    expect(styleSource).toContain('.keyboard-open .sticky-actions');
+  });
 });

@@ -15,8 +15,8 @@ import {
 
 async function startThread(user: ReturnType<typeof userEvent.setup>) {
   const view = render(<App />);
-  await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-  await user.click(screen.getByRole('button', { name: 'Valider' }));
+  await user.click(screen.getByRole('button', { name: 'Commencer' }));
+  await user.click(screen.getByRole('button', { name: 'Continuer' }));
   return view;
 }
 
@@ -25,7 +25,7 @@ async function editReference(user: ReturnType<typeof userEvent.setup>) {
 }
 
 async function returnToThread(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Valider' }));
+  await user.click(screen.getByRole('button', { name: 'Continuer' }));
 }
 
 describe('composition de la conversation', () => {
@@ -73,11 +73,11 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     await startThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
-    expect(screen.getByText('Echange vide. Il sera ignoré pour les calculs futurs.')).toBeVisible();
+    expect(screen.getByText('Échange vide. Il sera ignoré pour les calculs futurs.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' })).toBeDisabled();
     expect(screen.getByText('Saisissez votre message et la réponse du chatbot avant de lancer un calcul.')).toBeVisible();
     await user.type(screen.getByLabelText('Votre message'), ' Bonjour ');
-    expect(screen.queryByText('Echange vide. Il sera ignoré pour les calculs futurs.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Échange vide. Il sera ignoré pour les calculs futurs.')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Votre message')).toHaveValue(' Bonjour ');
   });
 

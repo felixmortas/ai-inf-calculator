@@ -5,7 +5,7 @@ import { App } from './App';
 
 async function startSelection(user: ReturnType<typeof userEvent.setup>) {
   const view = render(<App />);
-  await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+  await user.click(screen.getByRole('button', { name: 'Commencer' }));
   return view;
 }
 
@@ -118,7 +118,7 @@ describe('configuration de conversation', () => {
   it('bloque les calculs tant qu’une saisie avancée invalide n’est pas corrigée', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
@@ -128,7 +128,7 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
     await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
     expect(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' })).toBeDisabled();

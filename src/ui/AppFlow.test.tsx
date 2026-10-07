@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -12,33 +12,52 @@ describe('parcours de départ', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: 'auto' });
     scrollTo.mockRestore();
     if (heightDescriptor) Object.defineProperty(document.documentElement, 'scrollHeight', heightDescriptor);
     if (viewportDescriptor) Object.defineProperty(window, 'innerHeight', viewportDescriptor);
   });
 
-  it('propose une seule entrée manuelle et place le focus sur chaque étape', async () => {
+  it('propose un accueil minimal puis place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
-    const actions = within(screen.getByRole('region', { name: 'Commencez par copier/coller ou saisir une conversation :' })).getAllByRole('button');
-    expect(actions.map((action) => action.getAttribute('aria-label'))).toEqual(['Saisir un échange']);
-    expect(screen.getByRole('heading', { name: 'Commencez par copier/coller ou saisir une conversation :' })).toHaveFocus();
-    await user.click(actions[0]);
-    expect(screen.getByRole('heading', { name: 'Sélectionnez votre chatbot' })).toHaveFocus();
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
-    expect(screen.getByRole('heading', { name: 'Copiez/collez les messages de votre conversation' })).toHaveFocus();
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Méthodologie', 'Commencer']);
+    expect(screen.getByText(/Estimez en quelques clics/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toHaveFocus();
+    expect(screen.queryByText(/Estimez en quelques clics/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toHaveFocus();
     expect(screen.getByText(/Modèle sélectionné : ChatGPT — gpt-4o-mini/)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o-mini');
   });
 
+  it('revient à l’étape 1 sans perdre les textes et ouvre la méthodologie depuis chaque écran', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByRole('textbox', { name: 'Votre message' }), 'Mon texte');
+    await user.click(screen.getByRole('button', { name: 'Méthodologie' }));
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Méthodologie d’estimation' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Retour' }));
+    expect(screen.getByRole('textbox', { name: 'Votre message' })).toHaveValue('Mon texte');
+    await user.click(screen.getByRole('button', { name: 'Retour' }));
+    expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByRole('region', { name: 'Échange 1' })).toHaveTextContent('Mon texte');
+    expect(screen.queryByRole('button', { name: '?' })).not.toBeInTheDocument();
+  });
+
   it('propose les références Mistral et permet un autre modèle du chatbot', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.selectOptions(screen.getByLabelText('Chatbot'), 'Mistral AI');
     expect(screen.getByLabelText('Modèle')).toHaveValue('mistral-medium-3.1');
     await user.selectOptions(screen.getByLabelText('Mode'), 'reasoning');
@@ -50,7 +69,7 @@ describe('parcours de départ', () => {
   it('laisse corriger directement la référence ChatGPT proposée', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.selectOptions(screen.getByLabelText('Modèle'), 'gpt-4o');
     expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o');
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
@@ -61,11 +80,11 @@ describe('parcours de départ', () => {
   it('revient au fil vide après consultation de la référence', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.queryByLabelText('Votre message')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
-    await user.click(screen.getByRole('button', { name: 'Retour au fil' }));
+    await user.click(screen.getByRole('button', { name: 'Retour' }));
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
   });
 
@@ -74,8 +93,8 @@ describe('parcours de départ', () => {
 describe('fil et estimations', () => {
   async function openThread(user: ReturnType<typeof userEvent.setup>) {
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Saisir un échange' }));
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
   }
 
   it('calcule seulement l’échange demandé et laisse le bilan à son action explicite', async () => {
