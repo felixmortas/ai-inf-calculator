@@ -46,8 +46,6 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
   const [invalidFields, setInvalidFields] = useState<readonly string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen);
   const [expertOpen, setExpertOpen] = useState(false);
-  const [editingModel, setEditingModel] = useState(false);
-  const [editingCountry, setEditingCountry] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const validityCallback = useRef(onValidityChange);
@@ -57,7 +55,6 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
   const formKey = `${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}:${resetVersion}`;
   const userFactor = resolveUserCarbonIntensity(state.userCountry);
   const hostingFallsBackToWorld = !!reference && Object.values(reference.factorSources).includes('world');
-  const userCountryLabel = userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry;
 
   /** Validation en direct : calcule les champs invalides du brouillon courant. */
   function validate(): readonly string[] {
@@ -120,7 +117,6 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
   }
   function ignoreSubmit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); }
   const has = (name: string) => invalidFields.includes(name);
-  const modelPicker = requireMistralMode || editingModel;
 
   return (
     <section aria-labelledby="configuration-title" className="configuration">
@@ -151,31 +147,25 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
         </select>
       </div> : null}
 
-      {modelPicker ? <div className="field">
+      <div className="field">
         <label htmlFor="model">{fr.modelLabel}</label>
         <p id="model-help" className="help">{fr.modelReferenceHelp}</p>
         <select id="model" aria-describedby="model-help" value={requireMistralMode ? '' : state.modelId} onChange={selectModel} disabled={requireMistralMode && state.provider === mistralProvider}>
           {requireMistralMode ? <option value="">{fr.mistralModeChoice}</option> : providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
         </select>
-      </div> : <div className="field estimate-row">
-        <p className="estimate">{fr.estimatedModelLabel} <strong>{state.modelId}</strong></p>
-        <button type="button" className="link-button" aria-label={fr.changeModelAction} aria-expanded={false} onClick={() => setEditingModel(true)}>{fr.changeAction}</button>
-      </div>}
+      </div>
 
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => { if (event.target === event.currentTarget) setAdvancedOpen(event.currentTarget.open); }}>
         <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{fr.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
         <div id="advanced-settings-content">
           <p className="help">{fr.advancedSettingsIntro}</p>
-          {editingCountry ? <div className="field">
+          <div className="field">
             <label htmlFor="user-country">{fr.userCountryLabel}</label>
             <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
             <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
               {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
             </select>
-          </div> : <div className="field estimate-row">
-            <p className="estimate">{fr.estimatedCountryLabel} <strong>{userCountryLabel}</strong></p>
-            <button type="button" className="link-button" aria-label={fr.changeCountryAction} aria-expanded={false} onClick={() => setEditingCountry(true)}>{fr.changeAction}</button>
-          </div>}
+          </div>
           {userFactor.status === 'world' ? <p className="help" role="note">{fr.userCountryWorldFallback}</p> : null}
           {resolved ? <form ref={formRef} className="parameter-form" onInput={validate} onSubmit={ignoreSubmit} noValidate>
             {showerFields.map((name) => <Parameter key={name} name={name} value={resolved.shower[name]} version={resetVersion} invalid={has(name)} />)}

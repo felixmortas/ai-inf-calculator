@@ -430,8 +430,7 @@ describe('composition de la conversation', () => {
     await startThread(user);
     await editReference(user);
     await user.click(screen.getByText('Mode avancé'));
-    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
-    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'US');
+    await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'US');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Bilan conservé');
@@ -442,8 +441,7 @@ describe('composition de la conversation', () => {
     const summaryEnergy = screen.getByText(/Énergie:/).textContent;
 
     await editReference(user);
-    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
-    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'FR');
+    await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'FR');
     await returnToThread(user);
     expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
@@ -490,8 +488,7 @@ describe('composition de la conversation', () => {
     await startThread(user);
     await editReference(user);
     await user.click(screen.getByText('Mode avancé'));
-    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
-    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'ID');
+    await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'ID');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Repli mondial');

@@ -72,8 +72,8 @@ development_status:
   epic-6-retrospective: optional
 
   epic-7: in-progress
-  7-1-commencer-simplement-et-se-repérer-dans-le-parcours: review
-  7-2-choisir-son-ia-et-régler-ses-hypothèses-sans-se-perdre: review
+  7-1-commencer-simplement-et-se-repérer-dans-le-parcours: done
+  7-2-choisir-son-ia-et-régler-ses-hypothèses-sans-se-perdre: done
   7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic: backlog
   7-4-lire-un-résultat-clair-sous-la-conversation: backlog
   7-5-partager-son-résultat-sans-partager-sa-conversation: backlog

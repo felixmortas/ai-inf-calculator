@@ -32,8 +32,7 @@ describe('parcours de départ', () => {
     expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toHaveFocus();
     expect(screen.getByText(/Modèle sélectionné : ChatGPT — gpt-4o-mini/)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
-    expect(screen.getByText('Modèle estimé :')).toBeVisible();
-    expect(screen.getByText('gpt-4o-mini')).toBeVisible();
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
   });
 
   it('revient à l’étape 1 sans perdre les textes et ouvre la méthodologie depuis chaque écran', async () => {
@@ -64,21 +63,19 @@ describe('parcours de départ', () => {
     expect(screen.queryByLabelText('Modèle')).not.toBeInTheDocument();
     expect(screen.getByText('mistral-medium-3.1')).toBeVisible();
     await user.selectOptions(screen.getByLabelText('Mode'), 'reasoning');
-    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
-    await user.selectOptions(screen.getByLabelText('Modèle'), 'mistral-medium-3.1');
-    expect(screen.getByLabelText('Modèle')).toHaveValue('mistral-medium-3.1');
+    await user.selectOptions(screen.getByLabelText('Modèle estimé'), 'mistral-medium-3.1');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('mistral-medium-3.1');
   });
 
   it('laisse corriger directement la référence ChatGPT proposée', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
-    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
-    await user.selectOptions(screen.getByLabelText('Modèle'), 'gpt-4o');
-    expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o');
+    await user.selectOptions(screen.getByLabelText('Modèle estimé'), 'gpt-4o');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o');
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'without-paid-subscription');
-    expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o-mini');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
   });
 
   it('revient au fil vide après consultation de la référence', async () => {

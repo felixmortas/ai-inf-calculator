@@ -10,16 +10,12 @@ async function startSelection(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('configuration de conversation', () => {
-  it('affiche et résout le modèle estimé selon l’abonnement, la liste n’apparaissant qu’avec « Modifier »', async () => {
+  it('affiche et résout le modèle estimé selon l’abonnement, la liste toujours visible', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    expect(screen.getByText('Modèle estimé :')).toBeVisible();
-    expect(screen.getByText('gpt-4o-mini')).toBeVisible();
-    expect(screen.queryByLabelText('Modèle')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
-    expect(screen.getByText('gpt-4o')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
-    expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o');
   });
 
   it('masque l’abonnement et limite les modèles pour un autre fournisseur', async () => {
@@ -27,8 +23,7 @@ describe('configuration de conversation', () => {
     await startSelection(user);
     await user.selectOptions(screen.getByLabelText('Chatbot'), 'Gemini');
     expect(screen.queryByLabelText('Abonnement')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
-    const model = screen.getByLabelText('Modèle');
+    const model = screen.getByLabelText('Modèle estimé');
     expect(model).toHaveValue('gemini-2.5-pro');
     expect(screen.queryByRole('option', { name: 'gpt-4o-mini' })).not.toBeInTheDocument();
     await user.selectOptions(model, 'gemini-2.5-flash');
@@ -68,10 +63,7 @@ describe('configuration de conversation', () => {
   it('présente le pays estimé (langue du navigateur) et le laisse corriger, distinct de l’hébergement', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    expect(screen.getByText('Pays estimé :')).toBeInTheDocument();
-    expect(screen.getByText('États-Unis')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
-    const country = screen.getByLabelText('Où vous vous trouvez (pays)');
+    const country = screen.getByLabelText('Pays estimé : où vous vous trouvez');
     expect(country).toHaveValue('US');
     await user.selectOptions(country, 'ID');
     expect(country).toHaveValue('ID');
@@ -225,10 +217,9 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByText('Mode avancé'));
-    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
-    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'ID');
+    await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'ID');
     expect(screen.getByText(/Aucune donnée pour ce pays :/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Où vous vous trouvez (pays)')).toHaveValue('ID');
+    expect(screen.getByLabelText('Pays estimé : où vous vous trouvez')).toHaveValue('ID');
   });
 
   it('bloque les calculs tant qu’une saisie avancée invalide n’est pas corrigée', async () => {
