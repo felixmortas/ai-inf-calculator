@@ -6,8 +6,8 @@ import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw'
 import { defaultImpactConstants, type ImpactConstants } from '../domain/impact';
 import { chatGptProvider, chatGptSubscriptionModels, mistralModeModels, mistralProvider } from '../domain/modelSelection';
 
-export interface ShowerParameters { readonly flowLitresPerMinute: number; readonly inletTemperatureC: number; readonly outletTemperatureC: number; readonly energyKwhPerLitre: number; }
-export const defaultShowerParameters: Readonly<ShowerParameters> = Object.freeze({ flowLitresPerMinute: 15, inletTemperatureC: 18, outletTemperatureC: 38, energyKwhPerLitre: 0.00116 * 20 });
+export interface ShowerParameters { readonly flowLitresPerMinute: number; readonly inletTemperatureC: number; readonly outletTemperatureC: number; readonly ledPowerW: number; readonly energyKwhPerLitre: number; }
+export const defaultShowerParameters: Readonly<ShowerParameters> = Object.freeze({ flowLitresPerMinute: 15, inletTemperatureC: 18, outletTemperatureC: 38, ledPowerW: 5, energyKwhPerLitre: 0.00116 * 20 });
 export interface ImpactParameterOverrides extends Partial<Omit<ResolvedImpactParameters, 'systemPromptCacheTokens' | 'factorSources' | 'hostingCountry' | 'provider' | 'id' | 'consolidationDate' | 'constants' | 'wordsPerToken' | 'shower'>> { readonly constants?: Partial<ImpactConstants>; readonly wordsPerToken?: number; readonly shower?: Partial<Omit<ShowerParameters, 'energyKwhPerLitre'>>; }
 
 export interface CatalogModel {
@@ -172,20 +172,8 @@ export function isUserCountry(country: string): boolean {
   return userCountryOptions.some((option) => option.code === country);
 }
 
-const timeZoneCountries: Readonly<Record<string, string>> = Object.freeze({
-  'Europe/Paris': 'FR', 'Europe/Zurich': 'CH', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES',
-  'Europe/Rome': 'IT', 'Europe/London': 'GB', 'Europe/Amsterdam': 'NL', 'Europe/Brussels': 'BE',
-  'Europe/Stockholm': 'SE', 'Europe/Oslo': 'NO', 'Europe/Warsaw': 'PL', 'Europe/Lisbon': 'PT',
-  'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US', 'America/Toronto': 'CA',
-  'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR', 'America/Argentina/Buenos_Aires': 'AR',
-  'Asia/Kolkata': 'IN', 'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
-  'Asia/Bangkok': 'TH', 'Asia/Jakarta': 'ID', 'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
-});
-
-/** Heuristique locale, sans réseau ni géolocalisation : le contrôle utilisateur prévaut. */
-export function detectUserCountry(timeZone?: string, language?: string): string {
-  const zone = timeZone ?? (typeof Intl === 'undefined' ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
-  if (zone && timeZoneCountries[zone]) return timeZoneCountries[zone];
+/** Heuristique locale, sans réseau, géolocalisation ni fuseau horaire : la région de la langue du navigateur, sinon Monde. Le contrôle utilisateur prévaut. */
+export function detectUserCountry(language?: string): string {
   const locale = language ?? (typeof navigator === 'undefined' ? undefined : navigator.language);
   const region = locale?.match(/[-_]([A-Za-z]{2})\b/)?.[1]?.toUpperCase();
   return region && isUserCountry(region) ? region : 'WORLD';
@@ -251,9 +239,9 @@ export function resolveImpactParameters(provider: string, modelId: string, hosti
     constants, wordsPerToken: overrides.wordsPerToken ?? .75, shower,
     factorSources: Object.freeze({ pue: pue.status, wue: wue.status, carbonIntensity: carbonIntensity.status }),
   };
-  const values = [resolved.totalParameters, resolved.activatedParameters, resolved.inputRatio, resolved.cacheRatio, resolved.pue, resolved.wue, resolved.carbonIntensity, resolved.wordsPerToken, shower.flowLitresPerMinute, shower.inletTemperatureC, shower.outletTemperatureC];
+  const values = [resolved.totalParameters, resolved.activatedParameters, resolved.inputRatio, resolved.cacheRatio, resolved.pue, resolved.wue, resolved.carbonIntensity, resolved.wordsPerToken, shower.flowLitresPerMinute, shower.inletTemperatureC, shower.outletTemperatureC, shower.ledPowerW];
   const positiveConstants = [constants.batchSize, constants.gpuInstalledPerServer, constants.serverPowerWithoutGpuW, constants.gpuMemoryGb, constants.quantizationBits, constants.memoryOverhead, constants.energyAlpha, constants.energyGamma, constants.latencyAlpha, constants.latencyBeta, constants.latencyGamma];
-  if (!values.every((value) => Number.isFinite(value) && value >= 0) || !Object.values(constants).every(Number.isFinite) || !positiveConstants.every((value) => value > 0) || constants.energyBeta > 0 || resolved.totalParameters <= 0 || resolved.activatedParameters <= 0 || resolved.activatedParameters > resolved.totalParameters || resolved.pue < 1 || resolved.wordsPerToken <= 0 || shower.flowLitresPerMinute <= 0 || shower.outletTemperatureC <= shower.inletTemperatureC) return undefined;
+  if (!values.every((value) => Number.isFinite(value) && value >= 0) || !Object.values(constants).every(Number.isFinite) || !positiveConstants.every((value) => value > 0) || constants.energyBeta > 0 || resolved.totalParameters <= 0 || resolved.activatedParameters <= 0 || resolved.activatedParameters > resolved.totalParameters || resolved.pue < 1 || resolved.wordsPerToken <= 0 || shower.flowLitresPerMinute <= 0 || shower.ledPowerW <= 0 || shower.outletTemperatureC <= shower.inletTemperatureC) return undefined;
   return Object.freeze(resolved);
 }
 

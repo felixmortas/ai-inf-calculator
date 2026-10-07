@@ -8,3 +8,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-1-commencer-simplement-et-se-reperer-dans-le-parcours.md`
   summary: Revoir la hiérarchie des titres de la méthodologie (décalage +2 donne h3/h4 sous le h1).
   evidence: `vite.config.ts` décale les titres du Markdown de 2 niveaux, ce qui saute des niveaux sous le nouveau h1.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
+  summary: Retirer l'action morte `parametersValidationFailed` et le drapeau `parameterValidationInvalid` (reducer, ConversationBlocks) devenus inatteignables depuis l'UI.
+  evidence: Seul le dispatch de l'ancien « Appliquer » les utilisait ; la spec interdit de toucher `conversationReducer.ts` dans la 7.2.
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
+  summary: Les saisies numériques non appliquées sont perdues quand le modèle, le chatbot ou le pays d'hébergement change (clé `formKey`).
+  evidence: Relevé par deux relecteurs ; comportement hérité de la conception « brouillon appliqué par Continuer ».
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
+  summary: `ledPowerW` n'a pas encore de consommateur (équivalence LED à brancher en 7.4).
+  evidence: Aucune référence dans le domaine d'équivalence ; la durée LED est hors périmètre de la 7.2.

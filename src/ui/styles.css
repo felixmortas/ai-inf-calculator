@@ -26,7 +26,15 @@ h2 { font-size: 1.25rem; margin-top: 0; }
 .primary-action { background: #245a40; color: #fff; }
 html { scroll-padding-bottom: 6rem; }
 .sticky-actions { position: sticky; bottom: 0; z-index: 10; display: flex; margin-top: 1rem; padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom)); background: #eff4e8; border-top: 1px solid #c7d7c7; }
+.sticky-actions { flex-wrap: wrap; align-items: center; gap: .5rem; }
 .sticky-actions button { flex: 1; }
+.continue-blocked { flex: 1 1 100%; margin: 0; color: #7a1f1f; font-weight: 700; }
+.primary-action[aria-disabled="true"] { background: #e3e8e0; color: #3d4d43; border: 2px dashed #577160; cursor: not-allowed; }
+.estimate-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.estimate { margin: 0; }
+.expert-settings { margin-top: 1rem; }
+.expert-settings > summary { background: #fff; }
+.restore-link { justify-self: start; font-size: .9rem; }
 @media (max-height: 30rem), (max-width: 20rem) { .sticky-actions { position: static; } html { scroll-padding-bottom: 0; } }
 .keyboard-open .sticky-actions { position: static; }
 

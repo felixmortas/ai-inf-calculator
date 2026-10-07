@@ -151,11 +151,11 @@ describe('composition de la conversation', () => {
     const initialCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
 
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
     const batchSize = screen.getByLabelText('Taille de batch (tokens)');
     await user.clear(batchSize);
     await user.type(batchSize, '32');
-    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
     await user.click(screen.getByRole('button', { name: 'Recalculer cet échange' }));
@@ -166,8 +166,9 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     const french = await startThread(user);
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
-    await user.selectOptions(screen.getByLabelText('Localisation du modèle (hébergement)'), 'FR');
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
+    await user.selectOptions(screen.getByLabelText('Où est hébergée l’IA (pays des serveurs)'), 'FR');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
@@ -428,8 +429,9 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     await startThread(user);
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
-    await user.selectOptions(screen.getByLabelText('Votre localisation'), 'US');
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
+    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'US');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Bilan conservé');
@@ -440,7 +442,8 @@ describe('composition de la conversation', () => {
     const summaryEnergy = screen.getByText(/Énergie:/).textContent;
 
     await editReference(user);
-    await user.selectOptions(screen.getByLabelText('Votre localisation'), 'FR');
+    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
+    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'FR');
     await returnToThread(user);
     expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
@@ -460,11 +463,11 @@ describe('composition de la conversation', () => {
     await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
 
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
     expect(screen.getByLabelText('PUE (sans unité)')).toBeVisible();
     await user.clear(screen.getByLabelText('PUE (sans unité)'));
     await user.type(screen.getByLabelText('PUE (sans unité)'), '1.2');
-    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
     await returnToThread(user);
     expect(screen.getByLabelText('Votre message')).toHaveValue('Question conservée');
     expect(screen.getAllByText(/résultats dépendants sont à recalculer/)).toHaveLength(1);
@@ -472,7 +475,8 @@ describe('composition de la conversation', () => {
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
 
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.2);
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
@@ -485,8 +489,9 @@ describe('composition de la conversation', () => {
     const user = userEvent.setup();
     await startThread(user);
     await editReference(user);
-    await user.click(screen.getByText('Paramètres avancés'));
-    await user.selectOptions(screen.getByLabelText('Votre localisation'), 'ID');
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
+    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'ID');
     await returnToThread(user);
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Repli mondial');

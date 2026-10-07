@@ -1,8 +1,13 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, type ImpactParameterOverrides } from '../data/modelCatalog';
+import { useImperativeHandle, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type Ref } from 'react';
+import { flushSync } from 'react-dom';
+import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, resolveUserCarbonIntensity, type ImpactParameterOverrides } from '../data/modelCatalog';
 import { chatGptProvider, chatGptSubscriptions, mistralProvider, resolveMistralModel, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
+
+/** Résultat de la collecte des champs numériques à l’activation de « Continuer ». */
+export type ConfigurationCollection = { readonly ok: false } | { readonly ok: true; readonly overrides?: ImpactParameterOverrides };
+export interface ConfigurationHandle { collect(): ConfigurationCollection; }
 
 interface ConversationConfigurationProps {
   readonly state: ConversationState;
@@ -10,19 +15,80 @@ interface ConversationConfigurationProps {
   readonly requireMistralMode?: boolean;
   readonly onMistralModeChosen?: () => void;
   readonly initialAdvancedOpen?: boolean;
+  readonly onValidityChange?: (valid: boolean) => void;
+  readonly ref?: Ref<ConfigurationHandle>;
 }
 
-function Parameter({ name, label, unit, value, invalid }: { name: string; label: string; unit: string; value: number; invalid: boolean }) {
+type ParameterName = keyof typeof fr.parameterFields;
+
+function Parameter({ name, value, version, invalid }: { name: ParameterName; value: number; version: number; invalid: boolean }) {
+  const { label, unit, help } = fr.parameterFields[name];
   const id = `parameter-${name}`;
-  return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><input id={id} name={name} type="number" step="any" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={invalid ? `parameter-error parameter-error-${name}` : undefined} />{invalid ? <p id={`parameter-error-${name}`} className="parameter-field-error">{fr.invalidParameterField(label)}</p> : null}</div>;
+  const describedBy = [`${id}-help`, invalid ? `parameter-error-${name}` : undefined].filter(Boolean).join(' ');
+  return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><p id={`${id}-help`} className="help">{help}</p><input key={`${name}:${value}:${version}`} id={id} name={name} type="number" step="any" inputMode="decimal" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={describedBy} />{invalid ? <p id={`parameter-error-${name}`} className="parameter-field-error"><span aria-hidden="true">⚠ </span>{fr.invalidParameterField(label)}</p> : null}</div>;
 }
 
-export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen, initialAdvancedOpen = false }: ConversationConfigurationProps) {
+function readCandidate(form: HTMLFormElement): ImpactParameterOverrides {
+  const data = new FormData(form);
+  const number = (name: string) => {
+    const raw = data.get(name);
+    return typeof raw !== 'string' || raw.trim() === '' ? Number.NaN : Number(raw);
+  };
+  return {
+    totalParameters: number('totalParameters'), activatedParameters: number('activatedParameters'), inputRatio: number('inputRatio'), cacheRatio: number('cacheRatio'), pue: number('pue'), wue: number('wue'), carbonIntensity: number('carbonIntensity'), wordsPerToken: number('wordsPerToken'),
+    constants: Object.fromEntries(constantFields.map((key) => [key, number(key)])),
+    shower: { flowLitresPerMinute: number('flowLitresPerMinute'), inletTemperatureC: number('inletTemperatureC'), outletTemperatureC: number('outletTemperatureC'), ledPowerW: number('ledPowerW') },
+  };
+}
+
+export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen, initialAdvancedOpen = false, onValidityChange, ref }: ConversationConfigurationProps) {
   const providerModels = modelsForProvider(modelCatalog, state.provider);
   const [invalidFields, setInvalidFields] = useState<readonly string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen);
+  const [expertOpen, setExpertOpen] = useState(false);
+  const [editingModel, setEditingModel] = useState(false);
+  const [editingCountry, setEditingCountry] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
+  const validityCallback = useRef(onValidityChange);
+  validityCallback.current = onValidityChange;
   const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
+  const reference = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry);
+  const formKey = `${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}:${resetVersion}`;
+  const userFactor = resolveUserCarbonIntensity(state.userCountry);
+  const hostingFallsBackToWorld = !!reference && Object.values(reference.factorSources).includes('world');
+  const userCountryLabel = userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry;
+
+  /** Validation en direct : calcule les champs invalides du brouillon courant. */
+  function validate(): readonly string[] {
+    const form = formRef.current;
+    if (!form || !reference) return [];
+    const candidate = readCandidate(form);
+    const invalid = invalidParameterFields(candidate);
+    const fields = invalid.length > 0 || resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, candidate) ? invalid : parameterNames;
+    setInvalidFields((previous) => previous.length === fields.length && previous.every((name, index) => name === fields[index]) ? previous : fields);
+    return fields;
+  }
+
+  useEffect(() => { validate(); }, [formKey]);
+  useEffect(() => { validityCallback.current?.(invalidFields.length === 0); }, [invalidFields]);
+  useEffect(() => () => validityCallback.current?.(true), []);
+
+  useImperativeHandle(ref, () => ({
+    collect(): ConfigurationCollection {
+      const form = formRef.current;
+      if (!form || !reference) return { ok: true };
+      const fields = validate();
+      if (fields.length > 0) {
+        const first = [...advancedFieldNames, ...parameterNames].find((name) => fields.includes(name))!;
+        flushSync(() => { setAdvancedOpen(true); if (!advancedFieldNames.includes(first)) setExpertOpen(true); });
+        document.getElementById(`parameter-${first}`)?.focus();
+        return { ok: false };
+      }
+      const overrides = differences(readCandidate(form), reference);
+      return JSON.stringify(overrides) === JSON.stringify(state.parameterOverrides) ? { ok: true } : { ok: true, overrides };
+    },
+  }));
 
   function selectProvider(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'providerSelected', provider: event.currentTarget.value });
@@ -48,30 +114,13 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
   function selectUserCountry(event: ChangeEvent<HTMLSelectElement>) {
     dispatch({ type: 'userCountrySelected', country: event.currentTarget.value });
   }
-
-  function apply(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const number = (name: string) => {
-      const raw = data.get(name);
-      return typeof raw === 'string' && raw.trim() === '' ? Number.NaN : Number(raw);
-    };
-    const candidate: ImpactParameterOverrides = {
-      totalParameters: number('totalParameters'), activatedParameters: number('activatedParameters'), inputRatio: number('inputRatio'), cacheRatio: number('cacheRatio'), pue: number('pue'), wue: number('wue'), carbonIntensity: number('carbonIntensity'), wordsPerToken: number('wordsPerToken'),
-      constants: Object.fromEntries(constantFields.map(([key]) => [key, number(key)])),
-      shower: { flowLitresPerMinute: number('flowLitresPerMinute'), inletTemperatureC: number('inletTemperatureC'), outletTemperatureC: number('outletTemperatureC') },
-    };
-    const invalid = invalidParameterFields(candidate);
-    if (invalid.length > 0 || !resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, candidate)) {
-      const fields = invalid.length ? invalid : parameterNames;
-      setInvalidFields(fields);
-      dispatch({ type: 'parametersValidationFailed' });
-      requestAnimationFrame(() => document.getElementById(`parameter-${fields[0]}`)?.focus());
-      return;
-    }
-    const reference = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry)!;
-    setInvalidFields([]); dispatch({ type: 'parametersApplied', overrides: differences(candidate, reference) });
+  function restore() {
+    setResetVersion((version) => version + 1);
+    dispatch({ type: 'parametersRestored' });
   }
+  function ignoreSubmit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); }
+  const has = (name: string) => invalidFields.includes(name);
+  const modelPicker = requireMistralMode || editingModel;
 
   return (
     <section aria-labelledby="configuration-title" className="configuration">
@@ -102,68 +151,74 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
         </select>
       </div> : null}
 
-      <div className="field">
+      {modelPicker ? <div className="field">
         <label htmlFor="model">{fr.modelLabel}</label>
         <p id="model-help" className="help">{fr.modelReferenceHelp}</p>
         <select id="model" aria-describedby="model-help" value={requireMistralMode ? '' : state.modelId} onChange={selectModel} disabled={requireMistralMode && state.provider === mistralProvider}>
           {requireMistralMode ? <option value="">{fr.mistralModeChoice}</option> : providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
         </select>
-      </div>
-      <details className="advanced-settings" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
+      </div> : <div className="field estimate-row">
+        <p className="estimate">{fr.estimatedModelLabel} <strong>{state.modelId}</strong></p>
+        <button type="button" className="link-button" aria-label={fr.changeModelAction} aria-expanded={false} onClick={() => setEditingModel(true)}>{fr.changeAction}</button>
+      </div>}
+
+      <details className="advanced-settings" open={advancedOpen} onToggle={(event) => { if (event.target === event.currentTarget) setAdvancedOpen(event.currentTarget.open); }}>
         <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{fr.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
         <div id="advanced-settings-content">
-        <div className="field">
-          <label htmlFor="user-country">{fr.userCountryLabel}</label>
-          <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
-          <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
-            {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
-          <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
-          <select id="hosting-country" aria-describedby="hosting-country-help" value={state.hostingCountry} onChange={selectHostingCountry}>
-            {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
-          </select>
-        </div>
-        {advancedOpen && resolved ? <form key={`${state.provider}:${state.modelId}:${state.hostingCountry}:${JSON.stringify(state.parameterOverrides)}:${resetVersion}`} className="parameter-form" onSubmit={apply} noValidate>
-          <Parameter name="flowLitresPerMinute" label="Débit de votre douche" unit="L/min" value={resolved.shower.flowLitresPerMinute} invalid={invalidFields.includes('flowLitresPerMinute')} />
-          <Parameter name="inletTemperatureC" label="Température de l'eau froide dans le réseau" unit="°C" value={resolved.shower.inletTemperatureC} invalid={invalidFields.includes('inletTemperatureC')} />
-          <Parameter name="outletTemperatureC" label="Température de l'eau pendant votre douche" unit="°C" value={resolved.shower.outletTemperatureC} invalid={invalidFields.includes('outletTemperatureC')} />
-          <Parameter name="totalParameters" label="Paramètres totaux du modèle" unit="en milliards" value={resolved.totalParameters} invalid={invalidFields.includes('totalParameters')} />
-          <Parameter name="activatedParameters" label="Paramètres actifs à l'inférence" unit="en milliards" value={resolved.activatedParameters} invalid={invalidFields.includes('activatedParameters')} />
-          <Parameter name="inputRatio" label="Ratio consommation énergétique tokens entrants/tokens sortants" unit="sans unité" value={resolved.inputRatio} invalid={invalidFields.includes('inputRatio')} />
-          <Parameter name="cacheRatio" label="Ratio consommation énergétique tokens entrants en cache/tokens entrant" unit="sans unité" value={resolved.cacheRatio} invalid={invalidFields.includes('cacheRatio')} />
-          <Parameter name="wordsPerToken" label="Mots par token" unit="utilisé en repli si tokenizer indisponible" value={resolved.wordsPerToken} invalid={invalidFields.includes('wordsPerToken')} />
-          <Parameter name="pue" label="PUE" unit="sans unité" value={resolved.pue} invalid={invalidFields.includes('pue')} />
-          <Parameter name="wue" label="WUE" unit="L/kWh" value={resolved.wue} invalid={invalidFields.includes('wue')} />
-          <Parameter name="carbonIntensity" label="Intensité carbone du pays d'hébergement du modèle" unit="gCO2e/kWh" value={resolved.carbonIntensity} invalid={invalidFields.includes('carbonIntensity')} />
-          {constantFields.map(([name, label, unit]) => <Parameter key={name} name={name} label={label} unit={unit} value={resolved.constants[name]} invalid={invalidFields.includes(name)} />)}
-          {invalidFields.length > 0 ? <p id="parameter-error" role="alert">{fr.invalidParameters}</p> : null}
-          <div className="conversation-actions"><button type="submit">{fr.applyParametersAction}</button><button type="button" onClick={() => { setInvalidFields([]); setResetVersion((version) => version + 1); dispatch({ type: 'parametersRestored' }); }}>{fr.restoreParametersAction}</button></div>
-        </form> : null}
+          <p className="help">{fr.advancedSettingsIntro}</p>
+          {editingCountry ? <div className="field">
+            <label htmlFor="user-country">{fr.userCountryLabel}</label>
+            <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
+            <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
+              {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+            </select>
+          </div> : <div className="field estimate-row">
+            <p className="estimate">{fr.estimatedCountryLabel} <strong>{userCountryLabel}</strong></p>
+            <button type="button" className="link-button" aria-label={fr.changeCountryAction} aria-expanded={false} onClick={() => setEditingCountry(true)}>{fr.changeAction}</button>
+          </div>}
+          {userFactor.status === 'world' ? <p className="help" role="note">{fr.userCountryWorldFallback}</p> : null}
+          {resolved ? <form ref={formRef} className="parameter-form" onInput={validate} onSubmit={ignoreSubmit} noValidate>
+            {showerFields.map((name) => <Parameter key={name} name={name} value={resolved.shower[name]} version={resetVersion} invalid={has(name)} />)}
+            <details className="advanced-settings expert-settings" open={expertOpen} onToggle={(event) => { if (event.target === event.currentTarget) setExpertOpen(event.currentTarget.open); }}>
+              <summary aria-expanded={expertOpen} aria-controls="expert-settings-content">{fr.expertSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+              <div id="expert-settings-content">
+                <p className="help">{fr.expertSettingsIntro}</p>
+                <div className="field">
+                  <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
+                  <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
+                  <select id="hosting-country" aria-describedby={hostingFallsBackToWorld ? 'hosting-country-help hosting-country-fallback' : 'hosting-country-help'} value={state.hostingCountry} onChange={selectHostingCountry}>
+                    {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+                  </select>
+                  {hostingFallsBackToWorld ? <p id="hosting-country-fallback" className="help" role="note">{fr.hostingWorldFallback}</p> : null}
+                </div>
+                {[...expertScalarFields, ...constantFields].map((name) => <Parameter key={name} name={name} value={name in resolved.constants ? resolved.constants[name as typeof constantFields[number]] : resolved[name as typeof expertScalarFields[number]]} version={resetVersion} invalid={has(name)} />)}
+              </div>
+            </details>
+            <button type="button" className="link-button restore-link" onClick={restore}>{fr.restoreParametersAction}</button>
+          </form> : null}
         </div>
       </details>
     </section>
   );
 }
 
-const constantFields = [
-  ['batchSize', 'Taille de batch', 'tokens'], ['gpuInstalledPerServer', 'GPU installés par serveur', 'GPU'], ['serverPowerWithoutGpuW', 'Puissance serveur hors GPU', 'W'], ['gpuMemoryGb', 'Mémoire GPU', 'Go'], ['quantizationBits', 'Quantification', 'bits'], ['memoryOverhead', 'Surcoût mémoire', 'sans unité'],
-] as const;
-
-const parameterNames = ['totalParameters', 'activatedParameters', 'inputRatio', 'cacheRatio', 'wordsPerToken', 'pue', 'wue', 'carbonIntensity', ...constantFields.map(([name]) => name), 'flowLitresPerMinute', 'inletTemperatureC', 'outletTemperatureC'];
+const constantFields = ['batchSize', 'gpuInstalledPerServer', 'serverPowerWithoutGpuW', 'gpuMemoryGb', 'quantizationBits', 'memoryOverhead'] as const;
+const showerFields = ['flowLitresPerMinute', 'inletTemperatureC', 'outletTemperatureC', 'ledPowerW'] as const;
+const expertScalarFields = ['totalParameters', 'activatedParameters', 'inputRatio', 'cacheRatio', 'wordsPerToken', 'pue', 'wue', 'carbonIntensity'] as const;
+/** Ordre d’affichage : Mode avancé puis Mode expert (sert à trouver la première erreur). */
+const advancedFieldNames: readonly string[] = showerFields;
+const parameterNames: readonly string[] = [...showerFields, ...expertScalarFields, ...constantFields];
 function invalidParameterFields(value: ImpactParameterOverrides): string[] {
   const constants = value.constants!;
-  const invalid = parameterNames.filter((name) => !Number.isFinite((name in constants ? constants[name as keyof typeof constants] : name in value.shower! ? value.shower![name as keyof typeof value.shower] : value[name as keyof ImpactParameterOverrides]) as number));
-  if (value.pue! < 1) invalid.push('pue'); if (value.totalParameters! <= 0) invalid.push('totalParameters'); if (value.activatedParameters! <= 0 || value.activatedParameters! > value.totalParameters!) invalid.push('activatedParameters'); if (value.wordsPerToken! <= 0) invalid.push('wordsPerToken'); if (value.shower!.flowLitresPerMinute! <= 0) invalid.push('flowLitresPerMinute'); if (value.shower!.outletTemperatureC! <= value.shower!.inletTemperatureC!) invalid.push('outletTemperatureC');
+  const invalid: string[] = parameterNames.filter((name) => !Number.isFinite((name in constants ? constants[name as keyof typeof constants] : name in value.shower! ? value.shower![name as keyof typeof value.shower] : value[name as keyof ImpactParameterOverrides]) as number));
+  if (value.pue! < 1) invalid.push('pue'); if (value.totalParameters! <= 0) invalid.push('totalParameters'); if (value.activatedParameters! <= 0 || value.activatedParameters! > value.totalParameters!) invalid.push('activatedParameters'); if (value.wordsPerToken! <= 0) invalid.push('wordsPerToken'); if (value.shower!.flowLitresPerMinute! <= 0) invalid.push('flowLitresPerMinute'); if (value.shower!.ledPowerW! <= 0) invalid.push('ledPowerW'); if (value.shower!.outletTemperatureC! <= value.shower!.inletTemperatureC!) invalid.push('outletTemperatureC');
   for (const name of ['batchSize', 'gpuInstalledPerServer', 'serverPowerWithoutGpuW', 'gpuMemoryGb', 'quantizationBits', 'memoryOverhead', 'energyAlpha', 'energyGamma', 'latencyAlpha', 'latencyBeta', 'latencyGamma'] as const) if (constants[name]! <= 0) invalid.push(name);
   if (constants.energyBeta! > 0) invalid.push('energyBeta'); return [...new Set(invalid)];
 }
 function differences(candidate: ImpactParameterOverrides, reference: NonNullable<ReturnType<typeof resolveImpactParameters>>): ImpactParameterOverrides {
   const scalarNames = ['totalParameters', 'activatedParameters', 'inputRatio', 'cacheRatio', 'pue', 'wue', 'carbonIntensity', 'wordsPerToken'] as const;
   const scalar = Object.fromEntries(scalarNames.flatMap((key) => candidate[key] === reference[key] ? [] : [[key, candidate[key]]]));
-  const constants = Object.fromEntries(constantFields.flatMap(([key]) => candidate.constants![key] === reference.constants[key] ? [] : [[key, candidate.constants![key]]]));
-  const shower = Object.fromEntries((['flowLitresPerMinute', 'inletTemperatureC', 'outletTemperatureC'] as const).flatMap((key) => candidate.shower![key] === reference.shower[key] ? [] : [[key, candidate.shower![key]]]));
+  const constants = Object.fromEntries(constantFields.flatMap((key) => candidate.constants![key] === reference.constants[key] ? [] : [[key, candidate.constants![key]]]));
+  const shower = Object.fromEntries(showerFields.flatMap((key) => candidate.shower![key] === reference.shower[key] ? [] : [[key, candidate.shower![key]]]));
   return { ...scalar, ...(Object.keys(constants).length ? { constants } : {}), ...(Object.keys(shower).length ? { shower } : {}) };
 }

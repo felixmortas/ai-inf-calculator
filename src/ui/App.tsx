@@ -13,7 +13,7 @@ import { calculateShowerEquivalence } from '../domain/showerEquivalence';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
-import { ConversationConfiguration } from './ConversationConfiguration';
+import { ConversationConfiguration, type ConfigurationHandle } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
 import { Methodology } from './Methodology';
 import './styles.css';
@@ -46,6 +46,8 @@ export function App() {
   const calculationWasPending = useRef(false);
   const [openAdvancedOnSelection, setOpenAdvancedOnSelection] = useState(false);
   const [recalculationNotice, setRecalculationNotice] = useState('');
+  const configuration = useRef<ConfigurationHandle>(null);
+  const [parametersValid, setParametersValid] = useState(true);
   const client = useRef<TokenizationClient | undefined>(undefined);
 
   useEffect(() => {
@@ -120,6 +122,13 @@ export function App() {
       if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
     }
     dispatch(action);
+  }
+
+  function continueToThread() {
+    const collected = configuration.current?.collect();
+    if (collected && !collected.ok) return;
+    if (collected?.overrides) configurationDispatch({ type: 'parametersApplied', overrides: collected.overrides });
+    setStep('thread');
   }
 
   function openMethodology() {
@@ -250,8 +259,11 @@ export function App() {
         <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {fr.backAction}</button>
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
         <p className="step-justification">{fr.selectionJustification}</p>
-        <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} />
-        <div className="sticky-actions"><button type="button" className="primary-action" onClick={() => setStep('thread')}>{fr.continueThreadAction}</button></div>
+        <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} ref={configuration} onValidityChange={setParametersValid} />
+        <div className="sticky-actions">
+          {parametersValid ? null : <p id="continue-blocked" className="continue-blocked" role="alert"><span aria-hidden="true">⚠ </span>{fr.continueBlockedExplanation}</p>}
+          <button type="button" className="primary-action" aria-disabled={parametersValid ? undefined : true} aria-describedby={parametersValid ? undefined : 'continue-blocked'} onClick={continueToThread}>{fr.continueThreadAction}</button>
+        </div>
       </section> : null}
       {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>←</Icon> {fr.backAction}</button>

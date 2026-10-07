@@ -110,7 +110,7 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     const shower = showerFingerprint(state, 2);
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'country' } });
-    const changed = conversationReducer(state, { type: 'userCountrySelected', country: 'US' });
+    const changed = conversationReducer(state, { type: 'userCountrySelected', country: 'FR' });
     expect(isImpactCurrent(changed, 'one')).toBe(true);
     expect(changed.showerEquivalences.one?.fingerprint).toBe(`stale:${shower}`);
     expect(showerFingerprint(changed, 2)).not.toBe(shower);

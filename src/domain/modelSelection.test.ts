@@ -32,10 +32,10 @@ describe('sélection de modèle', () => {
   });
 
   it('détecte le pays utilisateur localement puis replie sur Monde', () => {
-    expect(detectUserCountry('Europe/Paris', 'en-US')).toBe('FR');
-    expect(detectUserCountry('Europe/Berlin', 'fr-FR')).toBe('DE');
-    expect(detectUserCountry(undefined, 'fr-FR')).toBe('FR');
-    expect(detectUserCountry('Unknown/Zone', 'fr')).toBe('WORLD');
+    expect(detectUserCountry('fr-FR')).toBe('FR');
+    expect(detectUserCountry('fr')).toBe('WORLD');
+    expect(detectUserCountry('en-XX')).toBe('WORLD');
+    expect(detectUserCountry('fr_FR')).toBe('FR');
     expect(resolveUserCarbonIntensity('FR')).toEqual({ status: 'country', value: 41.44 });
     expect(resolveUserCarbonIntensity('ID')).toMatchObject({ status: 'world', value: 473 });
     expect(resolveUserCarbonIntensity('ZZ')).toMatchObject({ status: 'world', value: 473 });
@@ -55,6 +55,8 @@ describe('sélection de modèle', () => {
     expect(modelCatalog.models).toEqual(before);
     expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
     expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { shower: { ledPowerW: 0 } })).toBeUndefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { shower: { ledPowerW: 9 } })?.shower.ledPowerW).toBe(9);
   });
 
   it('expose le pays d’hébergement', () => {

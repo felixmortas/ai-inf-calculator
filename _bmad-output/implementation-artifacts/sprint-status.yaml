@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-19-2026 22:54
-last_updated: 10-07-2026 20:00
+last_updated: 2026-10-07
 project: ai-inf-calculator
 project_key: NOKEY
 tracking_system: file-system
@@ -73,7 +73,7 @@ development_status:
 
   epic-7: in-progress
   7-1-commencer-simplement-et-se-repérer-dans-le-parcours: review
-  7-2-choisir-son-ia-et-régler-ses-hypothèses-sans-se-perdre: backlog
+  7-2-choisir-son-ia-et-régler-ses-hypothèses-sans-se-perdre: review
   7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic: backlog
   7-4-lire-un-résultat-clair-sous-la-conversation: backlog
   7-5-partager-son-résultat-sans-partager-sa-conversation: backlog

@@ -10,12 +10,16 @@ async function startSelection(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('configuration de conversation', () => {
-  it('affiche et résout le modèle ChatGPT selon l’abonnement', async () => {
+  it('affiche et résout le modèle estimé selon l’abonnement, la liste n’apparaissant qu’avec « Modifier »', async () => {
     const user = userEvent.setup();
     await startSelection(user);
+    expect(screen.getByText('Modèle estimé :')).toBeVisible();
     expect(screen.getByText('gpt-4o-mini')).toBeVisible();
+    expect(screen.queryByLabelText('Modèle')).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     expect(screen.getByText('gpt-4o')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
+    expect(screen.getByLabelText('Modèle')).toHaveValue('gpt-4o');
   });
 
   it('masque l’abonnement et limite les modèles pour un autre fournisseur', async () => {
@@ -23,6 +27,7 @@ describe('configuration de conversation', () => {
     await startSelection(user);
     await user.selectOptions(screen.getByLabelText('Chatbot'), 'Gemini');
     expect(screen.queryByLabelText('Abonnement')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Modifier le modèle' }));
     const model = screen.getByLabelText('Modèle');
     expect(model).toHaveValue('gemini-2.5-pro');
     expect(screen.queryByRole('option', { name: 'gpt-4o-mini' })).not.toBeInTheDocument();
@@ -39,30 +44,38 @@ describe('configuration de conversation', () => {
     expect(screen.getByLabelText('Chatbot')).toHaveFocus();
   });
 
-  it('permet de choisir au clavier le pays d’hébergement dans les paramètres avancés', async () => {
+  it('replie le Mode avancé sous le modèle et ne montre le Mode expert qu’à l’intérieur', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    const summary = screen.getByText('Paramètres avancés');
+    const summary = screen.getByText('Mode avancé');
     const details = summary.closest('details')!;
     expect(details).not.toHaveAttribute('open');
     expect(summary.querySelector('.chevron')).toBeInTheDocument();
+    const expert = screen.getByText('Mode expert').closest('details')!;
+    expect(details.contains(expert)).toBe(true);
+    expect(expert).not.toHaveAttribute('open');
     await user.click(summary);
     expect(details).toHaveAttribute('open');
-    expect(details.querySelector('summary')).toHaveAttribute('aria-expanded', 'true');
-    const country = screen.getByLabelText('Localisation du modèle (hébergement)');
+    expect(expert).not.toHaveAttribute('open');
+    await user.click(screen.getByText('Mode expert'));
+    const country = screen.getByLabelText('Où est hébergée l’IA (pays des serveurs)');
     expect(country).toHaveValue('US');
     await user.selectOptions(country, 'FR');
     expect(country).toHaveValue('FR');
+    expect(screen.queryByRole('button', { name: 'Appliquer les paramètres' })).not.toBeInTheDocument();
   });
 
-  it('propose un pays utilisateur indicatif et corrigeable, distinct de l’hébergement', async () => {
+  it('présente le pays estimé (langue du navigateur) et le laisse corriger, distinct de l’hébergement', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByText('Paramètres avancés'));
-    const country = screen.getByLabelText('Votre localisation');
+    expect(screen.getByText('Pays estimé :')).toBeInTheDocument();
+    expect(screen.getByText('États-Unis')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
+    const country = screen.getByLabelText('Où vous vous trouvez (pays)');
+    expect(country).toHaveValue('US');
     await user.selectOptions(country, 'ID');
     expect(country).toHaveValue('ID');
-    expect(screen.getByLabelText('Localisation du modèle (hébergement)')).toHaveValue('US');
+    expect(screen.getByLabelText('Où est hébergée l’IA (pays des serveurs)')).toHaveValue('US');
   });
 
   it('repart des valeurs initiales après un nouveau montage', async () => {
@@ -88,31 +101,134 @@ describe('configuration de conversation', () => {
     expect(replaceState).not.toHaveBeenCalled();
   });
 
-  it('expose les surcharges avec unités, refuse une valeur invalide et restaure les références', async () => {
+  it('expose les surcharges avec unités, bloque Continuer sur une valeur invalide et rétablit les références', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByText('Paramètres avancés'));
-    expect(screen.getByLabelText('Paramètres totaux du modèle (en milliards)')).toHaveValue(92);
+    await user.click(screen.getByText('Mode avancé'));
     expect(screen.getByLabelText('Débit de votre douche (L/min)')).toHaveValue(15);
-    await user.clear(screen.getByLabelText('PUE (sans unité)'));
-    await user.type(screen.getByLabelText('PUE (sans unité)'), '0.9');
-    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
-    expect(screen.getByLabelText('PUE (sans unité)')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('PUE (sans unité)')).toHaveAttribute('aria-describedby', 'parameter-error parameter-error-pue');
-    await waitFor(() => expect(screen.getByLabelText('PUE (sans unité)')).toHaveFocus());
+    expect(screen.getByLabelText('Puissance de l’ampoule LED de comparaison (W)')).toHaveValue(5);
+    const pue = screen.getByLabelText('PUE (sans unité)');
+    expect(screen.getByText('Mode expert').closest('details')).not.toHaveAttribute('open');
+    await user.clear(pue);
+    await user.type(pue, '0.9');
+    const next = screen.getByRole('button', { name: 'Continuer' });
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).toHaveAccessibleDescription(/valeur du Mode avancé ou du Mode expert est invalide/);
+    expect(pue).toHaveAttribute('aria-invalid', 'true');
+    expect(pue.getAttribute('aria-describedby')).toContain('parameter-error-pue');
+    await user.click(next);
+    expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toBeVisible();
+    expect(screen.getByText('Mode expert').closest('details')).toHaveAttribute('open');
+    await waitFor(() => expect(pue).toHaveFocus());
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
+    expect(screen.getByRole('button', { name: 'Continuer' })).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('ouvre le Mode avancé et le Mode expert et focalise la première erreur depuis des sections repliées', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
+    const pue = screen.getByLabelText('PUE (sans unité)');
+    await user.clear(pue);
+    await user.type(pue, '0.9');
+    await user.click(screen.getByText('Mode expert'));
+    await user.click(screen.getByText('Mode avancé'));
+    expect(screen.getByText('Mode avancé').closest('details')).not.toHaveAttribute('open');
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByText('Mode avancé').closest('details')).toHaveAttribute('open');
+    expect(screen.getByText('Mode expert').closest('details')).toHaveAttribute('open');
+    expect(pue).toHaveFocus();
   });
 
   it('refuse une valeur vide, même pour un paramètre dont zéro est autorisé', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    await user.click(screen.getByText('Paramètres avancés'));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
     await user.clear(screen.getByLabelText('WUE (L/kWh)'));
-    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
-    expect(screen.getByRole('alert')).toBeVisible();
     expect(screen.getByLabelText('WUE (L/kWh)')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Continuer' })).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('refuse une puissance LED nulle', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.click(screen.getByText('Mode avancé'));
+    const led = screen.getByLabelText('Puissance de l’ampoule LED de comparaison (W)');
+    await user.clear(led);
+    await user.type(led, '0');
+    expect(led).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('applique les valeurs valides par Continuer, sans calcul, et une seule annonce « à recalculer »', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
+    await user.click(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' }));
+    await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
+    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByText('Mode avancé'));
+    const flow = screen.getByLabelText('Débit de votre douche (L/min)');
+    await user.clear(flow);
+    await user.type(flow, '9');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toBeVisible();
+    expect(screen.getAllByText(/à recalculer/)).toHaveLength(1);
+    expect(screen.getByLabelText('Votre message')).toHaveValue('Bonjour');
+  });
+
+  it('applique une puissance LED modifiée par Continuer', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.click(screen.getByText('Mode avancé'));
+    const led = screen.getByLabelText(/Puissance de l’ampoule LED/);
+    await user.clear(led);
+    await user.type(led, '9');
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByText('Mode avancé'));
+    expect(screen.getByLabelText(/Puissance de l’ampoule LED/)).toHaveValue(9);
+  });
+
+  it('conserve les textes, le chatbot et le modèle en rétablissant les valeurs par défaut', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
+    await user.type(screen.getByLabelText('Votre message'), 'Texte conservé');
+    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
+    const pue = screen.getByLabelText('PUE (sans unité)');
+    await user.clear(pue);
+    await user.type(pue, '1.3');
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.3);
+    await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
+    expect(screen.getByText('gpt-4o')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.getByLabelText('Votre message')).toHaveValue('Texte conservé');
+  });
+
+  it('signale le repli Monde près du champ sans changer le pays', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByRole('button', { name: 'Modifier le pays' }));
+    await user.selectOptions(screen.getByLabelText('Où vous vous trouvez (pays)'), 'ID');
+    expect(screen.getByText(/Aucune donnée pour ce pays :/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Où vous vous trouvez (pays)')).toHaveValue('ID');
   });
 
   it('bloque les calculs tant qu’une saisie avancée invalide n’est pas corrigée', async () => {
@@ -122,15 +238,12 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un échange' }));
     await user.type(screen.getByLabelText('Votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
-    await user.click(screen.getByText('Paramètres avancés'));
+    await user.click(screen.getByText('Mode avancé'));
+    await user.click(screen.getByText('Mode expert'));
     await user.clear(screen.getByLabelText('PUE (sans unité)'));
     await user.type(screen.getByLabelText('PUE (sans unité)'), '0.9');
-    await user.click(screen.getByRole('button', { name: 'Appliquer les paramètres' }));
-
-    expect(screen.getByRole('alert')).toHaveTextContent('valeur est invalide');
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: 'Déplier l’échange 1' }));
-    expect(screen.getByRole('button', { name: 'Calculer l’impact de cet échange uniquement' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Calculer l’impact de toute la conversation' })).toBeDisabled();
+    expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toBeVisible();
+    expect(screen.getByLabelText('PUE (sans unité)')).toHaveAttribute('aria-invalid', 'true');
   });
 });
