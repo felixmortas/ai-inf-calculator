@@ -3,7 +3,6 @@ export const fr = {
   title: 'Calculatrice : l’impact environnemental de ma conversation avec l’IA',
   introduction: 'Estimez en quelques clics l’impact environnemental d’une conversation avec une IA, et comparez-le à une durée de douche chaude.',
   methodologyAction: 'Méthodologie',
-  stepsLabel: 'Actions principales',
   methodologyTitle: 'Méthodologie d’estimation',
   backAction: 'Retour',
   startAction: 'Commencer',

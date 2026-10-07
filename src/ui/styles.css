@@ -25,15 +25,12 @@ h2 { font-size: 1.25rem; margin-top: 0; }
 .step-justification { margin-top: 0; color: #4e665a; }
 .primary-action { background: #245a40; color: #fff; }
 html { scroll-padding-bottom: 6rem; }
-.sticky-actions { position: sticky; bottom: 0; z-index: 10; display: flex; margin-top: 1rem; padding: .75rem 0; background: #eff4e8; border-top: 1px solid #c7d7c7; }
+.sticky-actions { position: sticky; bottom: 0; z-index: 10; display: flex; margin-top: 1rem; padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom)); background: #eff4e8; border-top: 1px solid #c7d7c7; }
 .sticky-actions button { flex: 1; }
 @media (max-height: 30rem), (max-width: 20rem) { .sticky-actions { position: static; } html { scroll-padding-bottom: 0; } }
 .keyboard-open .sticky-actions { position: static; }
 
 .start-paths { margin-top: 2rem; }
-.start-choice { margin-top: 1rem; padding: 1.5rem; border: 1px solid #c7d7c7; border-radius: 1.25rem; background: #fff; }
-.start-choice h3 { margin-top: 0; }
-.start-choice p { color: #4e665a; }
 .thread-reference { margin-top: 1rem; padding: 1rem; border: 1px solid #c7d7c7; border-radius: .875rem; background: #fff; }
 .thread-reference { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .methodology { margin-top: 2rem; }

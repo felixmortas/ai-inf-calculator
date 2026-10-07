@@ -88,9 +88,11 @@ export function App() {
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return undefined;
-    const update = () => document.documentElement.classList.toggle('keyboard-open', viewport.height < window.innerHeight * 0.75);
+    const update = () => document.documentElement.classList.toggle('keyboard-open', viewport.scale <= 1 && viewport.height < window.innerHeight * 0.75);
+    update();
     viewport.addEventListener('resize', update);
-    return () => { viewport.removeEventListener('resize', update); document.documentElement.classList.remove('keyboard-open'); };
+    window.addEventListener('resize', update);
+    return () => { viewport.removeEventListener('resize', update); window.removeEventListener('resize', update); document.documentElement.classList.remove('keyboard-open'); };
   }, []);
 
   useEffect(() => {
@@ -241,7 +243,7 @@ export function App() {
           </div>
           <button className="link-button methodology-help" type="button" onClick={openMethodology}>{fr.methodologyAction}</button>
         </header>}
-      {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths" aria-label={fr.startAction}>
+      {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths">
         <button type="button" className="primary-action" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}>{fr.startAction}</button>
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">

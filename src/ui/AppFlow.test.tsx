@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -45,6 +45,7 @@ describe('parcours de départ', () => {
     await user.click(screen.getByRole('button', { name: 'Méthodologie' }));
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'Méthodologie d’estimation' })).toBeVisible();
+    expect(screen.getAllByRole('heading', { name: 'Méthodologie d’estimation' })).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Retour' }));
     expect(screen.getByRole('textbox', { name: 'Votre message' })).toHaveValue('Mon texte');
     await user.click(screen.getByRole('button', { name: 'Retour' }));
@@ -142,5 +143,27 @@ describe('fil et estimations', () => {
     expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Replier l’échange 1' })).toBeVisible();
     expect(screen.getAllByRole('button', { name: 'Recalculer cet échange' })).toHaveLength(2);
+  });
+});
+
+describe('barre d’action et clavier logiciel', () => {
+  it('bascule la classe keyboard-open selon la hauteur du viewport et la nettoie au démontage', () => {
+    const viewport = Object.assign(new EventTarget(), { height: 800, scale: 1 });
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+    const { unmount } = render(<App />);
+    const root = document.documentElement;
+    expect(root).not.toHaveClass('keyboard-open');
+    viewport.height = 300;
+    act(() => { viewport.dispatchEvent(new Event('resize')); });
+    expect(root).toHaveClass('keyboard-open');
+    viewport.height = 800;
+    act(() => { viewport.dispatchEvent(new Event('resize')); });
+    expect(root).not.toHaveClass('keyboard-open');
+    viewport.height = 300;
+    act(() => { viewport.dispatchEvent(new Event('resize')); });
+    unmount();
+    expect(root).not.toHaveClass('keyboard-open');
+    Reflect.deleteProperty(window, 'visualViewport');
   });
 });
