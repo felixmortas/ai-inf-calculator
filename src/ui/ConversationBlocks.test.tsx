@@ -10,7 +10,8 @@ import {
   conversationReducer,
   impactFingerprint,
   initialConversationState,
-  showerFingerprint,
+  equivalenceFingerprint,
+  ledFingerprint,
   summaryFingerprint,
 } from '../application/conversationReducer';
 
@@ -83,7 +84,7 @@ describe('composition de la conversation', () => {
     calculate.focus();
     await user.click(calculate);
     expect(calculate).toHaveFocus();
-    expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Résultat' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Collez ici votre message'), ' Bonjour ');
     expect(screen.getByRole('button', { name: 'Calculer' })).not.toHaveAttribute('aria-disabled');
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue(' Bonjour ');
@@ -186,7 +187,8 @@ describe('composition de la conversation', () => {
     await user.type(screen.getByLabelText('Collez ici votre message'), ' encore');
     expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('À recalculer');
     expect(screen.queryByLabelText('Impact pour cette question / réponse')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
     expect(screen.getAllByText(/à recalculer\./)).toHaveLength(1);
   });
 
@@ -223,8 +225,8 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     const frenchCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summary = await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
-    expect(summary.parentElement).toHaveTextContent('🪨 Carbone:');
+    const summary = await screen.findByRole('heading', { name: 'Résultat' });
+    expect(summary.parentElement).toHaveTextContent('Carbone');
     french.unmount();
 
     await startThread(user);
@@ -243,12 +245,11 @@ describe('composition de la conversation', () => {
     await user.type(screen.getAllByLabelText('Collez ici votre message')[0], 'Premier échange');
     await user.type(screen.getAllByLabelText('Collez ici votre message')[1], 'Deuxième échange plus long');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summaryHeading = await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
-    const summaryEnergy = Number(summaryHeading.parentElement!.textContent!.match(/Énergie: ([\d,]+)/)![1].replace(',', '.'));
+    const summaryHeading = await screen.findByRole('heading', { name: 'Résultat' });
+    expect(summaryHeading.parentElement).toHaveTextContent('Électricité');
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
-    expect(screen.getAllByText(/Énergie:/)).toHaveLength(1);
-    expect(summaryEnergy).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).toBeVisible();
+    expect(document.querySelectorAll('.result-section')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Une bonne pratique' })).toBeVisible();
   });
 
   it('calcule ensemble tous les échanges renseignés et ignore le vide', async () => {
@@ -259,9 +260,9 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getAllByLabelText('Collez ici votre message')[1], 'Second');
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
-    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect(await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Résultat' })).toBeVisible();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     expect(screen.getByRole('region', { name: 'Question / réponse 3' })).not.toHaveTextContent(/Vide|À calculer/);
   });
@@ -314,7 +315,7 @@ describe('composition de la conversation', () => {
     render(<><ConversationBlocks state={state} dispatch={() => undefined} /><CalculationBar state={state} onCalculate={() => undefined} /></>);
     expect(screen.getByRole('alert')).toHaveTextContent('Le calcul a échoué');
     expect(document.body).toHaveFocus();
-    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
   });
 
   it('adapte les unités sans modifier les valeurs calculées et développe leur nom accessible', () => {
@@ -379,7 +380,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     state = conversationReducer(state, { type: 'userCountrySelected', country: 'ID' });
-    const shower = showerFingerprint(state, 2);
+    const shower = equivalenceFingerprint(state, 2);
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'world' } });
     render(<ConversationBlocks state={state} dispatch={() => undefined}  />);
     expect(screen.queryByText(/🚿 Comparaison : environ/)).not.toBeInTheDocument();
@@ -402,12 +403,12 @@ describe('composition de la conversation', () => {
     expect(screen.queryByLabelText('Impact pour cette question / réponse')).not.toBeInTheDocument();
   });
 
-  it('affiche les cinq conseils dans le bilan actuel, jamais avant ce bilan', () => {
+  it('affiche une seule bonne pratique stable dans le résultat à jour, jamais avant ce résultat', () => {
     const renderBlocks = (state = initialConversationState) => render(
       <ConversationBlocks state={state} dispatch={() => undefined}  />,
     );
     const empty = renderBlocks();
-    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
     empty.unmount();
 
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
@@ -430,27 +431,87 @@ describe('composition de la conversation', () => {
       type: 'summaryResolved', fingerprint: summaryCurrentFingerprint,
       total: { energyWh: 5, carbonGco2e: 7, waterL: 9 },
     });
-    const current = renderBlocks(state);
-    const heading = screen.getByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' });
-    const practices = screen.getByRole('region', { name: 'Bonnes pratiques pour réduire cet impact' });
-    expect(practices).toContainElement(heading);
-    expect(screen.getByRole('list')).toBeVisible();
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
-    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Choisissez un petit modèle adapté à votre besoin lorsque cela suffit.',
-      'Ne demandez pas un raisonnement détaillé si vous n’en avez pas besoin. Cela ne désactive pas le raisonnement du chatbot.',
-      'Réduisez les textes envoyés et les textes générés au nécessaire.',
-      'Commencez une nouvelle conversation lorsque l’ancien contexte ne vous est plus utile.',
-      'Lorsque cela convient, modifiez un message existant plutôt que d’en envoyer un nouveau.',
-    ]);
-    expect([...document.querySelectorAll('.summary-panel')]).toHaveLength(1);
-    expect(document.querySelector('.summary-panel')).toContainElement(practices);
+    state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 5), equivalence: { status: 'available', seconds: 3600 } });
+    const random = vi.fn(() => 0.5);
+    const current = render(<ConversationBlocks state={state} dispatch={() => undefined} random={random} />);
+    const practices = screen.getByRole('region', { name: 'Une bonne pratique' });
+    expect(practices).toHaveTextContent('Réduisez les textes envoyés et les textes générés au nécessaire.');
+    expect(practices.querySelectorAll('li')).toHaveLength(0);
+    current.rerender(<ConversationBlocks state={state} dispatch={() => undefined} random={random} />);
+    expect(random).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('region', { name: 'Une bonne pratique' })).toHaveTextContent('Réduisez les textes');
+    expect(document.querySelector('.result-section')).toContainElement(practices);
+    const link = screen.getByRole('link', { name: 'Voir les bonnes pratiques (s’ouvre dans un nouvel onglet)' });
+    expect(link).toHaveAttribute('href', 'https://example.org/bonnes-pratiques-ia');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByText(/En savoir plus/)).not.toBeInTheDocument();
     current.unmount();
 
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Modifié' });
     renderBlocks(state);
-    expect(screen.queryByRole('heading', { name: 'Bonnes pratiques pour réduire cet impact' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(document.querySelector('.result-section')).not.toHaveTextContent(/\d+(,\d+)? (g|mg|Wh|L)/);
     expect(document.querySelectorAll('.exchange-status.impact-stale')).toHaveLength(2);
+  });
+
+  it('présente le résultat à jour dans l’ordre douche, carbone, eau, électricité, LED, phrase, périmètre, pratique, lien', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fp = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint: fp });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint: fp, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const sf = summaryFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint: sf });
+    state = conversationReducer(state, { type: 'summaryResolved', fingerprint: sf, total: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'showerEquivalenceResolved', fingerprint: equivalenceFingerprint(state, 2), equivalence: { status: 'available', seconds: 90, factorSource: 'country' } });
+    state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} random={() => 0} />);
+    const text = document.querySelector('.result-section')!.textContent!.replace(/\s/gu, ' ');
+    const order = ['douche chaude', 'Carbone', 'Eau', 'Électricité', 'Ampoule LED allumée (5 W)', '12 min', 'Une conversation pèse peu', '100 conversations', 'Ne compte que l’électricité des serveurs', 'pas sur une mesure', 'Une bonne pratique', 'Voir les bonnes pratiques'];
+    const positions = order.map((part) => text.indexOf(part));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect([...positions].sort((x, y) => x - y)).toEqual(positions);
+    expect(document.querySelector('.metric-hero')).toHaveTextContent('1,5 min');
+    expect(screen.queryByRole('link', { name: /méthodologie/i })).not.toBeInTheDocument();
+  });
+
+  it('indique « Comparaison non calculable » près de la LED sans toucher au reste du résultat', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fp = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint: fp });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint: fp, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const sf = summaryFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint: sf });
+    state = conversationReducer(state, { type: 'summaryResolved', fingerprint: sf, total: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'showerEquivalenceResolved', fingerprint: equivalenceFingerprint(state, 2), equivalence: { status: 'available', seconds: 90, factorSource: 'country' } });
+    state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'unavailable' } });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} />);
+    expect(screen.getByText('Comparaison non calculable')).toBeVisible();
+    expect(document.querySelector('.metric-hero')).toBeInTheDocument();
+    expect(screen.getByText('Électricité').closest('li')).toHaveTextContent('1 Wh');
+  });
+
+  it('ne périme que la ligne LED quand seule la puissance de l’ampoule change', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fp = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint: fp });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint: fp, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const sf = summaryFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint: sf });
+    state = conversationReducer(state, { type: 'summaryResolved', fingerprint: sf, total: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'showerEquivalenceResolved', fingerprint: equivalenceFingerprint(state, 2), equivalence: { status: 'available', seconds: 90, factorSource: 'country' } });
+    state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
+    state = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { ledPowerW: 9 } } });
+    render(<ConversationBlocks state={state} dispatch={() => undefined} />);
+    expect(screen.getByText(/Ampoule LED allumée/).closest('li')).toHaveTextContent('À recalculer');
+    expect(document.querySelector('.metric-hero')).toHaveTextContent('1,5 min');
+    expect(screen.getByText('Carbone').closest('li')).toHaveTextContent('2 gCO₂e');
+    expect(screen.queryByText(/Le résultat est à recalculer/)).not.toBeInTheDocument();
   });
 
   it('affiche carte repliée à jour avec « ✓ » et sans action de calcul', () => {
@@ -473,8 +534,9 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Un échange déjà calculé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summary = await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
-    expect(summary.parentElement).toHaveTextContent('Énergie:');
+    const summary = await screen.findByRole('heading', { name: 'Résultat' });
+    expect(summary.parentElement).toHaveTextContent('Électricité');
+    expect(summary).toHaveFocus();
   });
 
   it('actualise l’équivalence du bilan après un changement de pays sans recalculer le bloc', async () => {
@@ -487,19 +549,19 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bilan conservé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
-    const summaryEnergy = screen.getByText(/Énergie:/).textContent;
+    await screen.findByRole('heading', { name: 'Résultat' });
+    const summaryEnergy = screen.getByText('Électricité').closest('li')!.textContent;
 
     await editReference(user);
     await user.selectOptions(screen.getByLabelText('Pays estimé : où vous vous trouvez'), 'FR');
     await returnToThread(user);
-    expect(screen.getByText(/estimation de durée de douche est périmée/)).toBeVisible();
+    expect(screen.getByText(/comparaison avec la douche est à recalculer/i)).toBeVisible();
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Bilan environnemental de la conversation' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
 
-    expect(document.querySelector('.shower-equivalence')).toHaveTextContent(/🚿 Comparaison : environ/);
-    expect(screen.getByText(/Énergie:/).textContent).toBe(summaryEnergy);
+    expect(document.querySelector('.metric-hero')).toHaveTextContent(/Environ .* de douche chaude/);
+    expect(screen.getByText('Électricité').closest('li')!.textContent).toBe(summaryEnergy);
   });
 
   it('ouvre les hypothèses depuis le bilan, conserve la session et annonce leur péremption après application puis restauration', async () => {
@@ -508,7 +570,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Question conservée');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
+    await screen.findByRole('heading', { name: 'Résultat' });
 
     await editReference(user);
     await user.click(screen.getByText('Mode avancé'));
@@ -519,7 +581,8 @@ describe('composition de la conversation', () => {
     await returnToThread(user);
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Question conservée');
     expect(screen.getAllByText(/résultats dépendants sont à recalculer/)).toHaveLength(1);
-    expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' })).toHaveFocus();
 
     await editReference(user);
@@ -530,7 +593,8 @@ describe('composition de la conversation', () => {
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
     await returnToThread(user);
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Question conservée');
-    expect(screen.queryByRole('heading', { name: 'Bilan environnemental de la conversation' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Le résultat est à recalculer/)).toBeVisible();
+    expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
   });
 
   it('réserve le repli de la douche au bilan calculé', async () => {
@@ -543,8 +607,8 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Repli mondial');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
+    await screen.findByRole('heading', { name: 'Résultat' });
 
-    expect(screen.getByText(/facteur carbone de repli « Monde »/)).toBeVisible();
+    expect(screen.getByText(/valeur « Monde » est une estimation, que vous pouvez corriger/)).toBeVisible();
   });
 });

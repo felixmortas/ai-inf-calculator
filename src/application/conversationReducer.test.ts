@@ -6,8 +6,11 @@ import {
   isImpactCurrent,
   isIgnoredConversationBlock,
   isShowerEquivalenceCurrent,
-  showerFingerprint,
+  equivalenceFingerprint,
   isSummaryCurrent,
+  isSummaryLedEquivalenceCurrent,
+  isSummaryShowerEquivalenceCurrent,
+  ledFingerprint,
   summaryFingerprint,
   type ConversationBlock,
 } from './conversationReducer';
@@ -107,12 +110,12 @@ describe('conversationReducer', () => {
     const fingerprint = impactFingerprint(state, 'one');
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
-    const shower = showerFingerprint(state, 2);
+    const shower = equivalenceFingerprint(state, 2);
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'country' } });
     const changed = conversationReducer(state, { type: 'userCountrySelected', country: 'FR' });
     expect(isImpactCurrent(changed, 'one')).toBe(true);
     expect(changed.showerEquivalences.one?.fingerprint).toBe(`stale:${shower}`);
-    expect(showerFingerprint(changed, 2)).not.toBe(shower);
+    expect(equivalenceFingerprint(changed, 2)).not.toBe(shower);
   });
 
   it('refuse un modèle externe au fournisseur sélectionné', () => {
@@ -447,10 +450,10 @@ describe('conversationReducer', () => {
   it('dérive une empreinte de douche canonique des résultats et paramètres qui la déterminent', () => {
     const france = conversationReducer(initialConversationState, { type: 'userCountrySelected', country: 'FR' });
     const belgium = conversationReducer(initialConversationState, { type: 'userCountrySelected', country: 'BE' });
-    const base = showerFingerprint(france, 60);
-    expect(showerFingerprint(france, 60)).toBe(base);
-    expect(showerFingerprint(france, 61)).not.toBe(base);
-    expect(showerFingerprint(belgium, 60)).not.toBe(base);
+    const base = equivalenceFingerprint(france, 60);
+    expect(equivalenceFingerprint(france, 60)).toBe(base);
+    expect(equivalenceFingerprint(france, 61)).not.toBe(base);
+    expect(equivalenceFingerprint(belgium, 60)).not.toBe(base);
   });
 
   it('valide les surcharges, préserve les résultats et périme sélectivement sans calcul', () => {
@@ -474,17 +477,39 @@ describe('conversationReducer', () => {
   it('fait dépendre la frontière douche des paramètres de douche sans périmer l’impact', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
-    const base = showerFingerprint(state, 60);
+    const base = equivalenceFingerprint(state, 60);
     const withShowerOverride = { ...state, parameterOverrides: { shower: { flowLitresPerMinute: 10 } } };
-    expect(showerFingerprint(withShowerOverride, 60)).not.toBe(base);
+    expect(equivalenceFingerprint(withShowerOverride, 60)).not.toBe(base);
 
     const fingerprint = impactFingerprint(state, 'one');
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
-    const shower = showerFingerprint(state, 2);
+    const shower = equivalenceFingerprint(state, 2);
     state = conversationReducer(state, { type: 'showerEquivalenceResolved', blockId: 'one', fingerprint: shower, equivalence: { status: 'available', seconds: 1, factorSource: 'country' } });
     const changed = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { flowLitresPerMinute: 10 } } });
     expect(isImpactCurrent(changed, 'one')).toBe(true);
     expect(isShowerEquivalenceCurrent(changed, 'one')).toBe(false);
+  });
+
+  it('périme seule l’équivalence LED quand ledPowerW change, sans toucher aux impacts ni à la douche', () => {
+    let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
+    state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
+    const fingerprint = impactFingerprint(state, 'one');
+    state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
+    state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    const summary = summaryFingerprint(state);
+    state = conversationReducer(state, { type: 'summaryRequested', fingerprint: summary });
+    state = conversationReducer(state, { type: 'summaryResolved', fingerprint: summary, total: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
+    state = conversationReducer(state, { type: 'showerEquivalenceResolved', fingerprint: equivalenceFingerprint(state, 2), equivalence: { status: 'available', seconds: 1, factorSource: 'country' } });
+    state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
+    expect(isSummaryLedEquivalenceCurrent(state)).toBe(true);
+    const changed = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { ledPowerW: 9 } } });
+    expect(isSummaryCurrent(changed)).toBe(true);
+    expect(isSummaryShowerEquivalenceCurrent(changed)).toBe(true);
+    expect(isSummaryLedEquivalenceCurrent(changed)).toBe(false);
+    expect(changed.summaryLedEquivalence?.fingerprint.startsWith('stale:')).toBe(true);
+    const flowChanged = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { flowLitresPerMinute: 10 } } });
+    expect(isSummaryShowerEquivalenceCurrent(flowChanged)).toBe(false);
+    expect(isSummaryLedEquivalenceCurrent(flowChanged)).toBe(true);
   });
 });

@@ -1,8 +1,8 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   conversationReducer, impactFingerprint, initialConversationState, isIgnoredConversationBlock,
-  showerFingerprint, summaryFingerprint, type ConversationState,
-  isImpactCurrent, isShowerEquivalenceCurrent, isSummaryCurrent, isSummaryShowerEquivalenceCurrent, type ConversationAction,
+  equivalenceFingerprint, summaryFingerprint, type ConversationState,
+  isImpactCurrent, isShowerEquivalenceCurrent, isSummaryCurrent, isSummaryShowerEquivalenceCurrent, isSummaryLedEquivalenceCurrent, ledFingerprint, type ConversationAction,
 } from '../application/conversationReducer';
 import { TokenizationClient } from '../application/tokenizationClient';
 import { calculateImpact } from '../domain/impact';
@@ -10,6 +10,7 @@ import { prepareConversationHistory } from '../domain/conversationHistory';
 import { fallbackTokenCount } from '../domain/tokenization';
 import { resolveImpactParameters, resolveUserCarbonIntensity } from '../data/modelCatalog';
 import { calculateShowerEquivalence } from '../domain/showerEquivalence';
+import { calculateLedEquivalence } from '../domain/ledEquivalence';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
 import { fr } from '../i18n/fr';
@@ -59,7 +60,9 @@ export function App() {
     }
     if (calculationWasPending.current) {
       calculationWasPending.current = false;
-      if (calculationReturnFocus.current?.isConnected) calculationReturnFocus.current.focus();
+      const resultTitle = state.summary?.status === 'result' ? document.getElementById('result-title') : null;
+      if (resultTitle) resultTitle.focus();
+      else if (calculationReturnFocus.current?.isConnected) calculationReturnFocus.current.focus();
       calculationReturnFocus.current = null;
     }
   }, [summaryPending]);
@@ -79,7 +82,7 @@ export function App() {
 
   useEffect(() => {
     if (step === 'thread' && returnFocus.current) {
-      const target = returnFocus.current === 'summary' ? document.querySelector<HTMLButtonElement>('.summary-panel button') : null;
+      const target = returnFocus.current === 'summary' ? document.querySelector<HTMLButtonElement>('.result-section button') : null;
       (target ?? document.querySelector<HTMLButtonElement>('.thread-reference button'))?.focus();
       returnFocus.current = null;
     } else (step === 'methodology' ? methodologyTitle.current : stepTitle.current)?.focus();
@@ -100,13 +103,13 @@ export function App() {
 
   useEffect(() => {
     if (recalculationNotice && state.blocks.every((block) => isIgnoredConversationBlock(block) || isImpactCurrent(state, block.blockId))
-      && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state)) {
+      && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state) && isSummaryLedEquivalenceCurrent(state)) {
       setRecalculationNotice('');
     }
   }, [state, recalculationNotice]);
 
   function openSelection(origin: 'home' | 'thread', trigger?: HTMLButtonElement) {
-    const fromSummary = !!trigger?.closest('.summary-panel');
+    const fromSummary = !!trigger?.closest('.result-section');
     returnFocus.current = trigger ? (fromSummary ? 'summary' : 'reference') : null;
     setOpenAdvancedOnSelection(fromSummary || !!trigger?.classList.contains('edit-stale-parameters'));
     setSelectionOrigin(origin);
@@ -129,7 +132,8 @@ export function App() {
       const staleCount = next.blocks.filter((block) => next.impacts[block.blockId]?.status === 'result' && !isImpactCurrent(next, block.blockId)).length
         + next.blocks.filter((block) => next.showerEquivalences[block.blockId] && !isShowerEquivalenceCurrent(next, block.blockId)).length
         + Number(next.summary?.status === 'result' && !isSummaryCurrent(next))
-        + Number(!!next.summaryShowerEquivalence && !isSummaryShowerEquivalenceCurrent(next));
+        + Number(!!next.summaryShowerEquivalence && !isSummaryShowerEquivalenceCurrent(next))
+        + Number(!!next.summaryLedEquivalence && !isSummaryLedEquivalenceCurrent(next));
       if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
     }
     dispatch(action);
@@ -175,8 +179,8 @@ export function App() {
         if (result.ok) {
           dispatch({ type: 'impactResolved', blockId, fingerprint, impact: result.impact, factorSources: parameters.factorSources });
           const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
-          const showerFingerprintValue = showerFingerprint(snapshot, result.impact.carbonGco2e);
-          dispatch({ type: 'showerEquivalenceResolved', blockId, fingerprint: showerFingerprintValue, equivalence: calculateShowerEquivalence(result.impact.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters.shower, showerFactor.status === 'world' ? 'world' : 'country') });
+          const equivalenceFingerprintValue = equivalenceFingerprint(snapshot, result.impact.carbonGco2e);
+          dispatch({ type: 'showerEquivalenceResolved', blockId, fingerprint: equivalenceFingerprintValue, equivalence: calculateShowerEquivalence(result.impact.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters.shower, showerFactor.status === 'world' ? 'world' : 'country') });
           resolve(result.impact);
         } else {
           dispatch({ type: 'impactBlocked', blockId, fingerprint, code: 'invalid-data', async: true });
@@ -221,7 +225,8 @@ export function App() {
       factorSources: parameters?.factorSources,
     });
     const showerFactor = resolveUserCarbonIntensity(snapshot.userCountry);
-    dispatch({ type: 'showerEquivalenceResolved', fingerprint: showerFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
+    dispatch({ type: 'showerEquivalenceResolved', fingerprint: equivalenceFingerprint(snapshot, aggregation.total.carbonGco2e), equivalence: calculateShowerEquivalence(aggregation.total.carbonGco2e, showerFactor.status === 'unavailable' ? undefined : showerFactor.value, parameters!.shower, showerFactor.status === 'world' ? 'world' : 'country') });
+    dispatch({ type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(snapshot, aggregation.total.energyWh), equivalence: calculateLedEquivalence(aggregation.total.energyWh, parameters!.shower.ledPowerW) });
   }
 
   return (

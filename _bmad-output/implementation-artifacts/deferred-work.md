@@ -25,3 +25,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic.md`
   summary: Le statut « Calcul en cours… » de la barre collante est dans `.app-shell` rendu inerte pendant le calcul, donc non annoncé ; seul l'overlay annonce.
   evidence: rapport d'implémentation 7.3 et revue ; à traiter avec la section résultat de 7.4.
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-4-lire-un-resultat-clair-sous-la-conversation.md`
+  summary: Le sélecteur `.result-section button` (retour de focus 'summary' dans App.tsx) ne correspond plus à rien ; la logique fromSummary est morte.
+  evidence: La section Résultat n'a plus de bouton de modification, seulement un lien externe.

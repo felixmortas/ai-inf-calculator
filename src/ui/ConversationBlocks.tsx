@@ -4,8 +4,6 @@ import {
   isIgnoredConversationBlock,
   isImpactCurrent,
   isImpactFresh,
-  isSummaryCurrent,
-  isSummaryShowerEquivalenceCurrent,
   isAcceptedLocalSource,
   localSourceMaxBytes,
   type ConversationAction,
@@ -14,7 +12,7 @@ import {
 } from '../application/conversationReducer';
 import { fr } from '../i18n/fr';
 import { formatQuantity } from './quantityFormatter';
-import { userCountryOptions } from '../data/modelCatalog';
+import { ResultSection } from './ResultSection';
 
 export { localSourceMaxBytes } from '../application/conversationReducer';
 
@@ -36,6 +34,7 @@ interface ConversationBlocksProps {
   readonly state: ConversationState;
   readonly dispatch: (action: ConversationAction) => void;
   readonly onEditParameters?: (trigger: HTMLButtonElement) => void;
+  readonly random?: () => number;
 }
 
 const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
@@ -49,7 +48,7 @@ const optionalFields: readonly { readonly name: ConversationBlockField; readonly
 
 export const formatExchangeQuantity = formatQuantity;
 
-export function ConversationBlocks({ state, dispatch, onEditParameters }: ConversationBlocksProps) {
+export function ConversationBlocks({ state, dispatch, onEditParameters, random }: ConversationBlocksProps) {
   // Kept available for restoring the parameter action later.
   void onEditParameters;
   const nextBlockNumber = useRef(1);
@@ -64,15 +63,6 @@ export function ConversationBlocks({ state, dispatch, onEditParameters }: Conver
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const sourceImports = useRef(new Map<string, Promise<void>>());
   const [sourceStatus, setSourceStatus] = useState<Record<string, string>>({});
-  const currentSummary = state.summary?.status === 'result' && isSummaryCurrent(state) ? state.summary : undefined;
-  const currentSummaryShower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence : undefined;
-
-  const Shower = ({ value, stale }: { value: typeof state.summaryShowerEquivalence; stale: boolean }) => value ? (
-    <div className="shower-equivalence" role="status">
-      {value.equivalence.status === 'available' ? <p><span aria-hidden="true">{fr.showerEquivalence(formatQuantity(value.equivalence.seconds, 'duration').display)}</span><span className="visually-hidden">{fr.showerEquivalence(formatQuantity(value.equivalence.seconds, 'duration').accessible)}</span></p> : <p>{fr.showerUnavailable}</p>}
-      {value.equivalence.status === 'available' && value.equivalence.factorSource === 'world' ? <p className="impact-note">{fr.showerWorldFallback}</p> : null}
-    </div>
-  ) : stale ? <p className="impact-stale">{fr.staleShower}</p> : null;
 
   useEffect(() => {
     if (!pendingFocus.current) return;
@@ -281,15 +271,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters }: Conver
             </div>
           </div>
         </div>, document.body) : null}
-      {currentSummary ? <section className="summary-panel" aria-labelledby="summary-title">
-        <h3 id="summary-title">{fr.summaryTitle}</h3><p role="status" className="visually-hidden">{fr.summaryCurrentStatus}</p>
-        {([['energy', fr.energyLabel, currentSummary.total.energyWh], ['carbon', fr.carbonLabel, currentSummary.total.carbonGco2e], ['water', fr.waterLabel, currentSummary.total.waterL]] as const).map(([kind, label, value]) => { const quantity = formatQuantity(value, kind); return <p key={kind}>{label}: <span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></p>; })}
-        <p className="impact-note">{fr.userCountryLabel} : {userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry}</p>
-        <Shower value={currentSummaryShower} stale={!!state.summaryShowerEquivalence && !currentSummaryShower} />
-        {Object.values(currentSummary.factorSources ?? {}).includes('world') ? <p role="status" className="impact-note">{fr.worldFallbackNotice}</p> : null}
-        <p className="impact-note">{fr.summaryLimits}</p>
-        <section className="good-practices" aria-labelledby="good-practices-title"><h4 id="good-practices-title">{fr.goodPracticesTitle}</h4><ul>{fr.goodPractices.map((practice) => <li key={practice}>{practice}</li>)}</ul></section>
-      </section> : null}
+      <ResultSection state={state} random={random} />
     </section>
   );
 }

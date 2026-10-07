@@ -24,3 +24,24 @@ describe('quantités de présentation', () => {
     expect(huge.display).not.toMatch(/[eE][+-]?\d/);
   });
 });
+
+describe('durées (ampoule LED, douche)', () => {
+  it('affiche zéro en secondes', () => {
+    expect(formatQuantity(0, 'duration')).toEqual({ display: '0 s', accessible: '0 secondes' });
+  });
+  it('affiche « moins de » sous le seuil de 0,001 ms', () => {
+    expect(formatQuantity(1e-7, 'duration')).toEqual({ display: '< 0,001 ms', accessible: 'moins de 0,001 millisecondes' });
+  });
+  it('bascule d’une unité à la suivante au seuil', () => {
+    expect(formatQuantity(59, 'duration').display).toBe('59 s');
+    expect(formatQuantity(60, 'duration').display).toBe('1 min');
+    expect(formatQuantity(3600, 'duration').display).toBe('1 h');
+    expect(formatQuantity(86400, 'duration').display).toBe('1 j');
+    expect(formatQuantity(59.99, 'duration').display).toBe('1 min');
+  });
+  it('signale une valeur très élevée en jours au-delà de 999 j', () => {
+    const big = formatQuantity(86400 * 1500, 'duration');
+    expect(big.display.replace(/\s/gu, ' ')).toBe('1 500 j (valeur très élevée)');
+    expect(big.accessible.replace(/\s/gu, ' ')).toBe('1 500 jours (valeur très élevée)');
+  });
+});

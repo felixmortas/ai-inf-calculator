@@ -161,7 +161,7 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Bilan environnemental de la conversation' });
+    await screen.findByRole('heading', { name: 'Résultat' });
     await user.click(screen.getByRole('button', { name: 'Modifier le chatbot ou le modèle' }));
     await user.click(screen.getByText('Mode avancé'));
     const flow = screen.getByLabelText('Débit de votre douche (L/min)');
@@ -170,7 +170,7 @@ describe('configuration de conversation', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByRole('heading', { name: 'Étape 2/3 : Votre conversation' })).toBeVisible();
-    expect(screen.getAllByText(/à recalculer/)).toHaveLength(1);
+    expect(screen.getAllByText(/résultats? dépendants? (est|sont) à recalculer/)).toHaveLength(1);
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Bonjour');
   });
 

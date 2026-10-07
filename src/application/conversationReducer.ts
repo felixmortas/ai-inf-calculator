@@ -1,5 +1,6 @@
 import { detectUserCountry, modelCatalog, modelsForProvider, resolveHostingCountry, isHostingCountry, isUserCountry, resolveUserCarbonIntensity, type EnvironmentalFactorSource, type ImpactParameterOverrides } from '../data/modelCatalog';
 import type { ShowerEquivalence } from '../domain/showerEquivalence';
+import type { LedEquivalence } from '../domain/ledEquivalence';
 import {
   canSelectModel,
   chatGptProvider,
@@ -42,6 +43,7 @@ export interface ConversationState {
   readonly impacts: Readonly<Record<string, BlockImpactState>>;
   readonly showerEquivalences: Readonly<Record<string, ShowerEquivalenceState>>;
   readonly summaryShowerEquivalence?: ShowerEquivalenceState;
+  readonly summaryLedEquivalence?: LedEquivalenceState;
   readonly summary?: ConversationSummaryState;
 }
 
@@ -100,6 +102,7 @@ export type ConversationSummaryState =
   | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' };
 export interface ShowerEquivalenceState { readonly fingerprint: string; readonly equivalence: ShowerEquivalence; }
+export interface LedEquivalenceState { readonly fingerprint: string; readonly equivalence: LedEquivalence; }
 
 export type ConversationAction =
   | { readonly type: 'providerSelected'; readonly provider: string }
@@ -124,6 +127,7 @@ export type ConversationAction =
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
   | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' }
+  | { readonly type: 'ledEquivalenceResolved'; readonly fingerprint: string; readonly equivalence: LedEquivalence }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
 const initialSubscription: ChatGptSubscription = defaultChatGptSubscription;
@@ -196,13 +200,16 @@ function keepChangedResultsStale(previous: ConversationState, next: Conversation
   ]));
   const summary = next.summary?.status === 'result' && summaryFingerprint(previous) !== summaryFingerprint(next)
     ? { ...next.summary, fingerprint: `stale:${next.summary.fingerprint}` } : next.summary;
-  const showerChanged = showerFingerprint(previous) !== showerFingerprint(next);
+  const showerChanged = equivalenceFingerprint(previous) !== equivalenceFingerprint(next);
   const showerEquivalences = showerChanged ? Object.fromEntries(Object.entries(next.showerEquivalences).map(([blockId, value]) =>
     [blockId, { ...value, fingerprint: `stale:${value.fingerprint}` }])) : next.showerEquivalences;
   const summaryShowerEquivalence = showerChanged && next.summaryShowerEquivalence
     ? { ...next.summaryShowerEquivalence, fingerprint: `stale:${next.summaryShowerEquivalence.fingerprint}` }
     : next.summaryShowerEquivalence;
-  return { ...next, impacts, summary, showerEquivalences, summaryShowerEquivalence };
+  const summaryLedEquivalence = ledFingerprint(previous) !== ledFingerprint(next) && next.summaryLedEquivalence
+    ? { ...next.summaryLedEquivalence, fingerprint: `stale:${next.summaryLedEquivalence.fingerprint}` }
+    : next.summaryLedEquivalence;
+  return { ...next, impacts, summary, showerEquivalences, summaryShowerEquivalence, summaryLedEquivalence };
 }
 
 /** A canonical snapshot of exactly the inputs consumed by one impact calculation. */
@@ -230,26 +237,41 @@ export function summaryFingerprint(state: Pick<ConversationState, 'provider' | '
 }
 
 /**
- * The shower comparison is not rendered before epic 4, but its canonical
- * dependency boundary is available now for the later session parameters.
+ * Empreinte de l’équivalence douche : carbone, pays de la personne et paramètres de douche.
+ * `ledPowerW` en est exclu : sa modification ne périme que la ligne LED (voir `ledFingerprint`).
+ * Les impacts restent régis par `impactFingerprint`.
  */
-export function showerFingerprint(
+export function equivalenceFingerprint(
   state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry'>,
   carbonGco2e?: number,
 ): string {
   const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
   const factor = resolveUserCarbonIntensity(state.userCountry);
-  return JSON.stringify(['shower-v2', carbonGco2e ?? null, state.userCountry, factor, resolved?.shower ?? null]);
+  const shower = resolved ? (({ ledPowerW: _led, ...rest }) => rest)(resolved.shower) : null;
+  return JSON.stringify(['shower-v3', carbonGco2e ?? null, state.userCountry, factor, shower]);
+}
+
+/** Empreinte de l’équivalence ampoule LED : électricité totale et puissance de l’ampoule. */
+export function ledFingerprint(
+  state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides'>,
+  energyWh?: number,
+): string {
+  const resolved = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides);
+  return JSON.stringify(['led-v1', energyWh ?? null, resolved?.shower.ledPowerW ?? null]);
 }
 
 export function isShowerEquivalenceCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry' | 'showerEquivalences' | 'impacts' | 'blocks' | 'parameterValidationInvalid'>, blockId: string): boolean {
   const impact = currentImpact(state as ConversationState, blockId);
   const value = state.showerEquivalences[blockId];
-  return !!impact && value?.fingerprint === showerFingerprint(state, impact.carbonGco2e);
+  return !!impact && value?.fingerprint === equivalenceFingerprint(state, impact.carbonGco2e);
 }
 
 export function isSummaryShowerEquivalenceCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'userCountry' | 'summaryShowerEquivalence' | 'summary'>): boolean {
-  return state.summary?.status === 'result' && state.summaryShowerEquivalence?.fingerprint === showerFingerprint(state, state.summary.total.carbonGco2e);
+  return state.summary?.status === 'result' && state.summaryShowerEquivalence?.fingerprint === equivalenceFingerprint(state, state.summary.total.carbonGco2e);
+}
+
+export function isSummaryLedEquivalenceCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'parameterOverrides' | 'summaryLedEquivalence' | 'summary'>): boolean {
+  return state.summary?.status === 'result' && state.summaryLedEquivalence?.fingerprint === ledFingerprint(state, state.summary.total.energyWh);
 }
 
 export function isImpactCurrent(state: Pick<ConversationState, 'provider' | 'modelId' | 'hostingCountry' | 'blocks' | 'impacts' | 'parameterOverrides' | 'parameterValidationInvalid'>, blockId: string): boolean {
@@ -425,14 +447,18 @@ export function conversationReducer(state: ConversationState, action: Conversati
         && summaryFingerprint(state) === action.fingerprint
         ? { ...state, summary: { status: 'unavailable', fingerprint: action.fingerprint, code: action.code } }
         : state;
+    case 'ledEquivalenceResolved':
+      return state.summary?.status === 'result' && ledFingerprint(state, state.summary.total.energyWh) === action.fingerprint
+        ? { ...state, summaryLedEquivalence: { fingerprint: action.fingerprint, equivalence: action.equivalence } }
+        : state;
     case 'showerEquivalenceResolved': {
       if (action.blockId) {
         const impact = currentImpact(state, action.blockId);
-        return impact && showerFingerprint(state, impact.carbonGco2e) === action.fingerprint
+        return impact && equivalenceFingerprint(state, impact.carbonGco2e) === action.fingerprint
           ? { ...state, showerEquivalences: { ...state.showerEquivalences, [action.blockId]: { fingerprint: action.fingerprint, equivalence: action.equivalence } } }
           : state;
       }
-      return state.summary?.status === 'result' && showerFingerprint(state, state.summary.total.carbonGco2e) === action.fingerprint
+      return state.summary?.status === 'result' && equivalenceFingerprint(state, state.summary.total.carbonGco2e) === action.fingerprint
         ? { ...state, summaryShowerEquivalence: { fingerprint: action.fingerprint, equivalence: action.equivalence } }
         : state;
     }
