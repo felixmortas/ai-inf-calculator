@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
 describe('parcours de départ', () => {
@@ -172,5 +172,102 @@ describe('barre d’action et clavier logiciel', () => {
     unmount();
     expect(root).not.toHaveClass('keyboard-open');
     Reflect.deleteProperty(window, 'visualViewport');
+  });
+});
+
+describe('partage du résultat', () => {
+  async function calculate(user: ReturnType<typeof userEvent.setup>) {
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(screen.queryByRole('button', { name: 'Partager' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'SECRET-MSG');
+    await user.click(screen.getByRole('button', { name: 'Calculer' }));
+    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('button', { name: 'Partager' });
+  }
+  const navShare = Object.getOwnPropertyDescriptor(navigator, 'share');
+  const navClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  afterEach(() => {
+    for (const [key, descriptor] of [['share', navShare], ['clipboard', navClipboard]] as const) {
+      if (descriptor) Object.defineProperty(navigator, key, descriptor); else delete (navigator as unknown as Record<string, unknown>)[key];
+    }
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+  function setNav(share: unknown, writeText: unknown) {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: writeText ? { writeText } : undefined });
+  }
+
+  it('place Partager après le lien, partage sans contenu, sans réseau ni stockage', async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const share = vi.fn().mockResolvedValue(undefined);
+    await calculate(user);
+    setNav(share, undefined);
+    expect(share).not.toHaveBeenCalled();
+    const button = screen.getByRole('button', { name: 'Partager' });
+    const link = document.querySelector('.result-link')!;
+    expect(link.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelectorAll('.share-button')).toHaveLength(1);
+    await user.click(button);
+    expect(share).toHaveBeenCalledTimes(1);
+    const text = share.mock.calls[0][0].text as string;
+    expect(text).toContain('Ma conversation avec ChatGPT (1 échange)');
+    expect(text).toContain('Toi aussi, estime l’impact environnemental');
+    expect(text).not.toContain('SECRET');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(setItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it('copie en repli, alerte le navigateur, puis retire le bouton quand le résultat est périmé', async () => {
+    const user = userEvent.setup();
+    await calculate(user);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+    setNav(undefined, writeText);
+    await user.click(screen.getByRole('button', { name: 'Partager' }));
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(alertSpy).toHaveBeenCalledWith('Résultat copié dans le presse-papiers.');
+    expect(screen.queryByText('Résultat copié.')).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), ' plus');
+    expect(screen.queryByRole('button', { name: 'Partager' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Résultat copié.')).not.toBeInTheDocument();
+  });
+
+  it('ignore l’annulation et propose la copie manuelle si tout échoue', async () => {
+    const user = userEvent.setup();
+    await calculate(user);
+    setNav(vi.fn().mockRejectedValue(new DOMException('x', 'AbortError')), undefined);
+    await user.click(screen.getByRole('button', { name: 'Partager' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText('Résultat copié.')).not.toBeInTheDocument();
+    setNav(undefined, undefined);
+    await user.click(screen.getByRole('button', { name: 'Partager' }));
+    expect(await screen.findByRole('alert')).toBeVisible();
+    const area = screen.getByRole('textbox', { name: 'Copiez ce texte à la main.' });
+    expect(area).toHaveAttribute('readonly');
+    expect((area as HTMLTextAreaElement).value).not.toContain('SECRET');
+    expect(area).toHaveFocus();
+  });
+
+  it('rend Partager atteignable au clavier, dans la seule section Résultat', async () => {
+    const user = userEvent.setup();
+    await calculate(user);
+    const button = screen.getByRole('button', { name: 'Partager' });
+    expect(button.closest('.result-section')).not.toBeNull();
+    expect(screen.getAllByRole('button', { name: /Partager/ })).toHaveLength(1);
+    const link = document.querySelector<HTMLElement>('.result-link')!;
+    link.focus();
+    await user.tab();
+    expect(button).toHaveFocus();
+    expect(button).toHaveAccessibleName('Partager');
+    expect(button.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
 });

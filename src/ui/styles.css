@@ -212,6 +212,10 @@ button {
 .metric-value { font-size: 1.15rem; font-weight: 700; }
 .result-interpretation { font-weight: 700; }
 .result-link { margin-top: .5rem; border: 1px solid #184bb2; border-radius: .35rem; padding: .35rem .75rem; }
+.share-block { margin-top: .75rem; }
+.share-button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-width: 2.75rem; min-height: 2.75rem; padding: .35rem 1rem; border: 2px solid #184bb2; border-radius: .35rem; background: #fff; color: #184bb2; font-weight: 600; white-space: normal; }
+.share-feedback { margin: .5rem 0 0; }
+.share-feedback textarea { display: block; box-sizing: border-box; width: 100%; margin-top: .25rem; font: inherit; }
 .good-practices { margin-top: 1rem; padding: .8rem; border: 1px solid #577160; border-radius: .35rem; background: #f3f8f3; }
 .good-practices h4 { margin: 0 0 .5rem; }
 .good-practices p { margin: 0; }
