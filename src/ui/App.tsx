@@ -239,10 +239,10 @@ export function App() {
             <h1>{fr.title}</h1>
             {step === 'home' ? <p>{fr.introduction}</p> : null}
           </div>
-          <button className="link-button methodology-help" type="button" onClick={openMethodology}>{fr.methodologyAction}</button>
         </header>}
       {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths">
         <button type="button" className="primary-action" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}>{fr.startAction}</button>
+        <button className="link-button methodology-help" type="button" onClick={openMethodology}>{fr.methodologyAction}</button>
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
         <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {fr.backAction}</button>

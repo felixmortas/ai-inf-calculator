@@ -176,7 +176,7 @@ UX-DR24: « Calculer » unique : indisponible avec explication sans texte utile 
 UX-DR25: Résultat (`result-hero`) : équivalence douche en `metric-hero` avec nom accessible complet de l’unité ; puis carbone, eau et électricité en `metric` ; puis durée LED et phrase d’interprétation neutre ; périmètre sans jargon avec « En savoir plus » ; mention d’incertitude.
 UX-DR26: Résultat périmé : « à recalculer » sur les cartes touchées et sur la section résultat, valeurs anciennes retirées ou clairement inutilisables, partage indisponible ; états « durée LED non calculable », « pays non déduit » et repli Monde expliqués près du résultat concerné.
 UX-DR27: Bonne pratique unique avec lien « Voir toutes les bonnes pratiques » (cible externe non disponible : prévoir un état explicite) ; bouton « Partager » à contour, moins saillant que l’action principale, avec retour textuel « Résultat copié. » ou message d’échec et action de suite.
-UX-DR28: Lien « Méthodologie » libellé présent sur chaque écran (plus de bouton « ? », aucun tutoriel) ; page de méthodologie avec « Retour » libellé en haut et un seul titre principal.
+UX-DR28: Lien « Méthodologie » libellé présent uniquement sur l’accueil, sous « Commencer » (plus de bouton « ? », aucun tutoriel) ; page de méthodologie avec « Retour » libellé en haut et un seul titre principal.
 UX-DR29: Un seul dialogue modal : confirmation de suppression, avec fond inerte et restitution du focus ; focus après ajout sur la nouvelle question, après suppression sur la carte voisine ou « + Ajouter une question / réponse ».
 UX-DR30: Accessibilité du parcours simplifié : clavier, 320 px, zooms 200 %/400 %, cibles 44 × 44 px, `prefers-reduced-motion`, aucun statut par la couleur seule ; correction des coquilles de `fr.ts` (« entraiment », « conscis », etc.).
 
@@ -861,13 +861,13 @@ afin d’arriver au résultat sans me demander quoi faire.
 **quand** la personne active « Retour » (libellé et icône décorative, en haut à gauche au-dessus du titre, cible d’au moins 44 × 44 px),
 **alors** elle revient à l’étape 1/3 sans perdre les textes saisis. (FR-16, UX-DR18)
 
-**Étant donné** chaque écran du parcours,
+**Étant donné** l’accueil,
 **quand** il est affiché,
-**alors** un lien libellé « Méthodologie » est présent. Il n’y a ni bouton « ? » seul ni tutoriel. (UX-DR28)
+**alors** un lien libellé « Méthodologie » est présent sous le bouton « Commencer » ; il est absent des autres écrans. Il n’y a ni bouton « ? » seul ni tutoriel. (UX-DR28)
 
 **Étant donné** la page de méthodologie,
 **quand** elle s’ouvre,
-**alors** un « Retour » libellé figure tout en haut, au-dessus d’un seul titre principal. Il ramène à l’écran d’origine. (UX-DR28)
+**alors** un « Retour » libellé figure tout en haut, au-dessus d’un seul titre principal. Il ramène à l’accueil. (UX-DR28)
 
 **Étant donné** une étape portant une action principale (« Continuer » ou « Calculer »),
 **quand** elle est affichée,

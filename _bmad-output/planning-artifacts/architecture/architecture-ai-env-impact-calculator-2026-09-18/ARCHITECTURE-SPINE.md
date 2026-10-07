@@ -154,7 +154,7 @@ sequenceDiagram
 
 | Capability / Area | Lives in | Governed by |
 | --- | --- | --- |
-| Accueil, étapes 1–2, résultat sous la conversation, « Calculer » unique et péremption | `ui/`, `application/`, `domain/` | AD-2, AD-3, AD-9 |
+| Accueil (avec lien « Méthodologie » sous « Commencer », absent des autres écrans), étapes 1–2, résultat sous la conversation, « Calculer » unique et péremption | `ui/`, `application/`, `domain/` | AD-2, AD-3, AD-9 |
 | Historique, artifact et total | `domain/` | AD-2, AD-3 |
 | Comptage local et fallback | `workers/`, `domain/` | AD-2, AD-4 |
 | Modèles, références initiales, paramètres et calcul | `data/`, `application/`, `domain/` | AD-3, AD-5 |

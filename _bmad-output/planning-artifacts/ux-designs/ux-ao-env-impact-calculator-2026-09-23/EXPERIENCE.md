@@ -40,7 +40,7 @@ Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fa
 | Étape 3/3 — Résultat | « Calculer », sans nouvel écran : section sous la conversation, sur la même page | Lire la douche en grand, les valeurs, la comparaison LED, l'interprétation, une bonne pratique ; partager. [Maquette](mockups/bilan.html) (à régénérer). |
 | Mode avancé | Section repliable sous le choix du modèle, étape 1/3 | Corriger pays de l'utilisateur, paramètres douche et ampoule. |
 | Mode expert | Section repliable à l'intérieur du Mode avancé | Corriger pays d'hébergement et hypothèses techniques. |
-| Méthodologie | Lien libellé « Méthodologie », présent sur chaque écran | Document de référence pour les curieux ; bouton « Retour » libellé tout en haut, au-dessus d'un seul titre principal. |
+| Méthodologie | Lien libellé « Méthodologie », uniquement sur l'accueil, sous le bouton « Commencer » | Document de référence pour les curieux ; bouton « Retour » libellé tout en haut, au-dessus d'un seul titre principal. |
 
 L'accueil et les trois étapes forment une progression dans la même page. L'étape 3/3 n'est pas un nouvel écran : le résultat apparaît sous la conversation après « Calculer » et reçoit le focus. Depuis l'étape 2/3, « Retour » mène à l'étape 1/3 ; un retour à l'étape précédente ne supprime pas les textes. Le bouton « Retour » est libellé, placé en haut à gauche, au-dessus du titre de l'écran. Le fil reste l'ancre de navigation après le départ. La confirmation de suppression d’une question / réponse est le seul dialogue modal du parcours. La [variante Canopée claire](.working/palettes-guide-calme.html) illustre l'accueil ; `DESIGN.md` et ce document priment sur cette exploration et sur les maquettes statiques.
 
@@ -77,7 +77,7 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 | Start button | Bouton « Commencer » à l'accueil. |
 | Step indicator | Texte « Étape N/3 : titre » en tête des écrans 1 à 3 ; la phrase de justification suit le titre. |
 | Back button | Bouton retour libellé, en haut à gauche, avant le titre ; conserve les textes. |
-| Methodology link | Lien libellé « Méthodologie » ouvrant la page de méthodologie ; aucun bouton « ? » seul, aucun tutoriel. |
+| Methodology link | Lien libellé « Méthodologie » sous « Commencer » sur l'accueil uniquement, ouvrant la page de méthodologie ; aucun bouton « ? » seul, aucun tutoriel. |
 | Sticky action bar | L'action principale de l'étape (« Continuer », « Calculer ») est visible en bas de l'écran. Elle devient statique (non collante) à fort zoom ou en hauteur réduite et ne masque jamais le champ en focus. |
 | Exchange card | Cartes compactes ordonnées. En-tête : numéro, aperçu de la question et de la réponse, état d'actualité, carbone et eau si l'estimation est à jour. Commandes texte « Déplier » / « Replier » ; déplier révèle contenu, modification, suppression. Pas d'action de calcul propre à la carte. |
 | Exchange editor | Question puis réponse ; « Ajouter du contenu (optionnel) » regroupe réflexion affichée par l'IA, contenu du fichier créé par l'IA et fichiers joints. « + Ajouter une question / réponse » ouvre un nouvel éditeur sans imposer de calcul. |
@@ -186,7 +186,7 @@ Sur mobile, une seule colonne : indicateur d'étape, puis contenu de l'étape (l
 
 ### UJ-5 — Camille se renseigne puis partage
 
-1. Camille ouvre la méthodologie seulement si elle est curieuse, puis revient grâce à « ← Retour » en haut à gauche.
+1. Camille ouvre la méthodologie depuis l'accueil, sous « Commencer », seulement si elle est curieuse, puis revient à l'accueil grâce à « ← Retour » en haut à gauche.
 2. Sous sa conversation, elle active « Partager ». **Climax :** le partage du système s'ouvre avec un texte prérempli (chatbot utilisé, nombre d'échanges, équivalence douche, valeurs principales avec unités, mention d'estimation, adresse de la page), sans aucun contenu de sa conversation.
 
 Échec : si le partage n'est pas disponible, le texte est copié et « Résultat copié. » le confirme ; si la copie échoue, un message l'explique.

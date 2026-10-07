@@ -23,7 +23,7 @@ describe('parcours de départ', () => {
   it('propose un accueil minimal puis place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
-    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Méthodologie', 'Commencer']);
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Commencer', 'Méthodologie']);
     expect(screen.getByText(/Estimez en quelques clics/)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toHaveFocus();
@@ -35,21 +35,23 @@ describe('parcours de départ', () => {
     expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
   });
 
-  it('revient à l’étape 1 sans perdre les textes et ouvre la méthodologie depuis chaque écran', async () => {
+  it('revient à l’étape 1 sans perdre les textes ; la méthodologie ne s’ouvre que depuis l’accueil', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
+    expect(screen.queryByRole('button', { name: 'Méthodologie' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Mon texte');
+    expect(screen.queryByRole('button', { name: 'Méthodologie' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retour' }));
+    await user.click(screen.getByRole('button', { name: 'Retour' }));
     await user.click(screen.getByRole('button', { name: 'Méthodologie' }));
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'Méthodologie d’estimation' })).toBeVisible();
-    expect(screen.getAllByRole('heading', { name: 'Méthodologie d’estimation' })).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(screen.getByRole('textbox', { name: 'Collez ici votre message' })).toHaveValue('Mon texte');
-    await user.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Commencer' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('Mon texte');
     expect(screen.queryByRole('button', { name: '?' })).not.toBeInTheDocument();
