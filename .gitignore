@@ -1,9 +1,10 @@
-/.DS_Store
 .agents
+.claude
 _bmad
 node_modules
 dist
-chatgpt-share-output
+
+/.DS_Store
 __pycache__
 
 system_prompts_leaks
