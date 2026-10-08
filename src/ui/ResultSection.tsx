@@ -11,7 +11,7 @@ import { countryLabel as localizedCountry, resolveImpactParameters } from '../da
 import { useI18n } from '../i18n/I18nProvider';
 import type { Messages } from '../i18n/fr';
 import { Icon } from './Icons';
-import { formatQuantity, type QuantityKind } from './quantityFormatter';
+import { formatQuantity, type QuantityKind } from '../domain/quantityFormatter';
 
 interface ResultSectionProps {
   readonly state: ConversationState;

@@ -1,5 +1,5 @@
 import type { Messages } from '../i18n/fr';
-import { formatQuantity } from '../ui/quantityFormatter';
+import { formatQuantity } from '../domain/quantityFormatter';
 import { buildShareText, type ShareableResult } from '../domain/shareableResult';
 import { isIgnoredConversationBlock, isSummaryShowerEquivalenceCurrent, type ConversationState } from './conversationReducer';
 

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { fr } from '../i18n/fr';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { languages, type LanguageEntry } from '../i18n/languages';
-import { formatQuantity } from './quantityFormatter';
+import { formatQuantity } from '../domain/quantityFormatter';
 import { App } from './App';
 
 const yy: LanguageEntry = {

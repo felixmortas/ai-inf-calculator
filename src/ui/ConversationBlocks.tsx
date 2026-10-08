@@ -12,7 +12,7 @@ import {
 } from '../application/conversationReducer';
 import type { Messages } from '../i18n/fr';
 import { useI18n } from '../i18n/I18nProvider';
-import { formatQuantity } from './quantityFormatter';
+import { formatQuantity } from '../domain/quantityFormatter';
 import { ResultSection } from './ResultSection';
 import { Icon } from './Icons';
 
