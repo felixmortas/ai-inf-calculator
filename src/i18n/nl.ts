@@ -150,7 +150,7 @@ export const nl = {
   carbonLabel: '🪨 Koolstof',
   waterLabel: 'Water',
   impactLimits: 'Onzekere schatting: alleen gebruik, exclusief productie, afschrijving en Scope 3.',
-  resultTitle: 'Resultaat',
+  resultTitle: 'Stap 3/3: Resultaat',
   resultStale: 'Klik op «Berekenen» om een actueel resultaat weer te geven.',
   resultShower: (duration: string) => `Ongeveer ${duration} warme douche`,
   resultShowerUnavailable: 'Vergelijking met de douche kan niet worden berekend: de uitstoot per minuut is nul of niet beschikbaar.',

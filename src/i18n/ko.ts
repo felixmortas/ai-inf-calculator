@@ -150,7 +150,7 @@ export const ko = {
   carbonLabel: '🪨 탄소',
   waterLabel: '물',
   impactLimits: '불확실한 추정치입니다. 사용 단계만 포함하며, 제조·감가상각 및 Scope 3는 제외됩니다.',
-  resultTitle: '결과',
+  resultTitle: '3/3단계: 결과',
   resultStale: '최신 결과를 표시하려면 « 계산 »을 클릭하세요.',
   resultShower: (duration: string) => `따뜻한 샤워 약 ${duration}`,
   resultShowerUnavailable: '샤워와의 비교를 계산할 수 없습니다. 분당 배출량이 0이거나 사용할 수 없습니다.',

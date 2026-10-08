@@ -150,7 +150,7 @@ export const ar = {
   carbonLabel: 'الكربون',
   waterLabel: 'الماء',
   impactLimits: 'تقدير غير مؤكد: للاستخدام فقط، باستثناء التصنيع والاستهلاك المحاسبي وScope 3.',
-  resultTitle: 'النتيجة',
+  resultTitle: 'الخطوة 3/3: النتيجة',
   resultStale: 'انقر على «حساب» لعرض نتيجة محدثة.',
   resultShower: (duration: string) => `نحو ${duration} من الاستحمام بالماء الساخن`,
   resultShowerUnavailable: 'لا يمكن حساب المقارنة مع الدش: الانبعاثات لكل دقيقة تساوي صفرًا أو غير متاحة.',

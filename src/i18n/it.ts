@@ -150,7 +150,7 @@ export const it = {
   carbonLabel: 'Carbonio',
   waterLabel: 'Acqua',
   impactLimits: 'Stima incerta: solo utilizzo, esclusi produzione, ammortamento e Scope 3.',
-  resultTitle: 'Risultato',
+  resultTitle: 'Passaggio 3/3: risultato',
   resultStale: 'Fai clic su «Calcola» per visualizzare un risultato aggiornato.',
   resultShower: (duration: string) => `Circa ${duration} di doccia calda`,
   resultShowerUnavailable: 'Confronto con la doccia non calcolabile: le emissioni al minuto sono nulle o non disponibili.',

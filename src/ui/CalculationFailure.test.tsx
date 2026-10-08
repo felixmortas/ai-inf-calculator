@@ -21,7 +21,7 @@ describe('échec de calcul', () => {
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Le calcul a échoué');
-    expect(screen.queryByRole('heading', { name: 'Résultat' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Étape 3/3 : Résultat' })).not.toBeInTheDocument();
     expect(document.querySelector('.calculation-overlay')).toBeNull();
     expect(document.querySelector('.app-shell')).not.toHaveAttribute('inert');
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Bonjour');

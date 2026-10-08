@@ -113,7 +113,7 @@ describe('fil et estimations', () => {
     expect(screen.getByRole('button', { name: 'Déplier la question / réponse 1' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('button', { name: 'Calculer' }).closest('.sticky-actions')).not.toBeNull();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect(await screen.findByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     const ledRow = screen.getByText(/Ampoule LED allumée/).closest('li');
     expect(ledRow).not.toBeNull();
@@ -131,7 +131,7 @@ describe('fil et estimations', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Suite');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     const exchanges = document.querySelectorAll('.conversation-blocks .conversation-block');
     const lastExchange = exchanges[exchanges.length - 1];
@@ -148,7 +148,7 @@ describe('fil et estimations', () => {
     expect(document.querySelectorAll('.exchange-status.impact-stale')).toHaveLength(2);
     expect(screen.getAllByText(/à recalculer\./)).toHaveLength(1);
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toHaveAttribute('role', 'status');
-    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.metric-hero')).not.toBeInTheDocument();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(0);
@@ -187,7 +187,7 @@ describe('partage du résultat', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'SECRET-MSG');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     await screen.findByRole('button', { name: 'Partager' });
   }
   const navShare = Object.getOwnPropertyDescriptor(navigator, 'share');

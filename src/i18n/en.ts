@@ -145,7 +145,7 @@ export const en: Messages = {
   carbonLabel: 'Carbon',
   waterLabel: 'Water',
   impactLimits: 'Uncertain estimate: for usage only, excluding manufacturing, amortization, and Scope 3.',
-  resultTitle: 'Result',
+  resultTitle: 'Step 3/3: Result',
   resultStale: 'Click "Calculate" to display an up-to-date result.',
   resultShower: (duration: string) => `About ${duration} of hot shower`,
   resultShowerUnavailable: 'Comparison with the shower cannot be calculated: emissions per minute are zero or unavailable.',

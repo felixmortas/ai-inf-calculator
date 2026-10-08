@@ -150,7 +150,7 @@ export const ja = {
   carbonLabel: '炭素',
   waterLabel: '水',
   impactLimits: '不確実な推定：使用時のみを対象とし、製造、償却、Scope 3は含みません。',
-  resultTitle: '結果',
+  resultTitle: 'ステップ 3/3：結果',
   resultStale: '「計算」をクリックして最新の結果を表示してください。',
   resultShower: (duration: string) => `約${duration}の温水シャワー`,
   resultShowerUnavailable: 'シャワーとの比較は計算できません：1分あたりの排出量がゼロまたは利用できません。',

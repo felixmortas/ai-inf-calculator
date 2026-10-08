@@ -86,7 +86,7 @@ describe('composition de la conversation', () => {
     calculate.focus();
     await user.click(calculate);
     expect(calculate).toHaveFocus();
-    expect(screen.queryByRole('heading', { name: 'Résultat' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Étape 3/3 : Résultat' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Collez ici votre message'), ' Bonjour ');
     expect(screen.getByRole('button', { name: 'Calculer' })).not.toHaveAttribute('aria-disabled');
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue(' Bonjour ');
@@ -227,7 +227,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     const frenchCarbon = (await screen.findByLabelText(/Carbone :/)).textContent;
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summary = await screen.findByRole('heading', { name: 'Résultat' });
+    const summary = await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     expect(summary.parentElement).toHaveTextContent('Carbone');
     french.unmount();
 
@@ -247,7 +247,7 @@ describe('composition de la conversation', () => {
     await user.type(screen.getAllByLabelText('Collez ici votre message')[0], 'Premier échange');
     await user.type(screen.getAllByLabelText('Collez ici votre message')[1], 'Deuxième échange plus long');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summaryHeading = await screen.findByRole('heading', { name: 'Résultat' });
+    const summaryHeading = await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     expect(summaryHeading.parentElement).toHaveTextContent('Électricité');
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     expect(document.querySelectorAll('.result-section')).toHaveLength(1);
@@ -264,7 +264,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    expect(await screen.findByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
     expect(screen.getByRole('region', { name: 'Question / réponse 3' })).not.toHaveTextContent(/Vide|À calculer/);
   });
@@ -453,7 +453,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Modifié' });
     renderBlocks(state);
     expect(screen.queryByRole('heading', { name: 'Une bonne pratique' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     expect(screen.getByText(/pour afficher un résultat à jour/)).toBeVisible();
     expect(document.querySelector('.result-section')).not.toHaveTextContent(/\d+(,\d+)? (g|mg|Wh|L)/);
     expect(document.querySelectorAll('.exchange-status.impact-stale')).toHaveLength(2);
@@ -536,7 +536,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Un échange déjà calculé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    const summary = await screen.findByRole('heading', { name: 'Résultat' });
+    const summary = await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     expect(summary.parentElement).toHaveTextContent('Électricité');
     expect(summary).toHaveFocus();
   });
@@ -551,7 +551,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bilan conservé');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     const summaryEnergy = screen.getByText('Électricité').closest('li')!.textContent;
 
     await editReference(user);
@@ -559,7 +559,7 @@ describe('composition de la conversation', () => {
     await returnToThread(user);
     expect(screen.getByText(/comparaison avec la douche est à recalculer/i)).toBeVisible();
     expect(screen.getByText(/2 résultats dépendants sont à recalculer/)).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
 
     expect(document.querySelector('.metric-hero')).toHaveTextContent(/Environ .* de douche chaude/);
@@ -572,7 +572,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Question conservée');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
 
     await editReference(user);
     await user.click(screen.getByText('Mode avancé'));
@@ -609,7 +609,7 @@ describe('composition de la conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Repli mondial');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
 
     expect(screen.getByText(/valeur « Monde » est une estimation, que vous pouvez corriger/)).toBeVisible();
   });

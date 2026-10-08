@@ -150,7 +150,7 @@ export const de = {
   carbonLabel: 'Kohlenstoff',
   waterLabel: 'Wasser',
   impactLimits: 'Unsichere Schätzung: nur Nutzung, ohne Herstellung, Abschreibung und Scope 3.',
-  resultTitle: 'Ergebnis',
+  resultTitle: 'Schritt 3/3: Ergebnis',
   resultStale: 'Klicken Sie auf „Berechnen“, um ein aktuelles Ergebnis anzuzeigen.',
   resultShower: (duration: string) => `Etwa ${duration} warme Dusche`,
   resultShowerUnavailable: 'Vergleich mit der Dusche nicht berechenbar: Die Emissionen pro Minute sind null oder nicht verfügbar.',

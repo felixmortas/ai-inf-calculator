@@ -150,7 +150,7 @@ export const pt = {
   carbonLabel: '🪨 Carbono',
   waterLabel: 'Água',
   impactLimits: 'Estimativa incerta: apenas utilização, excluindo fabrico, amortização e Scope 3.',
-  resultTitle: 'Resultado',
+  resultTitle: 'Passo 3/3: Resultado',
   resultStale: 'Clique em «Calcular» para apresentar um resultado atualizado.',
   resultShower: (duration: string) => `Cerca de ${duration} de duche quente`,
   resultShowerUnavailable: 'Não é possível calcular a comparação com o duche: as emissões por minuto são nulas ou estão indisponíveis.',

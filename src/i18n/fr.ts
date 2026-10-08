@@ -150,7 +150,7 @@ export const fr = {
   carbonLabel: 'Carbone',
   waterLabel: 'Eau',
   impactLimits: 'Estimation incertaine : usage uniquement, hors fabrication, amortissement et Scope 3.',
-  resultTitle: 'Résultat',
+  resultTitle: 'Étape 3/3 : Résultat',
   resultStale: 'Cliquez sur « Calculer » pour afficher un résultat à jour.',
   resultShower: (duration: string) => `Environ ${duration} de douche chaude`,
   resultShowerUnavailable: 'Comparaison avec la douche non calculable : les émissions par minute sont nulles ou indisponibles.',

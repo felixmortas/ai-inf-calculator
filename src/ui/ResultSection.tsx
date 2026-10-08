@@ -24,7 +24,7 @@ function Quantity({ value, kind, messages, locale }: { readonly value: number; r
   return <><span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></>;
 }
 
-/** Section « Résultat » sous la conversation : absente avant le premier calcul réussi, « à recalculer » ensuite si périmée. */
+/** Section « Étape 3/3 : Résultat » sous la conversation : absente avant le premier calcul réussi, « à recalculer » ensuite si périmée. */
 export function ResultSection({ state, random }: ResultSectionProps) {
   const { messages, locale } = useI18n();
   const practice = useRef<{ readonly key: string; readonly id: GoodPracticeId } | null>(null);

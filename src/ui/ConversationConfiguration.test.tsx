@@ -162,7 +162,7 @@ describe('configuration de conversation', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
-    await screen.findByRole('heading', { name: 'Résultat' });
+    await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' });
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
     const flow = screen.getByLabelText('Débit de votre douche (L/min)');

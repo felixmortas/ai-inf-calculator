@@ -150,7 +150,7 @@ export const zh = {
   carbonLabel: '🪨 碳排放',
   waterLabel: '用水',
   impactLimits: '估算存在不确定性：仅计算使用阶段，不包括制造、折旧和 Scope 3。',
-  resultTitle: '结果',
+  resultTitle: '第 3/3 步：结果',
   resultStale: '点击“计算”以显示最新结果。',
   resultShower: (duration: string) => `约相当于 ${duration} 的热水淋浴`,
   resultShowerUnavailable: '无法计算淋浴比较：每分钟排放量为零或不可用。',
