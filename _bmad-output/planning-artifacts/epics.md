@@ -170,14 +170,14 @@ UX-DR18: Bouton « Retour » libellé (icône décorative + texte), en haut à g
 UX-DR19: Barre d’action collante unique (« Continuer », « Calculer ») ; statique à fort zoom, en hauteur réduite ou clavier logiciel ouvert ; `scroll-padding` pour ne jamais masquer le champ ou l’anneau de focus.
 UX-DR20: Étape 1/3 : modèle estimé affiché avec « Modifier » ; pays de la personne déduit avec « Modifier » ; libellés « Où vous vous trouvez (pour la comparaison douche) » et « Où est hébergée l’IA (pour le CO₂) » ; « Si vous ne savez pas, laissez la valeur par défaut. »
 UX-DR21: « Mode avancé » replié sous le choix du modèle (pays de la personne, débit, températures, puissance LED) contenant le « Mode expert » replié, imbriqué avec retrait visible et libellé de dépliage propre ; chaque champ explique son effet ; lien « Rétablir les valeurs par défaut » ; plus de bouton « Appliquer » ; « Continuer » et « Calculer » désactivés avec explication et focus sur la première erreur si un paramètre est invalide.
-UX-DR22: Libellés grand public : « Collez ici votre message / la réponse de l’IA », « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) », « Fichiers que vous avez joints », « + Ajouter une question / réponse » ; aucune icône seule ; champs vides sans avertissement ; explications à la demande de « fichier créé par l’IA », PUE, WUE et tokens.
+UX-DR22: Libellés grand public : « Collez ici votre message / la réponse de l’IA », « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) », « Fichiers que vous avez joints », « Ajouterne question / réponse » ; aucune icône seule ; champs vides sans avertissement ; explications à la demande de « fichier créé par l’IA », PUE, WUE et tokens.
 UX-DR23: Cartes question / réponse sans action de calcul propre : en-tête avec numéro, aperçu, état « ✓ » ou « à recalculer » (texte + pictogramme), carbone et eau si à jour ; commandes « Déplier » / « Replier » avec `aria-expanded` et `aria-controls`.
 UX-DR24: « Calculer » unique : indisponible avec explication sans texte utile ; état de calcul annoncé près de l’action avec interface verrouillée ; après succès, le focus va au titre du résultat sous la conversation, sans changement d’écran ; la section résultat n’existe pas avant le premier calcul.
 UX-DR25: Résultat (`result-hero`) : équivalence douche en `metric-hero` avec nom accessible complet de l’unité ; puis carbone, eau et électricité en `metric` ; puis durée LED et phrase d’interprétation neutre ; périmètre sans jargon avec « En savoir plus » ; mention d’incertitude.
 UX-DR26: Résultat périmé : « à recalculer » sur les cartes touchées et sur la section résultat, valeurs anciennes retirées ou clairement inutilisables, partage indisponible ; états « durée LED non calculable », « pays non déduit » et repli Monde expliqués près du résultat concerné.
 UX-DR27: Bonne pratique unique avec lien « Voir toutes les bonnes pratiques » (cible externe non disponible : prévoir un état explicite) ; bouton « Partager » à contour, moins saillant que l’action principale, avec retour textuel « Résultat copié. » ou message d’échec et action de suite.
 UX-DR28: Lien « Méthodologie » libellé présent uniquement sur l’accueil, sous « Commencer » (plus de bouton « ? », aucun tutoriel) ; page de méthodologie avec « Retour » libellé en haut et un seul titre principal.
-UX-DR29: Un seul dialogue modal : confirmation de suppression, avec fond inerte et restitution du focus ; focus après ajout sur la nouvelle question, après suppression sur la carte voisine ou « + Ajouter une question / réponse ».
+UX-DR29: Un seul dialogue modal : confirmation de suppression, avec fond inerte et restitution du focus ; focus après ajout sur la nouvelle question, après suppression sur la carte voisine ou « Ajouter une question / réponse ».
 UX-DR30: Accessibilité du parcours simplifié : clavier, 320 px, zooms 200 %/400 %, cibles 44 × 44 px, `prefers-reduced-motion`, aucun statut par la couleur seule ; correction des coquilles de `fr.ts` (« entraiment », « conscis », etc.).
 
 ### FR Coverage Map
@@ -931,7 +931,7 @@ afin d’obtenir carbone et eau pour chaque échange sans me demander quel bouto
 
 **Étant donné** l’étape 2/3,
 **quand** elle s’affiche,
-**alors** les libellés sont « Collez ici votre message » et « Collez ici la réponse de l’IA ». Les options sont « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) » et « Fichiers que vous avez joints ». Les champs vides n’affichent aucun avertissement. Chaque action porte un libellé visible : « + Ajouter une question / réponse », « Déplier » et « Replier ». (FR-14, NFR-8, UX-DR22)
+**alors** les libellés sont « Collez ici votre message » et « Collez ici la réponse de l’IA ». Les options sont « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) » et « Fichiers que vous avez joints ». Les champs vides n’affichent aucun avertissement. Chaque action porte un libellé visible : « Ajouter une question / réponse », « Déplier » et « Replier ». (FR-14, NFR-8, UX-DR22)
 
 **Étant donné** une carte de question / réponse,
 **quand** elle est repliée,
@@ -955,7 +955,7 @@ afin d’obtenir carbone et eau pour chaque échange sans me demander quel bouto
 
 **Étant donné** l’ajout ou la suppression d’un échange,
 **quand** l’action est faite,
-**alors** l’échange précédent se replie et le focus va à la question de la nouvelle carte. Après suppression, le focus va à la carte voisine ou à « + Ajouter une question / réponse ». La suppression passe par le seul dialogue modal du parcours : fond inerte, focus restitué. (FR-14, UX-DR12, UX-DR29)
+**alors** l’échange précédent se replie et le focus va à la question de la nouvelle carte. Après suppression, le focus va à la carte voisine ou à « Ajouter une question / réponse ». La suppression passe par le seul dialogue modal du parcours : fond inerte, focus restitué. (FR-14, UX-DR12, UX-DR29)
 
 **Étant donné** une erreur de calcul,
 **quand** elle survient,

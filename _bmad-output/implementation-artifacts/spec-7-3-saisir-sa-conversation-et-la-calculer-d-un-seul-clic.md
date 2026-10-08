@@ -34,8 +34,8 @@ context:
 | Paramètre invalide | Mode avancé/expert invalide | « Calculer » `aria-disabled` + explication | N/A |
 | Modification | Texte d’un échange calculé modifié | Carte « à recalculer » (pictogramme + texte), valeurs retirées, annonce, aucun calcul | N/A |
 | Carte repliée | Échange à jour | En-tête : n°, aperçu, « ✓ », carbone et eau ; bouton « Déplier la question / réponse N » (`aria-expanded`, `aria-controls`) sans action de calcul | N/A |
-| Ajout | « + Ajouter une question / réponse » | Échange précédent replié, focus sur « Collez ici votre message » de la nouvelle carte | N/A |
-| Suppression | Échange non vide | Dialogue modal (fond inerte, focus restitué) ; après confirmation, focus sur la carte voisine ou « + Ajouter… » | Échange vide : suppression directe |
+| Ajout | « Ajouter une question / réponse » | Échange précédent replié, focus sur « Collez ici votre message » de la nouvelle carte | N/A |
+| Suppression | Échange non vide | Dialogue modal (fond inerte, focus restitué) ; après confirmation, focus sur la carte voisine ou « Ajouter… » | Échange vide : suppression directe |
 | Erreur de calcul | Donnée invalide | Message près de l’action, textes conservés, focus non déplacé | `role="alert"` |
 
 </frozen-after-approval>
@@ -52,7 +52,7 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [x] `src/i18n/fr.ts` -- libellés exigés (« Collez ici votre message », « Collez ici la réponse de l’IA », « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) », « Fichiers que vous avez joints », « + Ajouter une question / réponse », « Déplier / Replier la question / réponse N », « Calculer », explications d’indisponibilité, annonces) ; corriger les coquilles ; retirer les clés mortes -- UX-DR22
+- [x] `src/i18n/fr.ts` -- libellés exigés (« Collez ici votre message », « Collez ici la réponse de l’IA », « Réflexion affichée par l’IA (optionnel) », « Contenu du fichier créé par l’IA (optionnel) », « Fichiers que vous avez joints », « Ajouter une question / réponse », « Déplier / Replier la question / réponse N », « Calculer », explications d’indisponibilité, annonces) ; corriger les coquilles ; retirer les clés mortes -- UX-DR22
 - [x] `src/ui/ConversationBlocks.tsx` -- carte repliée (n°, aperçu, état « ✓ »/« à recalculer »/« à calculer » en texte, carbone et eau si à jour), commande Déplier/Replier, suppression de `onCalculate` et du bouton par échange, « × » libellé, ajout qui replie le précédent, dialogue modal de suppression (`inert` sur le fond, focus restitué), champs sans avertissement -- UX-DR23
 - [x] `src/ui/App.tsx` -- barre collante de l’étape 2/3 avec « Calculer » unique (`aria-disabled` + explication si aucun échange renseigné ou paramètre invalide), statut `role="status"` près de l’action, erreur près de l’action sans déplacer le focus, suppression de `recalculateSummary`, annonce de péremption pour toute modification -- UX-DR24, UX-DR26
 - [x] `src/application/conversationReducer.ts` -- retirer l’action de recalcul du total et le code devenu mort ; moteur et empreintes inchangés

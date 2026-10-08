@@ -159,7 +159,7 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Résultat' });
@@ -194,7 +194,7 @@ describe('configuration de conversation', () => {
     await startSelection(user);
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Texte conservé');
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));
@@ -227,7 +227,7 @@ describe('configuration de conversation', () => {
     const user = userEvent.setup();
     await startSelection(user);
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     await user.click(screen.getByText('Mode avancé'));

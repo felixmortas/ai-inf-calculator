@@ -123,7 +123,7 @@ describe('menu de langue', () => {
     renderApp();
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Mon texte');
     await user.click(screen.getByRole('button', { name: 'Retour' }));
     await user.click(screen.getByRole('button', { name: 'Retour' }));

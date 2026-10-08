@@ -17,7 +17,7 @@ describe('échec de calcul', () => {
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByLabelText('Collez ici votre message'), 'Bonjour');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Le calcul a échoué');

@@ -42,7 +42,7 @@ describe('parcours de départ', () => {
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     expect(screen.queryByRole('button', { name: 'Méthodologie' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Mon texte');
     expect(screen.queryByRole('button', { name: 'Méthodologie' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retour' }));
@@ -104,11 +104,11 @@ describe('fil et estimations', () => {
   it('calcule les seuls échanges renseignés en un clic depuis la barre collante', async () => {
     const user = userEvent.setup();
     await openThread(user);
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Première question');
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici la réponse de l’IA' }), 'Seconde réponse');
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     expect(screen.getByRole('region', { name: 'Question / réponse 1' })).toHaveTextContent('Première question');
     expect(screen.getByRole('button', { name: 'Déplier la question / réponse 1' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('button', { name: 'Calculer' }).closest('.sticky-actions')).not.toBeNull();
@@ -126,9 +126,9 @@ describe('fil et estimations', () => {
   it('annonce la péremption après édition sans remplacer les textes ni recalculer', async () => {
     const user = userEvent.setup();
     await openThread(user);
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Question initiale');
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'Suite');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Résultat' });
@@ -184,7 +184,7 @@ describe('partage du résultat', () => {
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.queryByRole('button', { name: 'Partager' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '+ Ajouter une question / réponse' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter une question / réponse' }));
     await user.type(screen.getByRole('textbox', { name: 'Collez ici votre message' }), 'SECRET-MSG');
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     await screen.findByRole('heading', { name: 'Résultat' });

@@ -62,7 +62,7 @@ Le guide parle en phrases courtes et concrètes. Il dit pourquoi une question es
 | Localisation | « Où vous vous trouvez (pour la comparaison douche) » ; « Où est hébergée l'IA (pour le CO₂) » ; « Si vous ne savez pas, laissez la valeur par défaut. » | « Localisation » et « Localisation du modèle (hébergement) » côte à côte |
 | Champs | « Collez ici votre message » (exemple de contenu), « Collez ici la réponse de l'IA » | « Saisissez ou collez… » sans exemple, « Prompt », « Output » |
 | Options | « Réflexion affichée par l'IA (optionnel) », « Contenu du fichier créé par l'IA (optionnel) », « Fichiers que vous avez joints » | « Raisonnement visible », « Fichier généré », « Fichiers uploadés » |
-| Ajout | « + Ajouter une question / réponse » | « + » seul |
+| Ajout | « Ajouter une question / réponse » | « + » seul |
 | Calcul | « Calculer » | « Calculer l'impact de cet échange uniquement » |
 | État à jour | « ✓ » | « Impact à jour » |
 | Péremption | « à recalculer » (jusqu'au prochain « Calculer ») | Un simple symbole ou une couleur |
@@ -84,7 +84,7 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 | Methodology link | Lien libellé « Méthodologie » sous « Commencer » sur l'accueil uniquement, ouvrant la page de méthodologie ; aucun bouton « ? » seul, aucun tutoriel. |
 | Sticky action bar | L'action principale de l'étape (« Continuer », « Calculer ») est visible en bas de l'écran. Elle devient statique (non collante) à fort zoom ou en hauteur réduite et ne masque jamais le champ en focus. |
 | Exchange card | Cartes compactes ordonnées. En-tête : numéro seul (sans le libellé « Question / réponse »), aperçu de la question et de la réponse sur au moins deux lignes séparées, état d'actualité, puis carbone et eau si l'estimation est à jour, présentés par une icône et la valeur avec son unité, sans mot de libellé (le nom complet reste dans le nom accessible). Commandes texte « Voir détails » / « Masquer les détails » ; déplier révèle contenu, modification, suppression. Pas d'action de calcul propre à la carte. |
-| Exchange editor | Question puis réponse ; « Ajouter du contenu (optionnel) » regroupe réflexion affichée par l'IA, contenu du fichier créé par l'IA et fichiers joints. « + Ajouter une question / réponse » ouvre un nouvel éditeur sans imposer de calcul. |
+| Exchange editor | Question puis réponse ; « Ajouter du contenu (optionnel) » regroupe réflexion affichée par l'IA, contenu du fichier créé par l'IA et fichiers joints. « Ajouter une question / réponse » ouvre un nouvel éditeur sans imposer de calcul. |
 | Result hero | Équivalence douche en grand, premier élément du résultat, avec nom accessible complet de l'unité. |
 | Result values | Carbone, eau, électricité en second plan, avec unités adaptées. |
 | Everyday comparison | Durée d'ampoule LED 5W allumée et phrase d'interprétation ; la phrase est neutre. |
@@ -127,7 +127,7 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 - Ajouter, déplier, modifier ou supprimer une question / réponse sans perdre les autres. Le bouton de dépliage affiche « Voir détails » ou « Masquer les détails » ; son nom accessible dit « Déplier la question / réponse N » ou « Replier la question / réponse N » ; il porte `aria-expanded` et `aria-controls`, et garde le focus lors du dépliage.
 - « Calculer » traite toutes les questions / réponses renseignées et affiche tout à chaque fois (cartes, total, résultat) ; après le calcul, le focus va au titre du résultat, sous la conversation, sans changement d'écran ; il est indisponible, avec explication, tant qu'aucun texte utile n'existe.
 - L'action principale collante reste accessible au clavier et sans survol. Elle ne couvre jamais le champ en focus : `scroll-padding` et passage en position statique à fort zoom, en hauteur réduite ou avec clavier logiciel ouvert.
-- Après ajout, placer le focus sur la question de la nouvelle carte. Après suppression, rendre le focus à la carte voisine ou à « + Ajouter une question / réponse ».
+- Après ajout, placer le focus sur la question de la nouvelle carte. Après suppression, rendre le focus à la carte voisine ou à « Ajouter une question / réponse ».
 - Après un changement d'étape, placer le focus sur le nouveau titre et annoncer « Étape N/3 ».
 - Garder les actions tactiles et clavier identiques ; aucune commande cachée au survol, aucun glisser-déposer nécessaire.
 - « Partager » utilise le partage du système lorsqu'il existe, sinon copie le texte dans le presse-papiers ; il ne place jamais de donnée de conversation dans l'adresse de la page.
