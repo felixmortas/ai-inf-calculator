@@ -221,7 +221,7 @@ button {
 .exchange-status.impact-current { color: var(--accent); }
 .conversation-block { position: relative; }
 .conversation-block-heading { justify-content: center; min-height: 2.75rem; padding: 0 2.75rem; }
-.conversation-block-heading h3 { flex: 0 0 auto; }
+.conversation-block-heading h3 { flex: 0 0 auto; display: inline-grid; place-items: center; min-width: 2.25rem; height: 2.25rem; padding: 0 .6rem; box-sizing: border-box; border-radius: 999px; background: var(--tint); color: #fff; font-size: 1rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .impact-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-top: .7rem; }
 .impact-row .compact-impact { margin-top: 0; }
 .impact-row .exchange-status { margin-left: auto; }
