@@ -113,13 +113,8 @@ export interface HostingCountryOption {
 }
 export interface UserCountryOption extends HostingCountryOption {}
 
-const countryOptions = Object.freeze([
-  Object.freeze({ code: 'BR', label: 'Brésil' }),
-  Object.freeze({ code: 'CH', label: 'Suisse' }),
-  Object.freeze({ code: 'FR', label: 'France' }),
-  Object.freeze({ code: 'IN', label: 'Inde' }),
-  Object.freeze({ code: 'US', label: 'États-Unis' }),
-]);
+/** Pays d’hébergement proposés ; les libellés sont calculés à l’affichage. */
+const countryOptions: readonly string[] = Object.freeze(['BR', 'CH', 'FR', 'IN', 'US']);
 
 /** Codes ISO des pays effectivement présents dans le catalogue carbone local. */
 const countryNames: Readonly<Record<string, string>> = Object.freeze({
@@ -140,23 +135,33 @@ const countryNames: Readonly<Record<string, string>> = Object.freeze({
   UZ: 'Uzbekistan', VN: 'Viet Nam', WORLD: 'World',
 });
 
-const countryLabels: Readonly<Record<string, string>> = Object.freeze({
-  BR: 'Brésil', CH: 'Suisse', FR: 'France', IN: 'Inde', US: 'États-Unis', WORLD: 'Monde',
-});
-
 const countryCodesByName: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries([
   ...Object.entries(countryNames).map(([code, name]) => [name.toLowerCase(), code]),
   ['monde', 'WORLD'], ['world', 'WORLD'], ['brésil', 'BR'], ['suisse', 'CH'], ['états-unis', 'US'], ['inde', 'IN'], ['france', 'FR'],
 ]));
 
-export const hostingCountryOptions: readonly HostingCountryOption[] = countryOptions;
+const displayNames = new Map<string, Intl.DisplayNames | null>();
+
+/** Nom du pays dans la langue `locale` (Intl.DisplayNames), sinon nom anglais du catalogue. */
+export function countryLabel(code: string, locale: string, worldLabel: string): string {
+  if (code === 'WORLD') return worldLabel;
+  if (!displayNames.has(locale)) {
+    try { displayNames.set(locale, new Intl.DisplayNames([locale], { type: 'region' })); } catch { displayNames.set(locale, null); }
+  }
+  try { return displayNames.get(locale)?.of(code) ?? countryNames[code] ?? code; } catch { return countryNames[code] ?? code; }
+}
+
+export function hostingCountryOptions(locale: string, worldLabel: string): readonly HostingCountryOption[] {
+  return countryOptions.map((code) => Object.freeze({ code, label: countryLabel(code, locale, worldLabel) }));
+}
 /** Pays proposés uniquement pour l’équivalence douche, indépendamment de l’hébergement. */
-export const userCountryOptions: readonly UserCountryOption[] = Object.freeze([
-  ...Object.entries(countryNames)
-    .filter(([code]) => code !== 'WORLD')
-    .map(([code, name]) => Object.freeze({ code, label: countryLabels[code] ?? name })),
-  Object.freeze({ code: 'WORLD', label: countryLabels.WORLD }),
-]);
+export function userCountryOptions(locale: string, worldLabel: string): readonly UserCountryOption[] {
+  return Object.freeze([
+    ...Object.keys(countryNames).filter((code) => code !== 'WORLD').map((code) => Object.freeze({ code, label: countryLabel(code, locale, worldLabel) }))
+      .sort((a, b) => a.label.localeCompare(b.label, locale)),
+    Object.freeze({ code: 'WORLD', label: worldLabel }),
+  ]);
+}
 
 /** Normalise les libellés historiques des catalogues vers les codes ISO de session. */
 export function normalizeCountry(country: string): string | undefined {
@@ -166,10 +171,10 @@ export function normalizeCountry(country: string): string | undefined {
 }
 
 export function isHostingCountry(country: string): boolean {
-  return countryOptions.some((option) => option.code === country);
+  return countryOptions.includes(country);
 }
 export function isUserCountry(country: string): boolean {
-  return userCountryOptions.some((option) => option.code === country);
+  return Object.hasOwn(countryNames, country);
 }
 
 /** Heuristique locale, sans réseau, géolocalisation ni fuseau horaire : la région de la langue du navigateur, sinon Monde. Le contrôle utilisateur prévaut. */

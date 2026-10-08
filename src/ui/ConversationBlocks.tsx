@@ -10,7 +10,8 @@ import {
   type ConversationBlockField,
   type ConversationState,
 } from '../application/conversationReducer';
-import { fr } from '../i18n/fr';
+import type { Messages } from '../i18n/fr';
+import { useI18n } from '../i18n/I18nProvider';
 import { formatQuantity } from './quantityFormatter';
 import { ResultSection } from './ResultSection';
 
@@ -37,18 +38,19 @@ interface ConversationBlocksProps {
   readonly random?: () => number;
 }
 
-const fields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
-  { name: 'message', label: fr.messageLabel },
-  { name: 'finalResponse', label: fr.finalResponseLabel },
-];
-const optionalFields: readonly { readonly name: ConversationBlockField; readonly label: string }[] = [
-  { name: 'visibleReasoning', label: fr.visibleReasoningLabel },
-  { name: 'artifact', label: fr.artifactLabel },
-];
+const fields = [
+  { name: 'message', label: 'messageLabel' },
+  { name: 'finalResponse', label: 'finalResponseLabel' },
+] as const satisfies readonly { readonly name: ConversationBlockField; readonly label: keyof Messages }[];
+const optionalFields = [
+  { name: 'visibleReasoning', label: 'visibleReasoningLabel' },
+  { name: 'artifact', label: 'artifactLabel' },
+] as const satisfies readonly { readonly name: ConversationBlockField; readonly label: keyof Messages }[];
 
 export const formatExchangeQuantity = formatQuantity;
 
 export function ConversationBlocks({ state, dispatch, onEditParameters, random }: ConversationBlocksProps) {
+  const { messages, locale } = useI18n();
   // Kept available for restoring the parameter action later.
   void onEditParameters;
   const nextBlockNumber = useRef(1);
@@ -153,7 +155,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
           rejected.push(file.name);
         }
       }
-      setSourceStatus((current) => ({ ...current, [blockId]: rejected.length ? fr.sourceRejected(rejected.join(', ')) : '' }));
+      setSourceStatus((current) => ({ ...current, [blockId]: rejected.join(', ') }));
     });
     sourceImports.current.set(blockId, batch);
     void batch.finally(() => {
@@ -166,7 +168,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
   return (
     <section aria-labelledby="conversation-title" className="conversation-blocks">
       <div className="conversation-blocks-header">
-        <h2 id="conversation-title">{fr.conversationLabel}</h2>
+        <h2 id="conversation-title">{messages.conversationLabel}</h2>
       </div>
       {state.blocks.map((block, index) => {
         const ignored = isIgnoredConversationBlock(block);
@@ -180,42 +182,42 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
         const artifactReference = /sandbox:\/mnt\/data\/[^\s)\]]+/i.test(block.finalResponse);
         const sourceFileReference = /filecite[^]+/u.test(block.finalResponse);
         const [statusIcon, status] = ignored ? ['', ''] as const
-          : impactIsStale ? ['↻', fr.staleEstimate] as const
-          : impactState?.status === 'pending' && isImpactFresh(state, block.blockId) ? ['…', fr.pendingEstimate] as const
-          : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? ['✕', fr.failedEstimate] as const
-          : impactIsCurrent ? ['✓', fr.currentEstimate] as const : ['', ''] as const;
+          : impactIsStale ? ['↻', messages.staleEstimate] as const
+          : impactState?.status === 'pending' && isImpactFresh(state, block.blockId) ? ['…', messages.pendingEstimate] as const
+          : impactState?.status === 'error' && isImpactFresh(state, block.blockId) ? ['✕', messages.failedEstimate] as const
+          : impactIsCurrent ? ['✓', messages.currentEstimate] as const : ['', ''] as const;
         const impactRow = (status || impactIsCurrent) ? (<div className="impact-row">
-              {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={fr.estimatedImpact}>
+              {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={messages.estimatedImpact}>
                 {(['carbon', 'water'] as const).map((kind) => {
-                  const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind);
-                  return <span key={kind} aria-label={`${kind === 'carbon' ? fr.carbonLabel : fr.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
+                  const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind, messages, locale);
+                  return <span key={kind} aria-label={`${kind === 'carbon' ? messages.carbonLabel : messages.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
                 })}
               </div> : null}
               {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
             </div>) : null;
         return (
-          <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={fr.blockLabel(index + 1)} tabIndex={-1}>
+          <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={messages.blockLabel(index + 1)} tabIndex={-1}>
             <div className="conversation-block-heading">
-              <h3>{fr.blockTitle(index + 1)}</h3>
+              <h3>{messages.blockTitle(index + 1)}</h3>
               <button ref={(element) => {
                 if (element) removeButtonRefs.current.set(block.blockId, element);
                 else removeButtonRefs.current.delete(block.blockId);
-              }} className="remove-block" type="button" aria-label={fr.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><span aria-hidden="true">🗑️</span></button>
+              }} className="remove-block" type="button" aria-label={messages.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><span aria-hidden="true">🗑️</span></button>
             </div>
             {!expanded ? <div className="conversation-preview">
-              <p><strong>{fr.questionPreview} :</strong> {question || fr.noPreview}</p>
-              <p><strong>{fr.responsePreview} :</strong> {response || fr.noPreview}</p>
+              <p><strong>{messages.questionPreview} :</strong> {question || messages.noPreview}</p>
+              <p><strong>{messages.responsePreview} :</strong> {response || messages.noPreview}</p>
             </div> : null}
-            {artifactReference ? <p className="content-notice">{fr.artifactReferenceDetected}</p> : null}
-            {sourceFileReference ? <p className="content-notice">{fr.sourceFileReferenceDetected}</p> : null}
-            {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{sourceStatus[block.blockId]}</p> : null}
+            {artifactReference ? <p className="content-notice">{messages.artifactReferenceDetected}</p> : null}
+            {sourceFileReference ? <p className="content-notice">{messages.sourceFileReferenceDetected}</p> : null}
+            {sourceStatus[block.blockId] ? <p role="status" className="source-rejected">{messages.sourceRejected(sourceStatus[block.blockId])}</p> : null}
             <div className="block-actions">
               <button
                 type="button"
                 className="toggle-block"
                 aria-expanded={expanded}
                 aria-controls={editorId}
-                aria-label={expanded ? fr.collapseBlock(index + 1) : fr.expandBlock(index + 1)}
+                aria-label={expanded ? messages.collapseBlock(index + 1) : messages.expandBlock(index + 1)}
                 onClick={() => {
                   setExpandedBlocks((current) => {
                     const next = new Set(current);
@@ -224,14 +226,14 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                     return next;
                   });
                 }}
-              ><span aria-hidden="true" className="chevron">⌄</span> {expanded ? fr.collapseAction : fr.expandAction}</button>
+              ><span aria-hidden="true" className="chevron">⌄</span> {expanded ? messages.collapseAction : messages.expandAction}</button>
             </div>
             {!expanded ? impactRow : null}
             <div id={editorId} hidden={!expanded} className="block-editor">
               {fields.map(({ name, label }) => {
                 const id = `conversation-${block.blockId}-${name}`;
                 return <div className="field" key={name}>
-                  <label htmlFor={id}>{label}</label>
+                  <label htmlFor={id}>{messages[label]}</label>
                   <textarea id={id} ref={name === 'message' ? (element) => {
                     if (element) questionRefs.current.set(block.blockId, element);
                     else questionRefs.current.delete(block.blockId);
@@ -239,21 +241,21 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                 </div>;
               })}
               <details className="optional-contents">
-                <summary>{fr.optionalContents}</summary>
+                <summary>{messages.optionalContents}</summary>
                 {optionalFields.map(({ name, label }) => {
                   const id = `conversation-${block.blockId}-${name}`;
                   return <div className="field" key={name}>
-                    <label htmlFor={id}>{label}</label>
+                    <label htmlFor={id}>{messages[label]}</label>
                     <textarea id={id} value={block[name]} onChange={(event) => updateBlock(block.blockId, name, event)} />
                   </div>;
                 })}
                 <div className="field local-sources">
-                  <label htmlFor={`conversation-${block.blockId}-sources`}>{fr.sourcesLabel}</label>
+                  <label htmlFor={`conversation-${block.blockId}-sources`}>{messages.sourcesLabel}</label>
                   <input id={`conversation-${block.blockId}-sources`} type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.py,.js,.ts,.html,.xml,.yaml,.yml,text/*,application/json" onChange={(event) => addSources(block.blockId, event)} />
-                  <p className="field-help">{fr.sourcesHelp}</p>
+                  <p className="field-help">{messages.sourcesHelp}</p>
                   {(block.sources ?? []).length ? <ul className="source-list">{(block.sources ?? []).map((source) => <li key={source.id}>
-                    <span>{fr.sourceCounted(source.name, source.size)}</span>
-                    <button type="button" onClick={() => dispatch({ type: 'sourceRemoved', blockId: block.blockId, sourceId: source.id })}>{fr.removeSourceAction(source.name)}</button>
+                    <span>{messages.sourceCounted(source.name, source.size)}</span>
+                    <button type="button" onClick={() => dispatch({ type: 'sourceRemoved', blockId: block.blockId, sourceId: source.id })}>{messages.removeSourceAction(source.name)}</button>
                   </li>)}</ul> : null}
                 </div>
               </details>
@@ -263,15 +265,15 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
         );
       })}
       <div className="conversation-actions conversation-actions-after-thread">
-        <button ref={addButtonRef} type="button" onClick={addBlock}>{fr.addBlockAction}</button>
+        <button ref={addButtonRef} type="button" onClick={addBlock}>{messages.addBlockAction}</button>
       </div>
       {confirmRemoveId !== null && removing >= 0 ? createPortal(
         <div className="modal-backdrop">
           <div className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="remove-dialog-title" onKeyDown={(event) => trapDialogKeys(event, confirmRemoveId)}>
-            <p id="remove-dialog-title">{fr.confirmRemove(removing + 1)}</p>
+            <p id="remove-dialog-title">{messages.confirmRemove(removing + 1)}</p>
             <div className="modal-actions">
-              <button ref={cancelButtonRef} type="button" onClick={() => cancelRemove(confirmRemoveId)}>{fr.cancelRemoveAction}</button>
-              <button ref={confirmButtonRef} type="button" className="danger-action" onClick={() => removeBlock(confirmRemoveId)}>{fr.confirmRemoveAction}</button>
+              <button ref={cancelButtonRef} type="button" onClick={() => cancelRemove(confirmRemoveId)}>{messages.cancelRemoveAction}</button>
+              <button ref={confirmButtonRef} type="button" className="danger-action" onClick={() => removeBlock(confirmRemoveId)}>{messages.confirmRemoveAction}</button>
             </div>
           </div>
         </div>, document.body) : null}

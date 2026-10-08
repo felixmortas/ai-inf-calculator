@@ -1,43 +1,33 @@
+import type { Messages } from '../i18n/fr';
+
 export type QuantityKind = 'carbon' | 'water' | 'energy' | 'duration';
 
-const units = {
-  carbon: [
-    [1e-6, 'µgCO₂e', 'microgrammes de dioxyde de carbone équivalent'],
-    [1e-3, 'mgCO₂e', 'milligrammes de dioxyde de carbone équivalent'],
-    [1, 'gCO₂e', 'grammes de dioxyde de carbone équivalent'],
-    [1e3, 'kgCO₂e', 'kilogrammes de dioxyde de carbone équivalent'],
-    [1e6, 'tCO₂e', 'tonnes de dioxyde de carbone équivalent'],
-  ],
-  water: [
-    [1e-6, 'µL', 'microlitres d’eau'], [1e-3, 'mL', 'millilitres d’eau'],
-    [1, 'L', 'litres d’eau'], [1e3, 'kL', 'kilolitres d’eau'], [1e6, 'ML', 'mégalitres d’eau'],
-  ],
-  energy: [
-    [1e-3, 'mWh', 'milliwattheures'], [1, 'Wh', 'wattheures'],
-    [1e3, 'kWh', 'kilowattheures'], [1e6, 'MWh', 'mégawattheures'], [1e9, 'GWh', 'gigawattheures'],
-  ],
-  duration: [
-    [1e-3, 'ms', 'millisecondes'], [1, 's', 'secondes'],
-    [60, 'min', 'minutes'], [3600, 'h', 'heures'], [86400, 'j', 'jours'],
-  ],
+/** Facteurs d’échelle (par rapport à l’unité de base) ; les noms d’unités viennent des messages. */
+const scales = {
+  carbon: [1e-6, 1e-3, 1, 1e3, 1e6],
+  water: [1e-6, 1e-3, 1, 1e3, 1e6],
+  energy: [1e-3, 1, 1e3, 1e6, 1e9],
+  duration: [1e-3, 1, 60, 3600, 86400],
 } as const;
 
-export function formatQuantity(value: number, kind: QuantityKind): { display: string; accessible: string } {
-  const series = units[kind];
+export function formatQuantity(value: number, kind: QuantityKind, messages: Messages, locale: string): { display: string; accessible: string } {
+  const scale = scales[kind];
+  const names = messages.units[kind];
   const baseIndex = kind === 'energy' || kind === 'duration' ? 1 : 2;
-  if (value === 0) return { display: `0 ${series[baseIndex][1]}`, accessible: `0 ${series[baseIndex][2]}` };
+  if (value === 0) return { display: `0 ${names[baseIndex].symbol}`, accessible: `0 ${names[baseIndex].other}` };
   const magnitude = Math.abs(value);
   let index = 0;
-  for (let candidate = 1; candidate < series.length; candidate++) {
-    if (magnitude >= series[candidate][0]) index = candidate;
+  for (let candidate = 1; candidate < scale.length; candidate++) {
+    if (magnitude >= scale[candidate]) index = candidate;
   }
-  if (magnitude / series[0][0] < 0.001) {
-    return { display: `< 0,001 ${series[0][1]}`, accessible: `moins de 0,001 ${series[0][2]}` };
+  if (magnitude / scale[0] < 0.001) {
+    const threshold = new Intl.NumberFormat(locale).format(0.001);
+    return { display: messages.belowThreshold(threshold, names[0].symbol), accessible: messages.belowThresholdAccessible(threshold, names[0].other) };
   }
-  while (index < series.length - 1 && Number((magnitude / series[index][0]).toPrecision(3)) >= series[index + 1][0] / series[index][0]) index++;
-  const amount = Number((value / series[index][0]).toPrecision(3));
-  const number = new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 3, maximumFractionDigits: 20, useGrouping: true, notation: 'standard' }).format(amount);
-  const large = index === series.length - 1 && Math.abs(amount) >= 1000 ? ' (valeur très élevée)' : '';
-  const unitName = Math.abs(amount) === 1 ? series[index][2].replace(/^(\S+)s(\b)/u, '$1$2') : series[index][2];
-  return { display: `${number} ${series[index][1]}${large}`, accessible: `${number} ${unitName}${large}` };
+  while (index < scale.length - 1 && Number((magnitude / scale[index]).toPrecision(3)) >= scale[index + 1] / scale[index]) index++;
+  const amount = Number((value / scale[index]).toPrecision(3));
+  const number = new Intl.NumberFormat(locale, { maximumSignificantDigits: 3, maximumFractionDigits: 20, useGrouping: true, notation: 'standard' }).format(amount);
+  const large = index === scale.length - 1 && Math.abs(amount) >= 1000 ? ` ${messages.veryHigh}` : '';
+  const unitName = Math.abs(amount) === 1 ? names[index].one : names[index].other;
+  return { display: `${number} ${names[index].symbol}${large}`, accessible: `${number} ${unitName}${large}` };
 }

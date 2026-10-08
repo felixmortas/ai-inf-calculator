@@ -7,14 +7,14 @@ companions:
   - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
   - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
 sources:
-  - ../../../docs/methodologie-empreinte-inference-llm.md
+  - ../../../docs/methodology/fr.md
   - ../../planning-artifacts/prds/prd-ai-env-impact-calculator-2026-09-17/prd.md
   - ../../planning-artifacts/prds/prd-ai-env-impact-calculator-2026-09-17/addendum.md
   - ../../planning-artifacts/sprint-change-proposal-2026-09-23.md
   - ../../planning-artifacts/sprint-change-proposal-2026-10-07.md
 ---
 
-> **Source de vérité méthodologique.** `docs/methodologie-empreinte-inference-llm.md` est l’unique référence pour le périmètre, les données et les calculs d’impact. Cette SPEC et `calculation-contract.md` en déclinent les exigences produit sans la remplacer ; en cas d’écart, la méthodologie prévaut.
+> **Source de vérité méthodologique.** `docs/methodology/fr.md` est l’unique référence pour le périmètre, les données et les calculs d’impact. Cette SPEC et `calculation-contract.md` en déclinent les exigences produit sans la remplacer ; en cas d’écart, la méthodologie prévaut.
 
 # Calculateur d’empreinte environnementale de l’inférence des LLM
 

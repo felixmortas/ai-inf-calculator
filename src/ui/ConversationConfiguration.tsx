@@ -3,7 +3,8 @@ import { flushSync } from 'react-dom';
 import { hostingCountryOptions, userCountryOptions, modelCatalog, modelsForProvider, resolveImpactParameters, resolveUserCarbonIntensity, type ImpactParameterOverrides } from '../data/modelCatalog';
 import { chatGptProvider, chatGptSubscriptions, mistralProvider, resolveMistralModel, type ChatGptSubscription, type MistralMode } from '../domain/modelSelection';
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
-import { fr } from '../i18n/fr';
+import { useI18n } from '../i18n/I18nProvider';
+import type { Messages } from '../i18n/fr';
 
 /** Résultat de la collecte des champs numériques à l’activation de « Continuer ». */
 export type ConfigurationCollection = { readonly ok: false } | { readonly ok: true; readonly overrides?: ImpactParameterOverrides };
@@ -19,13 +20,13 @@ interface ConversationConfigurationProps {
   readonly ref?: Ref<ConfigurationHandle>;
 }
 
-type ParameterName = keyof typeof fr.parameterFields;
+type ParameterName = keyof Messages['parameterFields'];
 
-function Parameter({ name, value, version, invalid }: { name: ParameterName; value: number; version: number; invalid: boolean }) {
-  const { label, unit, help } = fr.parameterFields[name];
+function Parameter({ messages, name, value, version, invalid }: { messages: Messages; name: ParameterName; value: number; version: number; invalid: boolean }) {
+  const { label, unit, help } = messages.parameterFields[name];
   const id = `parameter-${name}`;
   const describedBy = [`${id}-help`, invalid ? `parameter-error-${name}` : undefined].filter(Boolean).join(' ');
-  return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><p id={`${id}-help`} className="help">{help}</p><input key={`${name}:${value}:${version}`} id={id} name={name} type="number" step="any" inputMode="decimal" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={describedBy} />{invalid ? <p id={`parameter-error-${name}`} className="parameter-field-error"><span aria-hidden="true">⚠ </span>{fr.invalidParameterField(label)}</p> : null}</div>;
+  return <div className="field parameter"><label htmlFor={id}>{label} ({unit})</label><p id={`${id}-help`} className="help">{help}</p><input key={`${name}:${value}:${version}`} id={id} name={name} type="number" step="any" inputMode="decimal" defaultValue={value} aria-invalid={invalid || undefined} aria-describedby={describedBy} />{invalid ? <p id={`parameter-error-${name}`} className="parameter-field-error"><span aria-hidden="true">⚠ </span>{messages.invalidParameterField(label)}</p> : null}</div>;
 }
 
 function readCandidate(form: HTMLFormElement): ImpactParameterOverrides {
@@ -42,6 +43,7 @@ function readCandidate(form: HTMLFormElement): ImpactParameterOverrides {
 }
 
 export function ConversationConfiguration({ state, dispatch, requireMistralMode = false, onMistralModeChosen, initialAdvancedOpen = false, onValidityChange, ref }: ConversationConfigurationProps) {
+  const { messages, locale } = useI18n();
   const providerModels = modelsForProvider(modelCatalog, state.provider);
   const [invalidFields, setInvalidFields] = useState<readonly string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen);
@@ -120,10 +122,10 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
 
   return (
     <section aria-labelledby="configuration-title" className="configuration">
-      <h2 id="configuration-title">{fr.configurationTitle}</h2>
+      <h2 id="configuration-title">{messages.configurationTitle}</h2>
       <div className="field">
-        <label htmlFor="provider">{fr.providerLabel}</label>
-        <p id="provider-help" className="help">{fr.providerHelp}</p>
+        <label htmlFor="provider">{messages.providerLabel}</label>
+        <p id="provider-help" className="help">{messages.providerHelp}</p>
         <select id="provider" aria-describedby="provider-help" value={state.provider} onChange={selectProvider} disabled={requireMistralMode}>
           {modelCatalog.providers.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
         </select>
@@ -131,60 +133,60 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
 
       {state.provider === chatGptProvider ? (
         <div className="field">
-          <label htmlFor="subscription">{fr.subscriptionLabel}</label>
+          <label htmlFor="subscription">{messages.subscriptionLabel}</label>
           <select id="subscription" value={state.subscription} onChange={selectSubscription}>
-            {chatGptSubscriptions.map(({ id, label }) => <option key={id} value={id}>{fr[label]}</option>)}
+            {chatGptSubscriptions.map(({ id, label }) => <option key={id} value={id}>{messages[label]}</option>)}
           </select>
         </div>
       ) : null}
 
       {state.provider === mistralProvider ? <div className="field">
-        <label htmlFor="mistral-mode">{fr.mistralModeLabel}</label>
+        <label htmlFor="mistral-mode">{messages.mistralModeLabel}</label>
         <select id="mistral-mode" value={requireMistralMode ? '' : state.mistralMode} onChange={selectMistralMode} required>
-          {requireMistralMode ? <option value="" disabled>{fr.mistralModeChoice}</option> : null}
-          <option value="fast">{fr.mistralFast}</option>
-          <option value="reasoning">{fr.mistralReasoning}</option>
+          {requireMistralMode ? <option value="" disabled>{messages.mistralModeChoice}</option> : null}
+          <option value="fast">{messages.mistralFast}</option>
+          <option value="reasoning">{messages.mistralReasoning}</option>
         </select>
       </div> : null}
 
       <div className="field">
-        <label htmlFor="model">{fr.modelLabel}</label>
-        <p id="model-help" className="help">{fr.modelReferenceHelp}</p>
+        <label htmlFor="model">{messages.modelLabel}</label>
+        <p id="model-help" className="help">{messages.modelReferenceHelp}</p>
         <select id="model" aria-describedby="model-help" value={requireMistralMode ? '' : state.modelId} onChange={selectModel} disabled={requireMistralMode && state.provider === mistralProvider}>
-          {requireMistralMode ? <option value="">{fr.mistralModeChoice}</option> : providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
+          {requireMistralMode ? <option value="">{messages.mistralModeChoice}</option> : providerModels.map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}
         </select>
       </div>
 
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => { if (event.target === event.currentTarget) setAdvancedOpen(event.currentTarget.open); }}>
-        <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{fr.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+        <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{messages.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
         <div id="advanced-settings-content">
-          <p className="help">{fr.advancedSettingsIntro}</p>
+          <p className="help">{messages.advancedSettingsIntro}</p>
           <div className="field">
-            <label htmlFor="user-country">{fr.userCountryLabel}</label>
-            <p id="user-country-help" className="help">{fr.userCountryHelp}</p>
+            <label htmlFor="user-country">{messages.userCountryLabel}</label>
+            <p id="user-country-help" className="help">{messages.userCountryHelp}</p>
             <select id="user-country" aria-describedby="user-country-help" value={state.userCountry} onChange={selectUserCountry}>
-              {userCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+              {userCountryOptions(locale, messages.worldCountry).map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
             </select>
           </div>
-          {userFactor.status === 'world' ? <p className="help" role="note">{fr.userCountryWorldFallback}</p> : null}
+          {userFactor.status === 'world' ? <p className="help" role="note">{messages.userCountryWorldFallback}</p> : null}
           {resolved ? <form ref={formRef} className="parameter-form" onInput={validate} onSubmit={ignoreSubmit} noValidate>
-            {showerFields.map((name) => <Parameter key={name} name={name} value={resolved.shower[name]} version={resetVersion} invalid={has(name)} />)}
+            {showerFields.map((name) => <Parameter messages={messages} key={name} name={name} value={resolved.shower[name]} version={resetVersion} invalid={has(name)} />)}
             <details className="advanced-settings expert-settings" open={expertOpen} onToggle={(event) => { if (event.target === event.currentTarget) setExpertOpen(event.currentTarget.open); }}>
-              <summary aria-expanded={expertOpen} aria-controls="expert-settings-content">{fr.expertSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+              <summary aria-expanded={expertOpen} aria-controls="expert-settings-content">{messages.expertSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
               <div id="expert-settings-content">
-                <p className="help">{fr.expertSettingsIntro}</p>
+                <p className="help">{messages.expertSettingsIntro}</p>
                 <div className="field">
-                  <label htmlFor="hosting-country">{fr.hostingCountryLabel}</label>
-                  <p id="hosting-country-help" className="help">{fr.hostingCountryHelp}</p>
+                  <label htmlFor="hosting-country">{messages.hostingCountryLabel}</label>
+                  <p id="hosting-country-help" className="help">{messages.hostingCountryHelp}</p>
                   <select id="hosting-country" aria-describedby={hostingFallsBackToWorld ? 'hosting-country-help hosting-country-fallback' : 'hosting-country-help'} value={state.hostingCountry} onChange={selectHostingCountry}>
-                    {hostingCountryOptions.map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
+                    {hostingCountryOptions(locale, messages.worldCountry).map((country) => <option key={country.code} value={country.code}>{country.label} ({country.code})</option>)}
                   </select>
-                  {hostingFallsBackToWorld ? <p id="hosting-country-fallback" className="help" role="note">{fr.hostingWorldFallback}</p> : null}
+                  {hostingFallsBackToWorld ? <p id="hosting-country-fallback" className="help" role="note">{messages.hostingWorldFallback}</p> : null}
                 </div>
-                {[...expertScalarFields, ...constantFields].map((name) => <Parameter key={name} name={name} value={name in resolved.constants ? resolved.constants[name as typeof constantFields[number]] : resolved[name as typeof expertScalarFields[number]]} version={resetVersion} invalid={has(name)} />)}
+                {[...expertScalarFields, ...constantFields].map((name) => <Parameter messages={messages} key={name} name={name} value={name in resolved.constants ? resolved.constants[name as typeof constantFields[number]] : resolved[name as typeof expertScalarFields[number]]} version={resetVersion} invalid={has(name)} />)}
               </div>
             </details>
-            <button type="button" className="link-button restore-link" onClick={restore}>{fr.restoreParametersAction}</button>
+            <button type="button" className="link-button restore-link" onClick={restore}>{messages.restoreParametersAction}</button>
           </form> : null}
         </div>
       </details>

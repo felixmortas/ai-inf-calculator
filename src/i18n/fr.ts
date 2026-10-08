@@ -1,4 +1,47 @@
+type Widen<T> = T extends string ? string
+  : T extends number ? number
+  : T extends (...args: infer A) => infer R ? (...args: { [K in keyof A]: A[K] }) => Widen<R>
+  : T extends readonly (infer U)[] ? readonly Widen<U>[]
+  : T extends object ? { -readonly [K in keyof T]: Widen<T[K]> }
+  : T;
+
 export const fr = {
+  pageTitle: 'Calculateur d’impact environnemental de l’IA',
+  languageMenuLabel: 'Langue',
+  worldCountry: 'Monde',
+  veryHigh: '(valeur très élevée)',
+  belowThreshold: (threshold: string, symbol: string) => `< ${threshold} ${symbol}`,
+  belowThresholdAccessible: (threshold: string, unit: string) => `moins de ${threshold} ${unit}`,
+  units: {
+    carbon: [
+      { symbol: 'µgCO₂e', one: 'microgramme de dioxyde de carbone équivalent', other: 'microgrammes de dioxyde de carbone équivalent' },
+      { symbol: 'mgCO₂e', one: 'milligramme de dioxyde de carbone équivalent', other: 'milligrammes de dioxyde de carbone équivalent' },
+      { symbol: 'gCO₂e', one: 'gramme de dioxyde de carbone équivalent', other: 'grammes de dioxyde de carbone équivalent' },
+      { symbol: 'kgCO₂e', one: 'kilogramme de dioxyde de carbone équivalent', other: 'kilogrammes de dioxyde de carbone équivalent' },
+      { symbol: 'tCO₂e', one: 'tonne de dioxyde de carbone équivalent', other: 'tonnes de dioxyde de carbone équivalent' },
+    ],
+    water: [
+      { symbol: 'µL', one: 'microlitre d’eau', other: 'microlitres d’eau' },
+      { symbol: 'mL', one: 'millilitre d’eau', other: 'millilitres d’eau' },
+      { symbol: 'L', one: 'litre d’eau', other: 'litres d’eau' },
+      { symbol: 'kL', one: 'kilolitre d’eau', other: 'kilolitres d’eau' },
+      { symbol: 'ML', one: 'mégalitre d’eau', other: 'mégalitres d’eau' },
+    ],
+    energy: [
+      { symbol: 'mWh', one: 'milliwattheure', other: 'milliwattheures' },
+      { symbol: 'Wh', one: 'wattheure', other: 'wattheures' },
+      { symbol: 'kWh', one: 'kilowattheure', other: 'kilowattheures' },
+      { symbol: 'MWh', one: 'mégawattheure', other: 'mégawattheures' },
+      { symbol: 'GWh', one: 'gigawattheure', other: 'gigawattheures' },
+    ],
+    duration: [
+      { symbol: 'ms', one: 'milliseconde', other: 'millisecondes' },
+      { symbol: 's', one: 'seconde', other: 'secondes' },
+      { symbol: 'min', one: 'minute', other: 'minutes' },
+      { symbol: 'h', one: 'heure', other: 'heures' },
+      { symbol: 'j', one: 'jour', other: 'jours' },
+    ],
+  },
   configurationTitle: 'Configuration',
   title: 'Calculatrice : l’impact environnemental de ma conversation avec l’IA',
   introduction: 'Estimez en quelques clics l’impact environnemental d’une conversation avec une IA, et comparez-le à une durée de douche chaude.',
@@ -119,7 +162,7 @@ export const fr = {
   resultElectricity: '⚡️ Électricité',
   resultLed: (power: string) => `💡 Ampoule LED allumée (${power})`,
   resultLedUnavailable: 'Comparaison non calculable',
-  resultLedPower: (power: number) => `${new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 3 }).format(power)} W`,
+  resultLedPower: (power: string) => `${power} W`,
   resultInterpretation: 'Une conversation pèse peu, mais ça s’additionne : 100 conversations comme celle-ci ont un impact plus conséquent.',
   resultScope: 'Ne compte que l’électricité des serveurs, pas la fabrication du matériel ni l’entraînement de l’IA.',
   resultUncertainty: 'Estimation fondée sur des hypothèses, pas sur une mesure.',
@@ -152,3 +195,6 @@ export const fr = {
   },
   invalidDataError: 'Le calcul est bloqué : une donnée indispensable est indisponible ou invalide.',
 } as const;
+
+/** Forme que doit respecter tout fichier de langue : mêmes clés que `fr`, littéraux élargis à `string`. */
+export type Messages = Widen<typeof fr>;

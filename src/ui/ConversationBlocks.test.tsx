@@ -1,3 +1,4 @@
+import { fr } from '../i18n/fr';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -319,12 +320,12 @@ describe('composition de la conversation', () => {
   });
 
   it('adapte les unités sans modifier les valeurs calculées et développe leur nom accessible', () => {
-    expect(formatExchangeQuantity(0, 'carbon')).toEqual({ display: '0 gCO₂e', accessible: '0 grammes de dioxyde de carbone équivalent' });
-    expect(formatExchangeQuantity(0.0000000001, 'carbon').display).toBe('< 0,001 µgCO₂e');
-    expect(formatExchangeQuantity(0.0012, 'carbon')).toEqual({ display: '1,2 mgCO₂e', accessible: '1,2 milligrammes de dioxyde de carbone équivalent' });
-    expect(formatExchangeQuantity(1, 'carbon').display).toBe('1 gCO₂e');
-    expect(formatExchangeQuantity(999.9, 'carbon').display).toBe('1 kgCO₂e');
-    expect(formatExchangeQuantity(0.002, 'water')).toEqual({ display: '2 mL', accessible: '2 millilitres d’eau' });
+    expect(formatExchangeQuantity(0, 'carbon', fr, 'fr-FR')).toEqual({ display: '0 gCO₂e', accessible: '0 grammes de dioxyde de carbone équivalent' });
+    expect(formatExchangeQuantity(0.0000000001, 'carbon', fr, 'fr-FR').display).toBe('< 0,001 µgCO₂e');
+    expect(formatExchangeQuantity(0.0012, 'carbon', fr, 'fr-FR')).toEqual({ display: '1,2 mgCO₂e', accessible: '1,2 milligrammes de dioxyde de carbone équivalent' });
+    expect(formatExchangeQuantity(1, 'carbon', fr, 'fr-FR').display).toBe('1 gCO₂e');
+    expect(formatExchangeQuantity(999.9, 'carbon', fr, 'fr-FR').display).toBe('1 kgCO₂e');
+    expect(formatExchangeQuantity(0.002, 'water', fr, 'fr-FR')).toEqual({ display: '2 mL', accessible: '2 millilitres d’eau' });
   });
 
   it('réserve la mention de repli Monde au bilan, pas à la carte compacte', () => {

@@ -1,4 +1,4 @@
-import { fr } from '../i18n/fr';
+import type { Messages } from '../i18n/fr';
 
 /** Projection fermée : aucune donnée de conversation, aucun paramètre de session. */
 export interface ShareableResult {
@@ -13,12 +13,12 @@ export interface ShareableResult {
   readonly pageUrl: string;
 }
 
-export function buildShareText(shareable: ShareableResult): string {
+export function buildShareText(shareable: ShareableResult, messages: Messages): string {
   return [
-    fr.shareIntro(shareable.chatbot, shareable.exchangeCount, shareable.showerAccessible),
-    fr.shareValues(shareable.carbon, shareable.electricity),
-    fr.shareWater(shareable.water),
-    fr.shareSource(shareable.pageUrl),
-    fr.shareInvitation,
+    messages.shareIntro(shareable.chatbot, shareable.exchangeCount, shareable.showerAccessible),
+    messages.shareValues(shareable.carbon, shareable.electricity),
+    messages.shareWater(shareable.water),
+    messages.shareSource(shareable.pageUrl),
+    messages.shareInvitation,
   ].join('\n');
 }

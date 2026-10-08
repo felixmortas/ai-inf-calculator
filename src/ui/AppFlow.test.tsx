@@ -23,7 +23,7 @@ describe('parcours de départ', () => {
   it('propose un accueil minimal puis place le focus sur chaque étape', async () => {
     const user = userEvent.setup();
     render(<App />);
-    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Commencer', 'Méthodologie']);
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Commencer', 'Méthodologie', '🌐 Français']);
     expect(screen.getByText(/Estimez en quelques clics/)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     expect(screen.getByRole('heading', { name: 'Étape 1/3 : Votre IA' })).toHaveFocus();

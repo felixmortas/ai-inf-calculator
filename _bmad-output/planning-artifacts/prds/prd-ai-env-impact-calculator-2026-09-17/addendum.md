@@ -51,7 +51,7 @@ duree_LED_secondes = 3600 × E_total / P_LED
 
 ## Référence méthodologique
 
-La source de vérité unique pour la méthode, ses données, leurs provenances et leurs limites est [`docs/methodologie-empreinte-inference-llm.md`](../../../../docs/methodologie-empreinte-inference-llm.md). Ce résumé ne la remplace pas ; en cas d’écart, elle prévaut. Les exigences produit ci-dessous ne doivent pas modifier les règles de calcul. Les constantes de la méthode sont appliquées telles que publiées, sans réglage utilisateur ; `S_tokens` provient du catalogue et reste masqué.
+La source de vérité unique pour la méthode, ses données, leurs provenances et leurs limites est [`docs/methodology/fr.md`](../../../../docs/methodology/fr.md). Ce résumé ne la remplace pas ; en cas d’écart, elle prévaut. Les exigences produit ci-dessous ne doivent pas modifier les règles de calcul. Les constantes de la méthode sont appliquées telles que publiées, sans réglage utilisateur ; `S_tokens` provient du catalogue et reste masqué.
 
 ### Données, unités et provenance
 

@@ -7,8 +7,9 @@ import {
 } from '../application/conversationReducer';
 import { browserShareEnvironment, buildShareTextFromState, shareResult, shouldAlertOnCopy } from '../application/shareResult';
 import { goodPracticesBlogUrl, pickGoodPractice, type GoodPracticeId } from '../domain/goodPractice';
-import { resolveImpactParameters, userCountryOptions } from '../data/modelCatalog';
-import { fr } from '../i18n/fr';
+import { countryLabel as localizedCountry, resolveImpactParameters } from '../data/modelCatalog';
+import { useI18n } from '../i18n/I18nProvider';
+import type { Messages } from '../i18n/fr';
 import { formatQuantity, type QuantityKind } from './quantityFormatter';
 
 interface ResultSectionProps {
@@ -17,13 +18,14 @@ interface ResultSectionProps {
   readonly random?: () => number;
 }
 
-function Quantity({ value, kind }: { readonly value: number; readonly kind: QuantityKind }) {
-  const quantity = formatQuantity(value, kind);
+function Quantity({ value, kind, messages, locale }: { readonly value: number; readonly kind: QuantityKind; readonly messages: Messages; readonly locale: string }) {
+  const quantity = formatQuantity(value, kind, messages, locale);
   return <><span aria-hidden="true">{quantity.display}</span><span className="visually-hidden">{quantity.accessible}</span></>;
 }
 
 /** Section « Résultat » sous la conversation : absente avant le premier calcul réussi, « à recalculer » ensuite si périmée. */
 export function ResultSection({ state, random }: ResultSectionProps) {
+  const { messages, locale } = useI18n();
   const practice = useRef<{ readonly key: string; readonly id: GoodPracticeId } | null>(null);
   const summary = state.summary?.status === 'result' ? state.summary : undefined;
   const current = !!summary && isSummaryCurrent(state);
@@ -38,14 +40,14 @@ export function ResultSection({ state, random }: ResultSectionProps) {
   useEffect(() => { if (shareFeedback?.kind === 'failed') { manualText.current?.focus(); manualText.current?.select(); } }, [shareFeedback]);
   if (!summary) return null;
   const onShare = async () => {
-    const text = buildShareTextFromState(state, { origin: window.location.origin, pathname: window.location.pathname });
+    const text = buildShareTextFromState(state, { origin: window.location.origin, pathname: window.location.pathname }, messages, locale);
     if (!text || sharing.current) return;
     sharing.current = true;
     setShareFeedback(null);
     const outcome = await shareResult(text, browserShareEnvironment()).finally(() => { sharing.current = false; });
     if (!canShareNow.current) return;
     if (outcome === 'copied') {
-      if (shouldAlertOnCopy(navigator.userAgent)) window.alert(fr.shareCopiedAlert);
+      if (shouldAlertOnCopy(navigator.userAgent)) window.alert(messages.shareCopiedAlert);
     }
     else if (outcome === 'failed') setShareFeedback({ kind: 'failed', text });
   };
@@ -57,52 +59,52 @@ export function ResultSection({ state, random }: ResultSectionProps) {
   const shower = isSummaryShowerEquivalenceCurrent(state) ? state.summaryShowerEquivalence?.equivalence : undefined;
   const led = isSummaryLedEquivalenceCurrent(state) ? state.summaryLedEquivalence?.equivalence : undefined;
   const ledPower = resolveImpactParameters(state.provider, state.modelId, state.hostingCountry, state.parameterOverrides)?.shower.ledPowerW;
-  const countryLabel = userCountryOptions.find((country) => country.code === state.userCountry)?.label ?? state.userCountry;
+  const countryLabel = localizedCountry(state.userCountry, locale, messages.worldCountry);
   const worldCountry = shower?.status === 'available' && shower.factorSource === 'world';
 
   return (
     <section className="result-section" aria-labelledby="result-title">
-      <h3 id="result-title" tabIndex={-1}>{fr.resultTitle}</h3>
-      {!current ? <p className="impact-stale"><span aria-hidden="true">↻ </span>{fr.resultStale}</p> : <>
+      <h3 id="result-title" tabIndex={-1}>{messages.resultTitle}</h3>
+      {!current ? <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.resultStale}</p> : <>
         <div className="result-hero">
           {shower?.status === 'available' ? <>
             <p className="metric-hero">
               <span aria-hidden="true">🚿 </span>
-              <span aria-hidden="true">{fr.resultShower(formatQuantity(shower.seconds, 'duration').display)}</span>
-              <span className="visually-hidden">{fr.resultShower(formatQuantity(shower.seconds, 'duration').accessible)}</span>
+              <span aria-hidden="true">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).display)}</span>
+              <span className="visually-hidden">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).accessible)}</span>
             </p>
-            <p className="impact-note">{worldCountry ? fr.resultCountryWorld(countryLabel) : fr.resultCountry(countryLabel)}</p>
-          </> : shower ? <p>{fr.resultShowerUnavailable}</p> : <p className="impact-stale"><span aria-hidden="true">↻ </span>{fr.resultShowerStale}</p>}
+            <p className="impact-note">{worldCountry ? messages.resultCountryWorld(countryLabel) : messages.resultCountry(countryLabel)}</p>
+          </> : shower ? <p>{messages.resultShowerUnavailable}</p> : <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.resultShowerStale}</p>}
         </div>
         <ul className="metrics">
-          <li className="metric"><span className="metric-label">{fr.resultCarbon}</span> <span className="metric-value"><Quantity value={total.carbonGco2e} kind="carbon" /></span></li>
-          <li className="metric"><span className="metric-label">{fr.resultWater}</span> <span className="metric-value"><Quantity value={total.waterL} kind="water" /></span></li>
-          <li className="metric"><span className="metric-label">{fr.resultElectricity}</span> <span className="metric-value"><Quantity value={total.energyWh} kind="energy" /></span></li>
+          <li className="metric"><span className="metric-label">{messages.resultCarbon}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.carbonGco2e} kind="carbon" /></span></li>
+          <li className="metric"><span className="metric-label">{messages.resultWater}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.waterL} kind="water" /></span></li>
+          <li className="metric"><span className="metric-label">{messages.resultElectricity}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.energyWh} kind="energy" /></span></li>
           <li className="metric">
-            <span className="metric-label">{fr.resultLed(ledPower === undefined ? '' : fr.resultLedPower(ledPower))}</span>{' '}
+            <span className="metric-label">{messages.resultLed(ledPower === undefined ? '' : messages.resultLedPower(new Intl.NumberFormat(locale, { maximumSignificantDigits: 3 }).format(ledPower)))}</span>{' '}
             <span className="metric-value">{!led
-              ? <span className="impact-stale"><span aria-hidden="true">↻ </span>{fr.staleEstimate}</span>
-              : led.status === 'available' ? <Quantity value={led.seconds} kind="duration" /> : <span>{fr.resultLedUnavailable}</span>}</span>
+              ? <span className="impact-stale"><span aria-hidden="true">↻ </span>{messages.staleEstimate}</span>
+              : led.status === 'available' ? <Quantity messages={messages} locale={locale} value={led.seconds} kind="duration" /> : <span>{messages.resultLedUnavailable}</span>}</span>
           </li>
         </ul>
-        <p className="result-interpretation">{fr.resultInterpretation}</p>
-        <p className="impact-note">{fr.resultScope}</p>
-        <p className="impact-note">{fr.resultUncertainty}</p>
-        {Object.values(summary.factorSources ?? {}).includes('world') ? <p className="impact-note">{fr.resultHostingWorld}</p> : null}
+        <p className="result-interpretation">{messages.resultInterpretation}</p>
+        <p className="impact-note">{messages.resultScope}</p>
+        <p className="impact-note">{messages.resultUncertainty}</p>
+        {Object.values(summary.factorSources ?? {}).includes('world') ? <p className="impact-note">{messages.resultHostingWorld}</p> : null}
         <section className="good-practices" aria-labelledby="good-practice-title">
-          <h4 id="good-practice-title">{fr.goodPracticeTitle}</h4>
-          <p>{fr.goodPractices[practice.current!.id]}</p>
+          <h4 id="good-practice-title">{messages.goodPracticeTitle}</h4>
+          <p>{messages.goodPractices[practice.current!.id]}</p>
         </section>
         <a className="link-button result-link" href={goodPracticesBlogUrl} target="_blank" rel="noopener noreferrer">
-          {fr.goodPracticesAction}{' '}<span className="visually-hidden">{fr.goodPracticesNewTab}</span>
+          {messages.goodPracticesAction}{' '}<span className="visually-hidden">{messages.goodPracticesNewTab}</span>
         </a>
         {canShare ? <div className="share-block">
           <button type="button" className="share-button" onClick={() => { void onShare(); }}>
-            <span aria-hidden="true">↗</span> {fr.shareAction}
+            <span aria-hidden="true">↗</span> {messages.shareAction}
           </button>
           {shareFeedback?.kind === 'failed' ? <div className="share-feedback">
-            <p role="alert">{fr.shareFailed}</p>
-            <label htmlFor="share-manual-text">{fr.shareManualInstruction}</label>
+            <p role="alert">{messages.shareFailed}</p>
+            <label htmlFor="share-manual-text">{messages.shareManualInstruction}</label>
             <textarea id="share-manual-text" ref={manualText} readOnly rows={6} value={shareFeedback.text} />
           </div> : null}
         </div> : null}

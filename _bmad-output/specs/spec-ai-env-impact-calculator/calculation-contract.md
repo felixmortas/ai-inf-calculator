@@ -1,6 +1,6 @@
 # Contrat de calcul et données
 
-> La source de vérité unique pour la méthode, les valeurs, leur provenance et leurs limites est [`docs/methodologie-empreinte-inference-llm.md`](../../../docs/methodologie-empreinte-inference-llm.md). Ce document en donne le résumé opérationnel ; en cas d’écart, la méthodologie prévaut. Les règles d’interface et d’agrégation propres au produit sont dans `SPEC.md` et `functional-contract.md`.
+> La source de vérité unique pour la méthode, les valeurs, leur provenance et leurs limites est [`docs/methodology/fr.md`](../../../docs/methodology/fr.md). Ce document en donne le résumé opérationnel ; en cas d’écart, la méthodologie prévaut. Les règles d’interface et d’agrégation propres au produit sont dans `SPEC.md` et `functional-contract.md`.
 
 ## Données et comptage
 

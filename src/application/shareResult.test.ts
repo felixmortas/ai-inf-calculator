@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { fr } from '../i18n/fr';
 import { buildShareTextFromState, shareResult, shouldAlertOnCopy, toShareableResult } from './shareResult';
 import { initialConversationState, summaryFingerprint, equivalenceFingerprint, type ConversationState } from './conversationReducer';
 
@@ -27,17 +28,17 @@ describe('shouldAlertOnCopy', () => {
 describe('toShareableResult', () => {
   it('ne laisse ressortir aucun contenu de conversation ni paramètre', () => {
     const state = stateWithSecrets();
-    const text = buildShareTextFromState(state, { origin: 'https://x.test', pathname: '/app/' })!;
+    const text = buildShareTextFromState(state, { origin: 'https://x.test', pathname: '/app/' }, fr, 'fr-FR')!;
     expect(text).not.toMatch(/SECRET|secret-fichier/);
     expect(text).not.toContain('?');
     expect(text).not.toContain('#');
     expect(text).toContain('https://x.test/app/');
-    expect(toShareableResult(state, { origin: 'o', pathname: '/p' })?.exchangeCount).toBe(1);
-    expect(Object.keys(toShareableResult(state, { origin: 'o', pathname: '/p' })!).sort())
+    expect(toShareableResult(state, { origin: 'o', pathname: '/p' }, fr, 'fr-FR')?.exchangeCount).toBe(1);
+    expect(Object.keys(toShareableResult(state, { origin: 'o', pathname: '/p' }, fr, 'fr-FR')!).sort())
       .toEqual(['carbon', 'chatbot', 'electricity', 'exchangeCount', 'pageUrl', 'showerAccessible', 'water']);
   });
   it('retourne undefined sans résultat', () => {
-    expect(toShareableResult(initialConversationState, { origin: 'o', pathname: '/' })).toBeUndefined();
+    expect(toShareableResult(initialConversationState, { origin: 'o', pathname: '/' }, fr, 'fr-FR')).toBeUndefined();
   });
 });
 

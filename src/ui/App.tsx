@@ -13,7 +13,8 @@ import { calculateShowerEquivalence } from '../domain/showerEquivalence';
 import { calculateLedEquivalence } from '../domain/ledEquivalence';
 import { aggregateImpacts } from '../domain/impactAggregation';
 import type { ImpactResult } from '../domain/impact';
-import { fr } from '../i18n/fr';
+import { useI18n } from '../i18n/I18nProvider';
+import { LanguageMenu } from './LanguageMenu';
 import { ConversationConfiguration, type ConfigurationHandle } from './ConversationConfiguration';
 import { ConversationBlocks } from './ConversationBlocks';
 import { CalculationBar } from './CalculationBar';
@@ -34,6 +35,7 @@ export function impactTexts(
 }
 
 export function App() {
+  const { messages } = useI18n();
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
   const summaryPending = state.summary?.status === 'pending';
   const [step, setStep] = useState<'home' | 'selection' | 'thread' | 'methodology'>('home');
@@ -47,7 +49,8 @@ export function App() {
   const calculationReturnFocus = useRef<HTMLElement | null>(null);
   const calculationWasPending = useRef(false);
   const [openAdvancedOnSelection, setOpenAdvancedOnSelection] = useState(false);
-  const [recalculationNotice, setRecalculationNotice] = useState('');
+  const [recalculationCount, setRecalculationCount] = useState(0);
+  const recalculationNotice = recalculationCount ? messages.recalculationNotice(recalculationCount) : '';
   const configuration = useRef<ConfigurationHandle>(null);
   const [parametersValid, setParametersValid] = useState(true);
   const client = useRef<TokenizationClient | undefined>(undefined);
@@ -102,11 +105,11 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (recalculationNotice && state.blocks.every((block) => isIgnoredConversationBlock(block) || isImpactCurrent(state, block.blockId))
+    if (recalculationCount && state.blocks.every((block) => isIgnoredConversationBlock(block) || isImpactCurrent(state, block.blockId))
       && isSummaryCurrent(state) && isSummaryShowerEquivalenceCurrent(state) && isSummaryLedEquivalenceCurrent(state)) {
-      setRecalculationNotice('');
+      setRecalculationCount(0);
     }
-  }, [state, recalculationNotice]);
+  }, [state, recalculationCount]);
 
   function openSelection(origin: 'home' | 'thread', trigger?: HTMLButtonElement) {
     const fromSummary = !!trigger?.closest('.result-section');
@@ -121,7 +124,7 @@ export function App() {
       const next = conversationReducer(state, action);
       const staleCards = next.blocks.filter((block) => next.impacts[block.blockId]?.status === 'result' && !isImpactCurrent(next, block.blockId)).length;
       const staleCount = staleCards || Number(next.summary?.status === 'result' && !isSummaryCurrent(next));
-      if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
+      if (staleCount) setRecalculationCount(staleCount);
     }
     dispatch(action);
   }
@@ -134,7 +137,7 @@ export function App() {
         + Number(next.summary?.status === 'result' && !isSummaryCurrent(next))
         + Number(!!next.summaryShowerEquivalence && !isSummaryShowerEquivalenceCurrent(next))
         + Number(!!next.summaryLedEquivalence && !isSummaryLedEquivalenceCurrent(next));
-      if (staleCount) setRecalculationNotice(fr.recalculationNotice(staleCount));
+      if (staleCount) setRecalculationCount(staleCount);
     }
     dispatch(action);
   }
@@ -236,38 +239,39 @@ export function App() {
         ? <Methodology titleRef={methodologyTitle} onReturn={() => setStep(stepBeforeMethodology.current)} />
         : <header className="app-header">
           <div className="app-header-copy">
-            <h1>{fr.title}</h1>
-            {step === 'home' ? <p>{fr.introduction}</p> : null}
+            <h1>{messages.title}</h1>
+            {step === 'home' ? <p>{messages.introduction}</p> : null}
           </div>
         </header>}
       {visibleStep === 'home' ? <section hidden={step === 'methodology'} className="start-paths">
-        <button type="button" className="primary-action" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}>{fr.startAction}</button>
-        <button className="link-button methodology-help" type="button" onClick={openMethodology}>{fr.methodologyAction}</button>
+        <button type="button" className="primary-action" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}>{messages.startAction}</button>
+        <button className="link-button methodology-help" type="button" onClick={openMethodology}>{messages.methodologyAction}</button>
+        <LanguageMenu />
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
-        <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {fr.backAction}</button>
-        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.selectionTitle}</h2>
-        <p className="step-justification">{fr.selectionJustification}</p>
+        <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {messages.backAction}</button>
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{messages.selectionTitle}</h2>
+        <p className="step-justification">{messages.selectionJustification}</p>
         <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} ref={configuration} onValidityChange={setParametersValid} />
         <div className="sticky-actions">
-          {parametersValid ? null : <p id="continue-blocked" className="continue-blocked" role="alert"><span aria-hidden="true">⚠ </span>{fr.continueBlockedExplanation}</p>}
-          <button type="button" className="primary-action" aria-disabled={parametersValid ? undefined : true} aria-describedby={parametersValid ? undefined : 'continue-blocked'} onClick={continueToThread}>{fr.continueThreadAction}</button>
+          {parametersValid ? null : <p id="continue-blocked" className="continue-blocked" role="alert"><span aria-hidden="true">⚠ </span>{messages.continueBlockedExplanation}</p>}
+          <button type="button" className="primary-action" aria-disabled={parametersValid ? undefined : true} aria-describedby={parametersValid ? undefined : 'continue-blocked'} onClick={continueToThread}>{messages.continueThreadAction}</button>
         </div>
       </section> : null}
       {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
-        <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>←</Icon> {fr.backAction}</button>
-        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{fr.threadTitle}</h2>
-        <p className="step-justification">{fr.threadJustification}</p>
+        <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>←</Icon> {messages.backAction}</button>
+        <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{messages.threadTitle}</h2>
+        <p className="step-justification">{messages.threadJustification}</p>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}
         <ConversationBlocks state={state} dispatch={blocksDispatch} onEditParameters={(trigger) => openSelection('thread', trigger)} />
-        <div className="thread-reference"><p>{fr.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{fr.editReferenceAction}</button></div>
+        <div className="thread-reference"><p>{messages.currentReference(state.provider, state.modelId)}</p><button type="button" onClick={(event) => openSelection('thread', event.currentTarget)}>{messages.editReferenceAction}</button></div>
         <CalculationBar state={state} onCalculate={() => void calculateAll()} />
       </section> : null}
     </main>
     {summaryPending ? <div className="calculation-overlay">
       <div ref={calculationStatus} className="calculation-progress" role="status" aria-live="polite" tabIndex={-1}>
         <span className="calculation-spinner" aria-hidden="true" />
-        <p>{fr.calculatingOverlayStatus}</p>
+        <p>{messages.calculatingOverlayStatus}</p>
       </div>
     </div> : null}
     </>

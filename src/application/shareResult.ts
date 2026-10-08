@@ -1,3 +1,4 @@
+import type { Messages } from '../i18n/fr';
 import { formatQuantity } from '../ui/quantityFormatter';
 import { buildShareText, type ShareableResult } from '../domain/shareableResult';
 import { isIgnoredConversationBlock, isSummaryShowerEquivalenceCurrent, type ConversationState } from './conversationReducer';
@@ -13,6 +14,8 @@ export interface ShareEnvironment {
 export function toShareableResult(
   state: ConversationState,
   location: { readonly origin: string; readonly pathname: string },
+  messages: Messages,
+  locale: string,
 ): ShareableResult | undefined {
   if (state.summary?.status !== 'result') return undefined;
   const total = state.summary.total;
@@ -20,18 +23,18 @@ export function toShareableResult(
   return {
     chatbot: state.provider,
     exchangeCount: state.blocks.filter((block) => !isIgnoredConversationBlock(block)).length,
-    showerAccessible: equivalence?.status === 'available' ? formatQuantity(equivalence.seconds, 'duration').accessible : undefined,
-    carbon: formatQuantity(total.carbonGco2e, 'carbon').accessible,
-    water: formatQuantity(total.waterL, 'water').accessible,
-    electricity: formatQuantity(total.energyWh, 'energy').accessible,
+    showerAccessible: equivalence?.status === 'available' ? formatQuantity(equivalence.seconds, 'duration', messages, locale).accessible : undefined,
+    carbon: formatQuantity(total.carbonGco2e, 'carbon', messages, locale).accessible,
+    water: formatQuantity(total.waterL, 'water', messages, locale).accessible,
+    electricity: formatQuantity(total.energyWh, 'energy', messages, locale).accessible,
     pageUrl: location.origin === 'null' ? location.pathname : `${location.origin}${location.pathname}`,
   };
 }
 
 /** Texte à partager, calculé au clic depuis l’état courant. */
-export function buildShareTextFromState(state: ConversationState, location: { readonly origin: string; readonly pathname: string }): string | undefined {
-  const shareable = toShareableResult(state, location);
-  return shareable ? buildShareText(shareable) : undefined;
+export function buildShareTextFromState(state: ConversationState, location: { readonly origin: string; readonly pathname: string }, messages: Messages, locale: string): string | undefined {
+  const shareable = toShareableResult(state, location, messages, locale);
+  return shareable ? buildShareText(shareable, messages) : undefined;
 }
 
 export function browserShareEnvironment(): ShareEnvironment {

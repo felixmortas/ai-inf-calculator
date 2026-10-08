@@ -242,3 +242,11 @@ button {
   .block-actions { display: grid; gap: .65rem; }
   .source-list li { align-items: stretch; flex-direction: column; }
 }
+
+.language-menu { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+.language-button, .language-list button { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 2.75rem; min-height: 2.75rem; padding: .4rem .9rem; border: 1px solid #577160; border-radius: .5rem; background: #fff; color: #203b32; }
+.language-list { display: flex; flex-direction: column; gap: .25rem; width: 100%; margin: .25rem 0 0; padding: 0; list-style: none; }
+.language-list li { display: flex; }
+.language-list button { flex: 1; max-width: 100%; overflow-wrap: anywhere; }
+.language-list button[aria-checked="true"] { background: #edf5ee; font-weight: 700; }
+.language-list button[aria-checked="true"]::before { content: "✓"; }

@@ -35,3 +35,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-5-partager-son-resultat-sans-partager-sa-conversation.md`
   summary: Le paragraphe `role="status"` « Résultat copié. » est monté en même temps que son texte, ce que certains lecteurs d'écran n'annoncent pas.
   evidence: `src/ui/ResultSection.tsx` rend la région conditionnellement ; une région live pré-montée serait plus fiable.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-internationaliser-le-site.md`
+  summary: Pluriels via `Intl.PluralRules` (langues à plus de deux formes) et `countryCodesByName` limité au français/anglais.
+  evidence: Relecture : le formateur n’a que `one`/`other` ; la normalisation des noms de pays n’est pas dérivée de la locale. À traiter à l’arrivée de langues réelles.
