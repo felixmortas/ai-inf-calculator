@@ -435,11 +435,11 @@ describe('composition de la conversation', () => {
     const random = vi.fn(() => 0.5);
     const current = render(<ConversationBlocks state={state} dispatch={() => undefined} random={random} />);
     const practices = screen.getByRole('region', { name: 'Une bonne pratique' });
-    expect(practices).toHaveTextContent('Réduisez les textes envoyés et les textes générés au nécessaire.');
+    expect(practices).toHaveTextContent('Créez des branches de conversation en modifiant un message. Cela maintient également un contexte propre.');
     expect(practices.querySelectorAll('li')).toHaveLength(0);
     current.rerender(<ConversationBlocks state={state} dispatch={() => undefined} random={random} />);
     expect(random).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('region', { name: 'Une bonne pratique' })).toHaveTextContent('Réduisez les textes');
+    expect(screen.getByRole('region', { name: 'Une bonne pratique' })).toHaveTextContent('Créez des branches');
     expect(document.querySelector('.result-section')).toContainElement(practices);
     const link = screen.getByRole('link', { name: 'Voir les bonnes pratiques (s’ouvre dans un nouvel onglet)' });
     expect(link).toHaveAttribute('href', 'https://example.org/bonnes-pratiques-ia');

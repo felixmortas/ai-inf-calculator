@@ -2,7 +2,7 @@
 export const goodPracticesBlogUrl = 'https://example.org/bonnes-pratiques-ia';
 
 /** Identifiants du catalogue ; les textes vivent dans `fr.goodPractices`. Aucun gain chiffré. */
-export const goodPracticeIds = ['smallModel', 'noDetailedReasoning', 'shortTexts', 'newConversation', 'editMessage'] as const;
+export const goodPracticeIds = ['smallModel', 'noDetailedReasoning', 'shortTexts', 'newConversation', 'editMessage', 'useBrowser', 'branchTopics', 'removeConversations', 'emptyMemory', 'smallEffort', 'shortOutputs', 'stopMessage'] as const;
 export type GoodPracticeId = typeof goodPracticeIds[number];
 
 /** Tire une bonne pratique ; `random` est injectable (valeur dans [0, 1[). */
