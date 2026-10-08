@@ -194,7 +194,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                   return <span key={kind} role="img" className={`badge badge-${kind}`} aria-label={`${kind === 'carbon' ? messages.carbonLabel : messages.waterLabel} : ${quantity.accessible}`}><Icon name={kind === 'carbon' ? 'leaf' : 'drop'} />{quantity.display}</span>;
                 })}
               </div> : null}
-              {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
+              {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}${impactIsCurrent ? ' impact-current' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
             </div>) : null;
         return (
           <section id={`conversation-${block.blockId}`} key={block.blockId} className={`conversation-block${expanded ? ' is-expanded' : ''}`} aria-label={messages.blockLabel(index + 1)} tabIndex={-1}>

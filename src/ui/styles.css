@@ -218,6 +218,7 @@ button {
 .calculation-error { flex: 1 1 100%; margin: 0; color: var(--error); font-weight: 600; }
 .exchange-status { display: inline-block; margin: 0; padding: .15rem .75rem; border-radius: 999px; background: var(--muted); font-size: .875rem; }
 .exchange-status.impact-stale { border-width: 0; }
+.exchange-status.impact-current { color: var(--accent); }
 .conversation-block { position: relative; }
 .conversation-block-heading { justify-content: center; min-height: 2.75rem; padding: 0 2.75rem; }
 .conversation-block-heading h3 { flex: 0 0 auto; }
