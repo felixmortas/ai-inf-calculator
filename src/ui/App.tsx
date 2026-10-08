@@ -19,9 +19,8 @@ import { ConversationConfiguration, type ConfigurationHandle } from './Conversat
 import { ConversationBlocks } from './ConversationBlocks';
 import { CalculationBar } from './CalculationBar';
 import { Methodology } from './Methodology';
+import { Icon } from './Icons';
 import './styles.css';
-
-function Icon({ children }: { readonly children: string }) { return <span aria-hidden="true" className="icon-glyph">{children}</span>; }
 
 export function impactTexts(
   block: { readonly message: string; readonly sources?: readonly { readonly text: string }[]; readonly finalResponse: string; readonly visibleReasoning: string },
@@ -249,7 +248,7 @@ export function App() {
         <LanguageMenu />
       </section> : null}
       {visibleStep === 'selection' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
-        <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon>←</Icon> {messages.backAction}</button>
+        <button className="back-button" type="button" onClick={() => setStep(selectionOrigin)}><Icon name="back" /> {messages.backAction}</button>
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{messages.selectionTitle}</h2>
         <p className="step-justification">{messages.selectionJustification}</p>
         <ConversationConfiguration state={state} dispatch={configurationDispatch} initialAdvancedOpen={openAdvancedOnSelection} ref={configuration} onValidityChange={setParametersValid} />
@@ -259,7 +258,7 @@ export function App() {
         </div>
       </section> : null}
       {visibleStep === 'thread' ? <section hidden={step === 'methodology'} aria-labelledby="step-title">
-        <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon>←</Icon> {messages.backAction}</button>
+        <button className="back-button" type="button" onClick={() => { setSelectionOrigin('home'); setStep('selection'); }}><Icon name="back" /> {messages.backAction}</button>
         <h2 id="step-title" ref={stepTitle} tabIndex={-1}>{messages.threadTitle}</h2>
         <p className="step-justification">{messages.threadJustification}</p>
         {recalculationNotice ? <p role="status" className="impact-stale">{recalculationNotice}</p> : null}

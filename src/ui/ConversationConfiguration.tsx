@@ -5,6 +5,7 @@ import { chatGptProvider, chatGptSubscriptions, mistralProvider, resolveMistralM
 import type { ConversationAction, ConversationState } from '../application/conversationReducer';
 import { useI18n } from '../i18n/I18nProvider';
 import type { Messages } from '../i18n/fr';
+import { Icon } from './Icons';
 
 /** Résultat de la collecte des champs numériques à l’activation de « Continuer ». */
 export type ConfigurationCollection = { readonly ok: false } | { readonly ok: true; readonly overrides?: ImpactParameterOverrides };
@@ -158,7 +159,7 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
       </div>
 
       <details className="advanced-settings" open={advancedOpen} onToggle={(event) => { if (event.target === event.currentTarget) setAdvancedOpen(event.currentTarget.open); }}>
-        <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{messages.advancedSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+        <summary aria-expanded={advancedOpen} aria-controls="advanced-settings-content">{messages.advancedSettingsTitle}<span aria-hidden="true" className="chevron"><Icon name="chev" /></span></summary>
         <div id="advanced-settings-content">
           <p className="help">{messages.advancedSettingsIntro}</p>
           <div className="field">
@@ -172,7 +173,7 @@ export function ConversationConfiguration({ state, dispatch, requireMistralMode 
           {resolved ? <form ref={formRef} className="parameter-form" onInput={validate} onSubmit={ignoreSubmit} noValidate>
             {showerFields.map((name) => <Parameter messages={messages} key={name} name={name} value={resolved.shower[name]} version={resetVersion} invalid={has(name)} />)}
             <details className="advanced-settings expert-settings" open={expertOpen} onToggle={(event) => { if (event.target === event.currentTarget) setExpertOpen(event.currentTarget.open); }}>
-              <summary aria-expanded={expertOpen} aria-controls="expert-settings-content">{messages.expertSettingsTitle}<span aria-hidden="true" className="chevron">⌄</span></summary>
+              <summary aria-expanded={expertOpen} aria-controls="expert-settings-content">{messages.expertSettingsTitle}<span aria-hidden="true" className="chevron"><Icon name="chev" /></span></summary>
               <div id="expert-settings-content">
                 <p className="help">{messages.expertSettingsIntro}</p>
                 <div className="field">

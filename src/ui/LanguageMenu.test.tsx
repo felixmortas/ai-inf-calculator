@@ -40,7 +40,7 @@ describe('menu de langue', () => {
   it('affiche la langue courante, sans changer l’ordre des deux boutons existants', () => {
     renderApp();
     const buttons = screen.getAllByRole('button');
-    expect(buttons.map((button) => button.textContent)).toEqual(['Commencer', 'Méthodologie', '🌐 Français']);
+    expect(buttons.map((button) => button.textContent)).toEqual(['Commencer', 'Méthodologie', 'Français']);
     expect(languageButton()).toHaveAttribute('aria-haspopup', 'menu');
     expect(languageButton()).toHaveAttribute('aria-expanded', 'false');
     expect(languageButton()).toHaveAccessibleName('Langue : Français');

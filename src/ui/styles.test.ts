@@ -39,4 +39,12 @@ describe('styles d’accessibilité et responsive', () => {
     expect(styleSource).toContain('.thread-reference button { flex-shrink: 0; white-space: nowrap; }');
     expect(styleSource).not.toContain('.thread-reference button { max-width: 100%; white-space: normal; }');
   });
+
+  it('applique les jetons de la DA Canopée épurée', () => {
+    for (const token of ['--accent: #0b7a5e', '--brand: #10a37f', '--tint: #e6f6f1', '--muted: #f4f4f4', '--card: 0 4px 12px rgba(0,0,0,.05)', '--outline: #8a8a8a', '--focus: #184bb2', 'Inter']) {
+      expect(styleSource).toContain(token);
+    }
+    expect(styleSource).toContain('border-radius: 999px');
+    expect(styleSource).toContain('border-left: 4px solid var(--accent)');
+  });
 });

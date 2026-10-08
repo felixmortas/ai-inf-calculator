@@ -39,3 +39,10 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-internationaliser-le-site.md`
   summary: Pluriels via `Intl.PluralRules` (langues à plus de deux formes) et `countryCodesByName` limité au français/anglais.
   evidence: Relecture : le formateur n’a que `one`/`other` ; la normalisation des noms de pays n’est pas dérivée de la locale. À traiter à l’arrivée de langues réelles.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-refonte-da-canopee-epuree.md`
+  summary: Remplacer le chevron texte `⌄` de `.optional-contents > summary::after` par l'icône SVG `chev`, et vérifier le contraste de `--ink-2` sur `--muted`/`--tint`.
+  evidence: les autres chevrons sont passés en SVG ; contraste jamais calculé ni testé.
+- source_spec: `_bmad-output/implementation-artifacts/spec-refonte-da-canopee-epuree.md`
+  summary: Ajouter des états hover/active, un fallback `forced-colors` et un indice non coloré pour les échanges périmés.
+  evidence: boutons sans bordure ni état hover ; cartes délimitées uniquement par l'ombre.

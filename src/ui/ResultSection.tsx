@@ -10,6 +10,7 @@ import { goodPracticesBlogUrl, pickGoodPractice, type GoodPracticeId } from '../
 import { countryLabel as localizedCountry, resolveImpactParameters } from '../data/modelCatalog';
 import { useI18n } from '../i18n/I18nProvider';
 import type { Messages } from '../i18n/fr';
+import { Icon } from './Icons';
 import { formatQuantity, type QuantityKind } from './quantityFormatter';
 
 interface ResultSectionProps {
@@ -69,7 +70,7 @@ export function ResultSection({ state, random }: ResultSectionProps) {
         <div className="result-hero">
           {shower?.status === 'available' ? <>
             <p className="metric-hero">
-              <span aria-hidden="true">🚿 </span>
+              <span className="disc" aria-hidden="true"><Icon name="shower" /></span>
               <span aria-hidden="true">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).display)}</span>
               <span className="visually-hidden">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).accessible)}</span>
             </p>
@@ -77,10 +78,11 @@ export function ResultSection({ state, random }: ResultSectionProps) {
           </> : shower ? <p>{messages.resultShowerUnavailable}</p> : <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.resultShowerStale}</p>}
         </div>
         <ul className="metrics">
-          <li className="metric"><span className="metric-label">{messages.resultCarbon}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.carbonGco2e} kind="carbon" /></span></li>
-          <li className="metric"><span className="metric-label">{messages.resultWater}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.waterL} kind="water" /></span></li>
-          <li className="metric"><span className="metric-label">{messages.resultElectricity}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.energyWh} kind="energy" /></span></li>
-          <li className="metric">
+          <li className="metric metric-carbon"><span className="disc" aria-hidden="true"><Icon name="leaf" /></span><span className="metric-label">{messages.resultCarbon}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.carbonGco2e} kind="carbon" /></span></li>
+          <li className="metric metric-water"><span className="disc" aria-hidden="true"><Icon name="drop" /></span><span className="metric-label">{messages.resultWater}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.waterL} kind="water" /></span></li>
+          <li className="metric metric-power"><span className="disc" aria-hidden="true"><Icon name="bolt" /></span><span className="metric-label">{messages.resultElectricity}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.energyWh} kind="energy" /></span></li>
+          <li className="metric metric-led">
+            <span className="disc" aria-hidden="true"><Icon name="bulb" /></span>
             <span className="metric-label">{messages.resultLed(ledPower === undefined ? '' : messages.resultLedPower(new Intl.NumberFormat(locale, { maximumSignificantDigits: 3 }).format(ledPower)))}</span>{' '}
             <span className="metric-value">{!led
               ? <span className="impact-stale"><span aria-hidden="true">↻ </span>{messages.staleEstimate}</span>
@@ -100,7 +102,7 @@ export function ResultSection({ state, random }: ResultSectionProps) {
         </a>
         {canShare ? <div className="share-block">
           <button type="button" className="share-button" onClick={() => { void onShare(); }}>
-            <span aria-hidden="true">↗</span> {messages.shareAction}
+            <Icon name="share" /> {messages.shareAction}
           </button>
           {shareFeedback?.kind === 'failed' ? <div className="share-feedback">
             <p role="alert">{messages.shareFailed}</p>

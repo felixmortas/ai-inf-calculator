@@ -14,6 +14,7 @@ import type { Messages } from '../i18n/fr';
 import { useI18n } from '../i18n/I18nProvider';
 import { formatQuantity } from './quantityFormatter';
 import { ResultSection } from './ResultSection';
+import { Icon } from './Icons';
 
 export { localSourceMaxBytes } from '../application/conversationReducer';
 
@@ -190,7 +191,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
               {impactIsCurrent && impactState?.status === 'result' ? <div className="compact-impact" aria-label={messages.estimatedImpact}>
                 {(['carbon', 'water'] as const).map((kind) => {
                   const quantity = formatQuantity(kind === 'carbon' ? impactState.impact.carbonGco2e : impactState.impact.waterL, kind, messages, locale);
-                  return <span key={kind} aria-label={`${kind === 'carbon' ? messages.carbonLabel : messages.waterLabel} : ${quantity.accessible}`}>{kind === 'carbon' ? '🪨' : '💧'} {quantity.display}</span>;
+                  return <span key={kind} role="img" className={`badge badge-${kind}`} aria-label={`${kind === 'carbon' ? messages.carbonLabel : messages.waterLabel} : ${quantity.accessible}`}><Icon name={kind === 'carbon' ? 'leaf' : 'drop'} />{quantity.display}</span>;
                 })}
               </div> : null}
               {status ? <p className={`exchange-status${impactIsStale ? ' impact-stale' : ''}`}>{statusIcon ? <span aria-hidden="true">{statusIcon} </span> : null}{status}</p> : null}
@@ -202,7 +203,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
               <button ref={(element) => {
                 if (element) removeButtonRefs.current.set(block.blockId, element);
                 else removeButtonRefs.current.delete(block.blockId);
-              }} className="remove-block" type="button" aria-label={messages.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><span aria-hidden="true">🗑️</span></button>
+              }} className="remove-block" type="button" aria-label={messages.removeBlockAction(index + 1)} onClick={() => requestRemove(block.blockId)}><Icon name="trash" /></button>
             </div>
             {!expanded ? <div className="conversation-preview">
               <p><strong>{messages.questionPreview} :</strong> {question || messages.noPreview}</p>
@@ -226,7 +227,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                     return next;
                   });
                 }}
-              ><span aria-hidden="true" className="chevron">⌄</span> {expanded ? messages.collapseAction : messages.expandAction}</button>
+              ><span aria-hidden="true" className="chevron"><Icon name="chev" /></span> {expanded ? messages.collapseAction : messages.expandAction}</button>
             </div>
             {!expanded ? impactRow : null}
             <div id={editorId} hidden={!expanded} className="block-editor">
@@ -265,7 +266,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
         );
       })}
       <div className="conversation-actions conversation-actions-after-thread">
-        <button ref={addButtonRef} type="button" onClick={addBlock}>{messages.addBlockAction}</button>
+        <button ref={addButtonRef} type="button" className="add-block" onClick={addBlock}><Icon name="plus" />{messages.addBlockAction}</button>
       </div>
       {confirmRemoveId !== null && removing >= 0 ? createPortal(
         <div className="modal-backdrop">

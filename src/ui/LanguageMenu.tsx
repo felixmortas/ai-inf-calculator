@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
+import { Icon } from './Icons';
 
 /** Bouton de langue de l’accueil : le libellé visible est la langue courante. */
 export function LanguageMenu() {
@@ -60,7 +61,7 @@ export function LanguageMenu() {
         aria-label={`${messages.languageMenuLabel} : ${current.label}`}
         onClick={() => (open ? close(false) : openMenu())}
         onKeyDown={onButtonKeyDown}
-      ><span aria-hidden="true">🌐</span> <span lang={current.code}>{current.label}</span></button>
+      ><Icon name="globe" /><span lang={current.code}>{current.label}</span></button>
       {open ? <ul id={menuId} role="menu" className="language-list" aria-label={messages.languageMenuLabel} onKeyDown={onMenuKeyDown}>
         {languages.map((entry, index) => (
           <li key={entry.code} role="none">

@@ -356,8 +356,8 @@ describe('composition de la conversation', () => {
 
     const first = within(screen.getByRole('region', { name: 'Question / réponse 1' }));
     expect(first.getByRole('button', { name: 'Déplier la question / réponse 1' })).toHaveAttribute('aria-expanded', 'false');
-    expect(first.getByLabelText('🪨 Carbone : 2 grammes de dioxyde de carbone équivalent')).toHaveTextContent('🪨 2 gCO₂e');
-    expect(first.getByLabelText('💧 Eau : 3 litres d’eau')).toHaveTextContent('💧 3 L');
+    expect(first.getByLabelText('🪨 Carbone : 2 grammes de dioxyde de carbone équivalent')).toHaveTextContent('2 gCO₂e');
+    expect(first.getByLabelText('💧 Eau : 3 litres d’eau')).toHaveTextContent('3 L');
   });
 
   it('garde les deux aperçus et les avis d’import visibles sur une ancienne carte repliée', () => {
