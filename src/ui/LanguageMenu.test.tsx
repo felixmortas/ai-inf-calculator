@@ -11,7 +11,8 @@ const yy: LanguageEntry = {
   code: 'yy', label: 'Yyyy', intlLocale: 'en-US',
   messages: { ...fr, startAction: 'Start-yy', methodologyAction: 'Method-yy', methodologyTitle: 'Method title yy', threadTitle: 'Step 2-yy', pageTitle: 'Title yy', worldCountry: 'World-yy' },
 };
-const registry = [...languages, yy];
+const frenchOnly = languages.filter((entry) => entry.code === 'fr');
+const registry = [...frenchOnly, yy];
 
 function renderApp(navigatorLanguages: readonly string[] = ['fr-FR']) {
   return render(<I18nProvider languages={registry} navigatorLanguages={navigatorLanguages}><App /></I18nProvider>);
@@ -103,7 +104,7 @@ describe('menu de langue', () => {
 
   it('fonctionne avec une seule langue au registre', async () => {
     const user = userEvent.setup();
-    render(<I18nProvider languages={languages} navigatorLanguages={['en']}><App /></I18nProvider>);
+    render(<I18nProvider languages={frenchOnly} navigatorLanguages={['en']}><App /></I18nProvider>);
     await user.click(languageButton());
     expect(screen.getAllByRole('menuitemradio')).toHaveLength(1);
   });
