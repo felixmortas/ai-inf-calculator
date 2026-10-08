@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { fr, type Messages } from './fr';
+import type { Messages } from './fr';
 import { browserLanguages, defaultLanguage, detectLanguage, languages as registry, type LanguageEntry } from './languages';
 
 export interface I18nValue {
@@ -11,8 +11,7 @@ export interface I18nValue {
   readonly setLanguage: (code: string) => void;
 }
 
-const fallbackValue: I18nValue = { language: defaultLanguage, messages: fr, locale: 'fr-FR', languages: registry, setLanguage: () => undefined };
-const I18nContext = createContext<I18nValue>(fallbackValue);
+const I18nContext = createContext<I18nValue | null>(null);
 
 /** Langue en mémoire de session uniquement : rien n’est stocké. */
 export function I18nProvider({ children, languages = registry, navigatorLanguages }: {
@@ -37,5 +36,7 @@ export function I18nProvider({ children, languages = registry, navigatorLanguage
 }
 
 export function useI18n(): I18nValue {
-  return useContext(I18nContext);
+  const value = useContext(I18nContext);
+  if (!value) throw new Error('useI18n doit être utilisé dans un I18nProvider.');
+  return value;
 }
