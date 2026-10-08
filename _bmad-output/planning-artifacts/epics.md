@@ -28,8 +28,8 @@ inputDocuments:
   - sprint-change-proposal-2026-09-20.md
   - sprint-change-proposal-2026-09-23.md
   - sprint-change-proposal-2026-10-07.md
-  - ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
-  - ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
+  - ux-designs/ux-ai-env-impact-calculator-2026-09-23/DESIGN.md
+  - ux-designs/ux-ai-env-impact-calculator-2026-09-23/EXPERIENCE.md
 ---
 
 # Calculateur d’empreinte environnementale des LLM — Epic Breakdown

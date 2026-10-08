@@ -1,7 +1,7 @@
 # Validation UX — Empreinte IA
 
-- DESIGN.md : `_bmad-output/planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md`
-- EXPERIENCE.md : `_bmad-output/planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md`
+- DESIGN.md : `_bmad-output/planning-artifacts/ux-designs/ux-ai-env-impact-calculator-2026-09-23/DESIGN.md`
+- EXPERIENCE.md : `_bmad-output/planning-artifacts/ux-designs/ux-ai-env-impact-calculator-2026-09-23/EXPERIENCE.md`
 - Date : 2026-09-23 18:30 UTC
 
 ## Synthèse

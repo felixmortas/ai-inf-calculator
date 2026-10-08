@@ -42,7 +42,7 @@ Les FR-1 à FR-25 sont uniques, UJ-1/UJ-2 ont une protagoniste nommée et SM-1 e
 
 ### Findings
 
-- **low** Références UX peu résolubles hors contexte (§FR-22, NFR-1, D-2/D-5) — Les noms `DESIGN.md` et `EXPERIENCE.md` sont génériques, tandis que les unités et plusieurs états de focus en dépendent. *Fix :* lier une fois les deux fichiers sous `ux-designs/ux-ao-env-impact-calculator-2026-09-23/`, puis garder les noms courts ailleurs.
+- **low** Références UX peu résolubles hors contexte (§FR-22, NFR-1, D-2/D-5) — Les noms `DESIGN.md` et `EXPERIENCE.md` sont génériques, tandis que les unités et plusieurs états de focus en dépendent. *Fix :* lier une fois les deux fichiers sous `ux-designs/ux-ai-env-impact-calculator-2026-09-23/`, puis garder les noms courts ailleurs.
 
 ## Shape fit — strong
 

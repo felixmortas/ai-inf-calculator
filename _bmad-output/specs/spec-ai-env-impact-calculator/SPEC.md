@@ -4,8 +4,8 @@ companions:
   - functional-contract.md
   - calculation-contract.md
   - ../../planning-artifacts/architecture/architecture-ai-env-impact-calculator-2026-09-18/ARCHITECTURE-SPINE.md
-  - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md
-  - ../../planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md
+  - ../../planning-artifacts/ux-designs/ux-ai-env-impact-calculator-2026-09-23/DESIGN.md
+  - ../../planning-artifacts/ux-designs/ux-ai-env-impact-calculator-2026-09-23/EXPERIENCE.md
 sources:
   - ../../../docs/methodology/fr.md
   - ../../planning-artifacts/prds/prd-ai-env-impact-calculator-2026-09-17/prd.md

@@ -6,7 +6,7 @@ status: 'done'
 route: 'oneshot'
 review_loop_iteration: 0
 context:
-  - '_bmad-output/planning-artifacts/ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md'
+  - '_bmad-output/planning-artifacts/ux-designs/ux-ai-env-impact-calculator-2026-09-23/EXPERIENCE.md'
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">

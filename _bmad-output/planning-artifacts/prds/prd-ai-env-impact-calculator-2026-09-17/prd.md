@@ -347,7 +347,7 @@ Le résultat propose un seul bouton « Partager » qui ouvre le partage du syst�
 
 ### NFR-1 — Utilisation sur ordinateur et mobile
 
-La page permet la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. L’accueil propose une phrase d’introduction et un seul bouton pour commencer à saisir les messages de sa conversation. Chaque étape a une seule action principale, toujours visible, devenue statique à fort zoom (NFR-7). Le fil et le bilan suivent [DESIGN.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/DESIGN.md) et [EXPERIENCE.md](../../ux-designs/ux-ao-env-impact-calculator-2026-09-23/EXPERIENCE.md) du 23 septembre 2026 ; ces documents priment sur les quatre maquettes statiques en cas d’écart.
+La page permet la saisie des échanges, la consultation des résultats et des bonnes pratiques, ainsi que la correction du pays de l’utilisateur depuis un ordinateur ou un mobile. L’accueil propose une phrase d’introduction et un seul bouton pour commencer à saisir les messages de sa conversation. Chaque étape a une seule action principale, toujours visible, devenue statique à fort zoom (NFR-7). Le fil et le bilan suivent [DESIGN.md](../../ux-designs/ux-ai-env-impact-calculator-2026-09-23/DESIGN.md) et [EXPERIENCE.md](../../ux-designs/ux-ai-env-impact-calculator-2026-09-23/EXPERIENCE.md) du 23 septembre 2026 ; ces documents priment sur les quatre maquettes statiques en cas d’écart.
 
 ### NFR-2 — Compatibilité avec GitHub Pages
 
