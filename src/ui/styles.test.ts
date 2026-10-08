@@ -29,4 +29,14 @@ describe('styles d’accessibilité et responsive', () => {
     expect(styleSource).toContain('@media (max-height: 30rem)');
     expect(styleSource).toContain('.keyboard-open .sticky-actions');
   });
+
+  it('espace le Mode avancé et les paramètres du Mode expert comme les autres paramètres', () => {
+    expect(styleSource).toContain('.advanced-settings { margin-top: 1rem; }');
+    expect(styleSource).toContain('.parameter-form .expert-settings .field { margin-top: .7rem; }');
+  });
+
+  it('garde le bouton Modifier du modèle sur une seule ligne', () => {
+    expect(styleSource).toContain('.thread-reference button { flex-shrink: 0; white-space: nowrap; }');
+    expect(styleSource).not.toContain('.thread-reference button { max-width: 100%; white-space: normal; }');
+  });
 });

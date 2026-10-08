@@ -34,7 +34,7 @@ button[aria-disabled="true"] { opacity: .85; cursor: not-allowed; }
 .primary-action[aria-disabled="true"] { background: #e3e8e0; color: #3d4d43; border: 2px dashed #577160; cursor: not-allowed; }
 .estimate-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .estimate { margin: 0; }
-.expert-settings { margin-top: 1rem; }
+.advanced-settings { margin-top: 1rem; }
 .expert-settings > summary { background: #fff; }
 .restore-link { justify-self: start; font-size: .9rem; }
 @media (max-height: 30rem), (max-width: 20rem) { .sticky-actions { position: static; } html { scroll-padding-bottom: 0; } }
@@ -56,6 +56,7 @@ button[aria-disabled="true"] { opacity: .85; cursor: not-allowed; }
 .methodology-content :not(pre) > code { padding: .1rem .25rem; border-radius: .2rem; background: #e3ece2; }
 .methodology-content a { color: #184bb2; }
 .thread-reference p { margin: 0; }
+.thread-reference button { flex-shrink: 0; white-space: nowrap; }
 [tabindex="-1"]:focus { outline: 3px solid #184bb2; outline-offset: .25rem; }
 
 .configuration, .conversation-blocks {
@@ -83,6 +84,7 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-
 .resolved-model { display: flex; align-items: center; background: #edf5ee; }
 .parameter-form { display: grid; gap: .45rem; margin-top: 1rem; }
 .parameter-form .field { margin-top: .25rem; }
+.parameter-form .expert-settings .field { margin-top: .7rem; }
 .parameter-field-error { margin: 0; color: #9d3030; font-size: .9rem; }
 .content-notice { margin-top: .5rem; padding: .8rem; border-left: 4px solid #8a5a00; border-radius: .35rem; background: #fff7df; }
 .calculation-overlay {
@@ -236,7 +238,7 @@ button {
   .conversation-blocks-header, .conversation-actions { align-items: stretch; flex-direction: column; }
   .conversation-block-heading { align-items: center; flex-direction: row; gap: .5rem; }
   .conversation-actions-after-thread { align-items: center; flex-direction: row; }
-  .result-section .result-link, .thread-reference button { max-width: 100%; white-space: normal; }
+  .result-section .result-link { max-width: 100%; white-space: normal; }
   .block-actions { display: grid; gap: .65rem; }
   .source-list li { align-items: stretch; flex-direction: column; }
 }
