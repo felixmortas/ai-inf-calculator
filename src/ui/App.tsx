@@ -43,7 +43,7 @@ export function App() {
   const [selectionOrigin, setSelectionOrigin] = useState<'home' | 'thread'>('home');
   const stepTitle = useRef<HTMLHeadingElement>(null);
   const methodologyTitle = useRef<HTMLHeadingElement>(null);
-  const returnFocus = useRef<'summary' | 'reference' | null>(null);
+  const returnFocus = useRef<'reference' | null>(null);
   const calculationStatus = useRef<HTMLDivElement>(null);
   const calculationReturnFocus = useRef<HTMLElement | null>(null);
   const calculationWasPending = useRef(false);
@@ -84,8 +84,7 @@ export function App() {
 
   useEffect(() => {
     if (step === 'thread' && returnFocus.current) {
-      const target = returnFocus.current === 'summary' ? document.querySelector<HTMLButtonElement>('.result-section button') : null;
-      (target ?? document.querySelector<HTMLButtonElement>('.thread-reference button'))?.focus();
+      document.querySelector<HTMLButtonElement>('.thread-reference button')?.focus();
       returnFocus.current = null;
     } else (step === 'methodology' ? methodologyTitle.current : stepTitle.current)?.focus();
     if (step === 'thread' && document.documentElement.scrollHeight > window.innerHeight) {
@@ -111,9 +110,8 @@ export function App() {
   }, [state, recalculationCount]);
 
   function openSelection(origin: 'home' | 'thread', trigger?: HTMLButtonElement) {
-    const fromSummary = !!trigger?.closest('.result-section');
-    returnFocus.current = trigger ? (fromSummary ? 'summary' : 'reference') : null;
-    setOpenAdvancedOnSelection(fromSummary || !!trigger?.classList.contains('edit-stale-parameters'));
+    returnFocus.current = trigger ? 'reference' : null;
+    setOpenAdvancedOnSelection(!!trigger?.classList.contains('edit-stale-parameters'));
     setSelectionOrigin(origin);
     setStep('selection');
   }

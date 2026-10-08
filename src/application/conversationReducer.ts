@@ -94,12 +94,12 @@ export interface BlockTokenizationState {
 export type BlockImpactState =
   | { readonly status: 'pending'; readonly fingerprint: string }
   | { readonly status: 'result'; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly status: 'error'; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block' };
+  | { readonly status: 'error'; readonly fingerprint: string; readonly code: 'invalid-data' };
 
 export type ConversationSummaryState =
   | { readonly status: 'pending'; readonly fingerprint: string }
   | { readonly status: 'result'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' };
+  | { readonly status: 'unavailable'; readonly fingerprint: string; readonly code: 'invalid-results' };
 export interface ShowerEquivalenceState { readonly fingerprint: string; readonly equivalence: ShowerEquivalence; }
 export interface LedEquivalenceState { readonly fingerprint: string; readonly equivalence: LedEquivalence; }
 
@@ -121,10 +121,10 @@ export type ConversationAction =
   | { readonly type: 'tokenizationResponded'; readonly response: TokenizationResponse }
   | { readonly type: 'impactRequested'; readonly blockId: string; readonly fingerprint: string; readonly preserveSummary?: boolean }
   | { readonly type: 'impactResolved'; readonly blockId: string; readonly fingerprint: string; readonly impact: ImpactResult; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data' | 'empty-block'; readonly async?: true }
+  | { readonly type: 'impactBlocked'; readonly blockId: string; readonly fingerprint: string; readonly code: 'invalid-data'; readonly async?: true }
   | { readonly type: 'summaryRequested'; readonly fingerprint: string }
   | { readonly type: 'summaryResolved'; readonly fingerprint: string; readonly total: ImpactTotal; readonly factorSources?: Readonly<Record<string, EnvironmentalFactorSource>> }
-  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'no-exchanges' | 'invalid-results' }
+  | { readonly type: 'summaryUnavailable'; readonly fingerprint: string; readonly code: 'invalid-results' }
   | { readonly type: 'ledEquivalenceResolved'; readonly fingerprint: string; readonly equivalence: LedEquivalence }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
