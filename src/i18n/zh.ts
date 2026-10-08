@@ -142,7 +142,6 @@ export const zh = {
   removeSourceAction: (name: string) => `移除文件 ${name}`,
   sourceRejected: (names: string) => `文件被拒绝（${names}）：请选择符合要求的 UTF-8 文本文件，最大 5 MB；或者将其内容粘贴到“在此粘贴您的消息”字段中。`,
   calculateAction: '计算',
-  calculateBlockedInvalid: '高级模式或专家模式中的某个值无效。请修正后才能计算。',
   calculationErrorAlert: '计算失败：必要数据不可用或无效。您的文本已保留。',
   calculatingAction: '计算中…',
   calculatingOverlayStatus: '正在计算，请稍候…',

@@ -291,18 +291,10 @@ describe('composition de la conversation', () => {
     });
   });
 
-  it('rend « Calculer » indisponible avec explication quand un paramètre est invalide et pendant le calcul', async () => {
+  it('rend « Calculer » indisponible pendant le calcul', async () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Bonjour' });
     const onCalculate = vi.fn();
-    const invalid = conversationReducer(state, { type: 'parametersValidationFailed' });
-    const view = render(<CalculationBar state={invalid} onCalculate={onCalculate} />);
-    const button = screen.getByRole('button', { name: 'Calculer' });
-    expect(button).toHaveAttribute('aria-disabled', 'true');
-    expect(button).toHaveAccessibleDescription(/Mode avancé ou du Mode expert est invalide/);
-    await userEvent.setup().click(button);
-    expect(onCalculate).not.toHaveBeenCalled();
-    view.unmount();
     const pending = conversationReducer(state, { type: 'summaryRequested', fingerprint: summaryFingerprint(state) });
     render(<CalculationBar state={pending} onCalculate={onCalculate} />);
     expect(screen.getByRole('status')).toHaveTextContent('Calcul en cours…');

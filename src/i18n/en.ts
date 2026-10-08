@@ -137,7 +137,6 @@ export const en: Messages = {
   removeSourceAction: (name: string) => `Remove file ${name}`,
   sourceRejected: (names: string) => `File rejected (${names}): choose an accepted UTF-8 text up to 5 MB, or paste its content in the "Paste your message here" field.`,
   calculateAction: 'Calculate',
-  calculateBlockedInvalid: 'A value in Advanced or Expert mode is invalid. Fix it to be able to calculate.',
   calculationErrorAlert: 'The calculation failed: essential data is unavailable or invalid. Your texts are preserved.',
   calculatingAction: 'Calculating…',
   calculatingOverlayStatus: 'The calculation is in progress. Please wait…',

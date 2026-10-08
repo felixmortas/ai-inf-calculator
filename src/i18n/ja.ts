@@ -142,7 +142,6 @@ export const ja = {
   removeSourceAction: (name: string) => `ファイル ${name} を削除`,
   sourceRejected: (names: string) => `ファイルを受け付けられません（${names}）：対応するUTF-8テキスト（最大5 MB）を選択するか、「ここにメッセージを貼り付けてください」欄に内容を貼り付けてください。`,
   calculateAction: '計算',
-  calculateBlockedInvalid: '詳細モードまたはエキスパートモードの値が無効です。計算するには修正してください。',
   calculationErrorAlert: '計算に失敗しました：必要なデータが利用できないか無効です。入力したテキストは保持されています。',
   calculatingAction: '計算中…',
   calculatingOverlayStatus: '計算中です。お待ちください…',

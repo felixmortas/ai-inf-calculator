@@ -142,7 +142,6 @@ export const ar = {
   removeSourceAction: (name: string) => `إزالة الملف ${name}`,
   sourceRejected: (names: string) => `تم رفض الملف (${names}): اختر ملفًا نصيًا مقبولًا بترميز UTF-8 وحجم أقصى 5 ميغابايت، أو ألصق محتواه في حقل «ألصق رسالتك هنا».`,
   calculateAction: 'حساب',
-  calculateBlockedInvalid: 'قيمة في الوضع المتقدم أو وضع الخبراء غير صالحة. صححها لإجراء الحساب.',
   calculationErrorAlert: 'فشل الحساب: إحدى البيانات الضرورية غير متاحة أو غير صالحة. تم الاحتفاظ بنصوصك.',
   calculatingAction: 'جارٍ الحساب…',
   calculatingOverlayStatus: 'جارٍ إجراء الحساب. يرجى الانتظار…',

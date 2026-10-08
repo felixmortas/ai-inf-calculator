@@ -1,30 +1,6 @@
-- source_spec: `_bmad-output/implementation-artifacts/spec-3-1-calculer-tous-les-echanges-et-leur-bilan.md`
-  summary: Définir le délai de repli lorsque le Worker de tokenisation ne répond jamais.
-  evidence: Le client local peut rester en attente sans erreur; le mécanisme existe avant cette story et nécessite une politique de délai à définir.
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-1-commencer-simplement-et-se-reperer-dans-le-parcours.md`
-  summary: Porter « Calculer » dans la barre d’action collante de l’étape 2/3 et désactiver « Continuer » si un paramètre est invalide.
-  evidence: La barre collante ne couvre que « Continuer » à l’étape 1 ; « Calculer » relève de 7.3 et la validation des paramètres de 7.2.
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-1-commencer-simplement-et-se-reperer-dans-le-parcours.md`
-  summary: Revoir la hiérarchie des titres de la méthodologie (décalage +2 donne h3/h4 sous le h1).
-  evidence: `vite.config.ts` décale les titres du Markdown de 2 niveaux, ce qui saute des niveaux sous le nouveau h1.
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
-  summary: Retirer l'action morte `parametersValidationFailed` et le drapeau `parameterValidationInvalid` (reducer, ConversationBlocks) devenus inatteignables depuis l'UI.
-  evidence: Seul le dispatch de l'ancien « Appliquer » les utilisait ; la spec interdit de toucher `conversationReducer.ts` dans la 7.2.
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
-  summary: Les saisies numériques non appliquées sont perdues quand le modèle, le chatbot ou le pays d'hébergement change (clé `formKey`).
-  evidence: Relevé par deux relecteurs ; comportement hérité de la conception « brouillon appliqué par Continuer ».
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-choisir-son-ia-et-regler-ses-hypotheses-sans-se-perdre.md`
-  summary: `ledPowerW` n'a pas encore de consommateur (équivalence LED à brancher en 7.4).
-  evidence: Aucune référence dans le domaine d'équivalence ; la durée LED est hors périmètre de la 7.2.
-
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic.md`
   summary: Élaguer le code `no-exchanges` (et textes `empty-block`) devenu inatteignable depuis l'interface dans le reducer et `summaryFingerprint`.
   evidence: `calculateAll` retourne silencieusement sans blocs renseignés ; plus aucun dispatch ni texte associé.
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-3-saisir-sa-conversation-et-la-calculer-d-un-seul-clic.md`
-  summary: Le statut « Calcul en cours… » de la barre collante est dans `.app-shell` rendu inerte pendant le calcul, donc non annoncé ; seul l'overlay annonce.
-  evidence: rapport d'implémentation 7.3 et revue ; à traiter avec la section résultat de 7.4.
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-4-lire-un-resultat-clair-sous-la-conversation.md`
   summary: Le sélecteur `.result-section button` (retour de focus 'summary' dans App.tsx) ne correspond plus à rien ; la logique fromSummary est morte.
   evidence: La section Résultat n'a plus de bouton de modification, seulement un lien externe.
@@ -32,17 +8,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-5-partager-son-resultat-sans-partager-sa-conversation.md`
   summary: `src/application/shareResult.ts` importe `formatQuantity` depuis `src/ui/quantityFormatter`, ce qui inverse le sens des couches.
   evidence: relevé par la revue ; le formateur vit dans `ui` alors que l'adaptateur de partage est dans `application`.
-- source_spec: `_bmad-output/implementation-artifacts/spec-7-5-partager-son-resultat-sans-partager-sa-conversation.md`
-  summary: Le paragraphe `role="status"` « Résultat copié. » est monté en même temps que son texte, ce que certains lecteurs d'écran n'annoncent pas.
-  evidence: `src/ui/ResultSection.tsx` rend la région conditionnellement ; une région live pré-montée serait plus fiable.
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-internationaliser-le-site.md`
-  summary: Pluriels via `Intl.PluralRules` (langues à plus de deux formes) et `countryCodesByName` limité au français/anglais.
-  evidence: Relecture : le formateur n’a que `one`/`other` ; la normalisation des noms de pays n’est pas dérivée de la locale. À traiter à l’arrivée de langues réelles.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-refonte-da-canopee-epuree.md`
   summary: Remplacer le chevron texte `⌄` de `.optional-contents > summary::after` par l'icône SVG `chev`, et vérifier le contraste de `--ink-2` sur `--muted`/`--tint`.
   evidence: les autres chevrons sont passés en SVG ; contraste jamais calculé ni testé.
-- source_spec: `_bmad-output/implementation-artifacts/spec-refonte-da-canopee-epuree.md`
-  summary: Ajouter des états hover/active, un fallback `forced-colors` et un indice non coloré pour les échanges périmés.
-  evidence: boutons sans bordure ni état hover ; cartes délimitées uniquement par l'ombre.

@@ -142,7 +142,6 @@ export const ko = {
   removeSourceAction: (name: string) => `${name} 파일 제거`,
   sourceRejected: (names: string) => `파일이 거부되었습니다 (${names}). 최대 5MB의 허용된 UTF-8 텍스트를 선택하거나 « 여기에 메시지를 붙여 넣으세요 » 필드에 내용을 붙여 넣으세요.`,
   calculateAction: '계산',
-  calculateBlockedInvalid: '고급 모드 또는 전문가 모드의 값이 잘못되었습니다. 계산하려면 수정하세요.',
   calculationErrorAlert: '계산에 실패했습니다. 필수 데이터가 없거나 잘못되었습니다. 입력한 텍스트는 보존됩니다.',
   calculatingAction: '계산 중…',
   calculatingOverlayStatus: '계산 중입니다. 잠시 기다려 주세요…',

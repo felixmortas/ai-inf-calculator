@@ -142,7 +142,6 @@ export const fr = {
   removeSourceAction: (name: string) => `Retirer le fichier ${name}`,
   sourceRejected: (names: string) => `Fichier refusé (${names}) : choisissez un texte UTF-8 admis de 5 Mo maximum, ou collez son contenu dans le champ « Collez ici votre message ».`,
   calculateAction: 'Calculer',
-  calculateBlockedInvalid: 'Une valeur du Mode avancé ou du Mode expert est invalide. Corrigez-la pour pouvoir calculer.',
   calculationErrorAlert: 'Le calcul a échoué : une donnée indispensable est indisponible ou invalide. Vos textes sont conservés.',
   calculatingAction: 'Calcul en cours…',
   calculatingOverlayStatus: 'Le calcul est en cours. Veuillez patienter…',

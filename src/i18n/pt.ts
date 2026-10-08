@@ -142,7 +142,6 @@ export const pt = {
   removeSourceAction: (name: string) => `Remover o ficheiro ${name}`,
   sourceRejected: (names: string) => `Ficheiro recusado (${names}): escolha um texto UTF-8 aceite com um máximo de 5 MB ou cole o seu conteúdo no campo «Cole aqui a sua mensagem».`,
   calculateAction: 'Calcular',
-  calculateBlockedInvalid: 'Um valor do Modo avançado ou do Modo especialista é inválido. Corrija-o para poder calcular.',
   calculationErrorAlert: 'O cálculo falhou: um dado indispensável está indisponível ou é inválido. Os seus textos são conservados.',
   calculatingAction: 'Cálculo em curso…',
   calculatingOverlayStatus: 'O cálculo está em curso. Aguarde…',

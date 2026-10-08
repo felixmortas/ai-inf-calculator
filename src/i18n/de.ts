@@ -142,7 +142,6 @@ export const de = {
   removeSourceAction: (name: string) => `Datei ${name} entfernen`,
   sourceRejected: (names: string) => `Datei abgelehnt (${names}): Wählen Sie einen zulässigen UTF-8-Text mit maximal 5 MB oder fügen Sie den Inhalt in das Feld „Fügen Sie hier Ihre Nachricht ein“ ein.`,
   calculateAction: 'Berechnen',
-  calculateBlockedInvalid: 'Ein Wert im erweiterten Modus oder im Expertenmodus ist ungültig. Korrigieren Sie ihn, um die Berechnung durchführen zu können.',
   calculationErrorAlert: 'Die Berechnung ist fehlgeschlagen: Eine erforderliche Angabe ist nicht verfügbar oder ungültig. Ihre Texte bleiben erhalten.',
   calculatingAction: 'Berechnung läuft …',
   calculatingOverlayStatus: 'Die Berechnung läuft. Bitte warten …',

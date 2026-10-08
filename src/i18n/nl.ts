@@ -142,7 +142,6 @@ export const nl = {
   removeSourceAction: (name: string) => `Bestand verwijderen ${name}`,
   sourceRejected: (names: string) => `Bestand geweigerd (${names}) : kies een toegestaan UTF-8-tekstbestand van maximaal 5 MB of plak de inhoud in het veld «Plak hier uw bericht».`,
   calculateAction: 'Berekenen',
-  calculateBlockedInvalid: 'Een waarde in de geavanceerde modus of expertmodus is ongeldig. Corrigeer deze om te kunnen berekenen.',
   calculationErrorAlert: 'De berekening is mislukt: een vereiste gegeven ontbreekt of is ongeldig. Uw teksten blijven behouden.',
   calculatingAction: 'Berekening bezig…',
   calculatingOverlayStatus: 'De berekening wordt uitgevoerd. Even geduld…',

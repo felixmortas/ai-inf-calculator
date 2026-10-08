@@ -204,7 +204,7 @@ export function App() {
     calculationReturnFocus.current = activeElement instanceof HTMLElement ? activeElement : null;
     const snapshot = state;
     const blocks = snapshot.blocks.filter((block) => !isIgnoredConversationBlock(block));
-    if (blocks.length === 0 || snapshot.parameterValidationInvalid || snapshot.summary?.status === 'pending') return;
+    if (blocks.length === 0 || snapshot.summary?.status === 'pending') return;
     const fingerprint = summaryFingerprint(snapshot);
     dispatch({ type: 'summaryRequested', fingerprint });
     const impacts: ImpactResult[] = [];
