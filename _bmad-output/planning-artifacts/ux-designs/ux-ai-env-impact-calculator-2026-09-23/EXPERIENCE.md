@@ -11,7 +11,7 @@ updated: 2026-10-07
 
 ## Foundation
 
-Page web responsive, en français, sans compte, pour un public curieux et non technique. Le fil représente une conversation **déjà tenue** avec un chatbot : le calculateur guide la reconstruction et estime son impact ; il ne répond pas aux questions collées. Le système visuel est défini par [DESIGN.md](DESIGN.md). Pas de bibliothèque de composants imposée. Les textes saisis, leur tokenisation et les calculs restent locaux. La session n'est pas conservée après fermeture.
+Page web responsive, multilingue (français par défaut), sans compte, pour un public curieux et non technique. Le fil représente une conversation **déjà tenue** avec un chatbot : le calculateur guide la reconstruction et estime son impact ; il ne répond pas aux questions collées. Le système visuel est défini par [DESIGN.md](DESIGN.md) ; côté expérience, l'intention est une interface épurée et familière comme un chatbot, différenciée par une touche environnementale discrète. Pas de bibliothèque de composants imposée. Les textes saisis, leur tokenisation et les calculs restent locaux. La session n'est pas conservée après fermeture.
 
 Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fait et pourquoi, ne poser que des questions compréhensibles, montrer une valeur lisible avant les chiffres techniques. Chaque étape a **une seule action principale**, libellée, toujours visible.
 
@@ -19,7 +19,8 @@ Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fa
 
 | Parcours actuel | Décision UX |
 |---|---|
-| Titre d'accueil et carte intermédiaire avec flèche muette | Une phrase, un bouton « Commencer ». Plus de carte intermédiaire ni de « ou ». |
+| Titre d'accueil et carte intermédiaire avec flèche muette | Un titre qui dit qu'il s'agit d'un calculateur, une phrase, un bouton « Commencer ». Plus de carte intermédiaire ni de « ou ». Pas de nom de marque au-dessus du titre. |
+| Langue de l'interface non choisissable depuis l'accueil | Un sélecteur de langue discret, sous le lien « Méthodologie ». |
 | Paragraphe d'introduction de cinq lignes répété sur tous les écrans | Une seule phrase, affichée à l'accueil uniquement. |
 | Configuration du modèle sans justification | « Étape 1/3 : Votre IA », avec la raison de la question. |
 | « Valider » et « Appliquer les paramètres » concurrents | Un seul « Continuer » collant ; les paramètres valides sont appliqués automatiquement. |
@@ -33,16 +34,16 @@ Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fa
 
 | Surface | Accès | Besoin couvert |
 |---|---|---|
-| Accueil | Ouverture | Comprendre en une phrase le rôle de l'outil et commencer. [Maquette](mockups/accueil.html) (à régénérer). |
+| Accueil | Ouverture | Comprendre en un titre et une phrase le rôle de l'outil, choisir sa langue et commencer. [Maquette](mockups/accueil.html). |
 | Étape 1/3 — Votre IA | « Commencer » ; « Changer d'IA » depuis le fil | Choisir chatbot et abonnement/mode ; modèle déduit modifiable ; pays de la personne déduit ; « Mode avancé » replié sous le choix du modèle, qui contient le « Mode expert » replié. |
-| Étape 2/3 — Votre conversation | « Continuer » | Saisir, relire, modifier, ajouter et supprimer les questions / réponses. [Maquette](mockups/conversation.html) (à régénérer). |
+| Étape 2/3 — Votre conversation | « Continuer » | Saisir, relire, modifier, ajouter et supprimer les questions / réponses. [Maquette](mockups/conversation.html). |
 | Carte question / réponse | Dans le fil de l'étape 2/3 ; valeurs affichées après « Calculer » | Lire carbone et eau estimés dans l'en-tête ; voir l'état d'actualité. |
-| Étape 3/3 — Résultat | « Calculer », sans nouvel écran : section sous la conversation, sur la même page | Lire la douche en grand, les valeurs, la comparaison LED, l'interprétation, une bonne pratique ; partager. [Maquette](mockups/bilan.html) (à régénérer). |
+| Étape 3/3 — Résultat | « Calculer », sans nouvel écran : section sous la conversation, sur la même page | Lire la douche en grand, les valeurs, la comparaison LED, l'interprétation, une bonne pratique ; partager. [Maquette](mockups/bilan.html). |
 | Mode avancé | Section repliable sous le choix du modèle, étape 1/3 | Corriger pays de l'utilisateur, paramètres douche et ampoule. |
 | Mode expert | Section repliable à l'intérieur du Mode avancé | Corriger pays d'hébergement et hypothèses techniques. |
 | Méthodologie | Lien libellé « Méthodologie », uniquement sur l'accueil, sous le bouton « Commencer » | Document de référence pour les curieux ; bouton « Retour » libellé tout en haut, au-dessus d'un seul titre principal. |
 
-L'accueil et les trois étapes forment une progression dans la même page. L'étape 3/3 n'est pas un nouvel écran : le résultat apparaît sous la conversation après « Calculer » et reçoit le focus. Depuis l'étape 2/3, « Retour » mène à l'étape 1/3 ; un retour à l'étape précédente ne supprime pas les textes. Le bouton « Retour » est libellé, placé en haut à gauche, au-dessus du titre de l'écran. Le fil reste l'ancre de navigation après le départ. La confirmation de suppression d’une question / réponse est le seul dialogue modal du parcours. La [variante Canopée claire](.working/palettes-guide-calme.html) illustre l'accueil ; `DESIGN.md` et ce document priment sur cette exploration et sur les maquettes statiques.
+L'accueil et les trois étapes forment une progression dans la même page. L'étape 3/3 n'est pas un nouvel écran : le résultat apparaît sous la conversation après « Calculer » et reçoit le focus. Depuis l'étape 2/3, « Retour » mène à l'étape 1/3 ; un retour à l'étape précédente ne supprime pas les textes. Le bouton « Retour » est libellé, placé en haut à gauche, au-dessus du titre de l'écran. Le fil reste l'ancre de navigation après le départ. La confirmation de suppression d’une question / réponse est le seul dialogue modal du parcours. `DESIGN.md` et ce document priment sur les maquettes statiques.
 
 L'indicateur de progression (« Étape 1/3 : Votre IA ») est textuel, ne repose pas seulement sur une barre colorée, et annonce l'étape au changement.
 
@@ -52,7 +53,9 @@ Le guide parle en phrases courtes et concrètes. Il dit pourquoi une question es
 
 | Situation | Texte indicatif | Éviter |
 |---|---|---|
-| Accueil | « Estimez l'énergie, le CO₂ et l'eau consommés par votre conversation avec une IA, comparés à une douche chaude. » | Un paragraphe de cinq lignes, « Discutez avec nous » |
+| Accueil | Titre : « Calculateur d'impact de votre conversation avec une IA » ; phrase : « Estimez l'énergie, le CO₂ et l'eau consommés par votre conversation avec une IA, comparés à une douche chaude. » | Un nom de marque seul en guise de titre, un paragraphe de cinq lignes, « Discutez avec nous » |
+| Langue | « Langue » ; chaque langue écrite dans sa propre langue (Français, English, Español…) | Drapeaux seuls, codes de pays |
+| Détails d'une carte | « Voir détails » / « Masquer les détails » | « Déplier » seul |
 | Action d'accueil | « Commencer » | Une flèche seule |
 | Étape 1/3 | « Étape 1/3 : Votre IA » ; « Chaque IA consomme différemment, c'est pourquoi nous avons besoin de savoir laquelle vous utilisez. » | « Configurez votre fournisseur » |
 | Modèle déduit | « Modèle estimé : gpt-6-luna » avec « Modifier » | « Sélectionnez un modèle » sans contexte |
@@ -73,21 +76,22 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 
 | Composant | Comportement |
 |---|---|
-| Guide prompt | Une seule phrase, à l'accueil uniquement. Disparaît comme guide actif après « Commencer ». |
+| Guide prompt | Un titre et une seule phrase, à l'accueil uniquement. Disparaît comme guide actif après « Commencer ». |
 | Start button | Bouton « Commencer » à l'accueil. |
+| Language selector | Sélecteur « Langue » sous le lien « Méthodologie », sur l'accueil uniquement. Affiche la langue courante ; liste des langues disponibles, chacune dans sa propre langue. Le choix s'applique immédiatement à toute l'interface, sans recharger ni perdre de texte saisi, et mémorise la préférence pour la session. Langue initiale déduite du navigateur, français à défaut. L'écriture de droite à gauche est prise en charge. Jamais en en-tête des autres écrans. |
 | Step indicator | Texte « Étape N/3 : titre » en tête des écrans 1 à 3 ; la phrase de justification suit le titre. |
 | Back button | Bouton retour libellé, en haut à gauche, avant le titre ; conserve les textes. |
 | Methodology link | Lien libellé « Méthodologie » sous « Commencer » sur l'accueil uniquement, ouvrant la page de méthodologie ; aucun bouton « ? » seul, aucun tutoriel. |
 | Sticky action bar | L'action principale de l'étape (« Continuer », « Calculer ») est visible en bas de l'écran. Elle devient statique (non collante) à fort zoom ou en hauteur réduite et ne masque jamais le champ en focus. |
-| Exchange card | Cartes compactes ordonnées. En-tête : numéro, aperçu de la question et de la réponse, état d'actualité, carbone et eau si l'estimation est à jour. Commandes texte « Déplier » / « Replier » ; déplier révèle contenu, modification, suppression. Pas d'action de calcul propre à la carte. |
+| Exchange card | Cartes compactes ordonnées. En-tête : numéro seul (sans le libellé « Question / réponse »), aperçu de la question et de la réponse sur au moins deux lignes séparées, état d'actualité, puis carbone et eau si l'estimation est à jour, présentés par une icône et la valeur avec son unité, sans mot de libellé (le nom complet reste dans le nom accessible). Commandes texte « Voir détails » / « Masquer les détails » ; déplier révèle contenu, modification, suppression. Pas d'action de calcul propre à la carte. |
 | Exchange editor | Question puis réponse ; « Ajouter du contenu (optionnel) » regroupe réflexion affichée par l'IA, contenu du fichier créé par l'IA et fichiers joints. « + Ajouter une question / réponse » ouvre un nouvel éditeur sans imposer de calcul. |
-| Result hero | Équivalence douche en grand (`metric-hero`), avec nom accessible complet de l'unité. |
+| Result hero | Équivalence douche en grand, premier élément du résultat, avec nom accessible complet de l'unité. |
 | Result values | Carbone, eau, électricité en second plan, avec unités adaptées. |
 | Everyday comparison | Durée d'ampoule LED 5W allumée et phrase d'interprétation ; la phrase est neutre. |
 | Practice tip | Une bonne pratique tirée au hasard, stable pour un même résultat, avec « Voir toutes les bonnes pratiques ». |
 | Result actions | Un seul bouton libellé « Partager ». |
 | Button primary | Une action principale par étape, nommée explicitement. Aucune action concurrente de même poids. |
-| Text link | « Rétablir les valeurs par défaut », « En savoir plus », « Modifier » : liens discrets, soulignés, cible de 44 × 44 px. |
+| Text link | « Rétablir les valeurs par défaut », « En savoir plus », « Modifier » : liens discrets, cible de 44 × 44 px. |
 | Status message | Signale données invalides, calcul en cours, résultat périmé et facteurs de repli avec une action de suite lorsque possible. L'état initial normal d'un champ ou d'un bloc vide n'est jamais présenté comme un avertissement. |
 | Model selector | Modèle déduit affiché avec « Modifier » ; le choix direct d'un autre modèle du catalogue reste possible. Le chatbot et le modèle restent consultables et modifiables depuis le fil ; un changement signale les calculs devenus périmés. |
 | Advanced mode | À l'étape 1/3, section repliée sous le choix du modèle : où vous vous trouvez (déduit de la langue du navigateur, avec « Modifier »), débit de douche, température de l'eau froide, température de l'eau pendant la douche, puissance de la LED. Contient le Mode expert. |
@@ -100,14 +104,14 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 
 | Surface / état | Traitement |
 |---|---|
-| Accueil | Une phrase et « Commencer » ; aucun paramètre avant l'étape 1/3. |
+| Accueil | Titre, une phrase, « Commencer », lien « Méthodologie » et sélecteur de langue ; aucun paramètre avant l'étape 1/3. |
 | Étape 1/3 | Titre, justification, choix chatbot et abonnement/mode ; modèle déduit avec « Modifier » ; « Mode avancé » replié sous le choix du modèle, contenant le « Mode expert » replié ; « Continuer » collant. |
 | Fil sans question / réponse | Champs vides avec exemples d'aide neutres ; pas de message d'avertissement ; ne pas afficher de résultat chiffré. |
 | Question / réponse incomplète | Question seule ou réponse seule reste calculable ; nommer les champs effectivement pris en compte. |
 | Question / réponse vide | Ignorée sans avertissement alarmiste ; « Calculer » explique s'il n'existe aucune question / réponse renseignée. |
 | Calcul en cours / erreur | État annoncé près de l'action et du résultat concerné ; conserver les textes ; l'interface reste verrouillée pendant le calcul. |
 | Résultat non calculé | La section résultat n'existe pas tant que « Calculer » n'a pas abouti ; aucune valeur n'est montrée. |
-| Estimation à jour | « ✓ » avec le pictogramme. |
+| Estimation à jour | « ✓ » accompagné d'un texte. |
 | Résultat périmé | « à recalculer » sur la carte touchée et sur la section résultat ; valeur ancienne retirée ou clairement non utilisable ; partage indisponible. Le prochain « Calculer » recalcule et affiche tout. |
 | Aucune question / réponse renseignée | « Calculer » est indisponible avec explication. Aucun total ancien n'est présenté comme actuel. |
 | Facteur manquant / repli Monde | Expliquer l'indisponibilité ou le repli à côté du résultat concerné. |
@@ -120,7 +124,7 @@ Le chatbot et le modèle restent visibles dans l'en-tête du fil et peuvent êtr
 ## Interaction Primitives
 
 - Coller des textes dans des champs clairement étiquetés ; `Entrée` ajoute une ligne dans un champ multiligne, elle ne lance pas un calcul.
-- Ajouter, déplier, modifier ou supprimer une question / réponse sans perdre les autres. Le bouton de dépliage dit « Déplier la question / réponse N » ou « Replier la question / réponse N », porte `aria-expanded` et `aria-controls`, et garde le focus lors du dépliage.
+- Ajouter, déplier, modifier ou supprimer une question / réponse sans perdre les autres. Le bouton de dépliage affiche « Voir détails » ou « Masquer les détails » ; son nom accessible dit « Déplier la question / réponse N » ou « Replier la question / réponse N » ; il porte `aria-expanded` et `aria-controls`, et garde le focus lors du dépliage.
 - « Calculer » traite toutes les questions / réponses renseignées et affiche tout à chaque fois (cartes, total, résultat) ; après le calcul, le focus va au titre du résultat, sous la conversation, sans changement d'écran ; il est indisponible, avec explication, tant qu'aucun texte utile n'existe.
 - L'action principale collante reste accessible au clavier et sans survol. Elle ne couvre jamais le champ en focus : `scroll-padding` et passage en position statique à fort zoom, en hauteur réduite ou avec clavier logiciel ouvert.
 - Après ajout, placer le focus sur la question de la nouvelle carte. Après suppression, rendre le focus à la carte voisine ou à « + Ajouter une question / réponse ».
@@ -140,25 +144,26 @@ Chaque unité abrégée possède un nom accessible complet, par exemple « milli
 - Toute commande, y compris avec icône, porte un libellé visible ; l'icône est décorative (`aria-hidden`).
 - Les messages de calcul et d'erreur sont annoncés sans relire tout le fil ; les résultats ne déplacent pas le focus de manière inattendue.
 - La confirmation de remplacement suit les mêmes règles de dialogue. Le fond est inerte pendant ces dialogues, qui ne s'empilent jamais.
-- Contrôles tactiles d'au moins 44 × 44 px ; focus visible via `{colors.focus}` et jamais masqué par la barre collante ; reflow à 320 px et zoom à 200 % puis 400 % sans perte d'action.
+- Contrôles tactiles d'au moins 44 × 44 px ; focus visible, distinct du contour normal, et jamais masqué par la barre collante ; reflow à 320 px et zoom à 200 % puis 400 % sans perte d'action.
 - Les statuts ne reposent jamais seulement sur une couleur, un pictogramme ou un mouvement (« ✓ », « à recalculer »). Respect de `prefers-reduced-motion` ; aucune animation nécessaire à la compréhension.
 - L'indicateur « Étape N/3 » est du texte, annoncé au changement d'étape.
 - Les fichiers joints et contenus facultatifs ont des libellés compréhensibles et des messages de refus qui expliquent la prochaine action.
+- Le sélecteur de langue met à jour l'attribut `lang` de la page, annonce le changement et nomme chaque langue dans sa propre langue.
 - Les termes « fichier créé par l'IA », « PUE », « WUE » et « tokens » ont une explication courte à la demande.
 
 ## Inspiration & Anti-patterns
 
-Le fil de chatbot inspire l'ordre chronologique et la proximité entre question, réponse et estimation. Le guide calme est retenu pour son rythme, Canopée claire pour son identité. L'interface évite les codes visuels de Claude relevés par Felix, les bulles qui feraient croire à une conversation avec le calculateur, les formulaires de paramètres techniques présentés dès l'arrivée, les boutons à icône seule, deux boutons de calcul concurrents, les avertissements pour un état initial normal et les conseils personnalisés non calculés.
+Le fil de chatbot inspire l'ordre chronologique et la proximité entre question, réponse et estimation. Le guide calme est retenu pour son rythme ; l'identité visuelle, définie dans `DESIGN.md`, reste épurée comme un chatbot avec une touche environnementale. L'interface évite les codes visuels de Claude relevés par Felix, les bulles qui feraient croire à une conversation avec le calculateur, les formulaires de paramètres techniques présentés dès l'arrivée, les boutons à icône seule, deux boutons de calcul concurrents, les avertissements pour un état initial normal et les conseils personnalisés non calculés.
 
 ## Responsive & Platform
 
-Sur mobile, une seule colonne : indicateur d'étape, puis contenu de l'étape (le résultat s'ajoute sous la conversation), et action principale collante en bas ; l'introduction n'occupe pas l'écran hors accueil. Le clavier logiciel ne masque pas le champ actif, son libellé ni l'action principale. Sur ordinateur, conserver la largeur de lecture de `{spacing.content-max}`. Aucun comportement ne dépend du survol. L'interface est une page web ; le bouton « Retour » en haut à gauche suit la convention mobile sans reproduire une navigation native.
+Sur mobile, une seule colonne : indicateur d'étape, puis contenu de l'étape (le résultat s'ajoute sous la conversation), et action principale collante en bas ; l'introduction n'occupe pas l'écran hors accueil. Le clavier logiciel ne masque pas le champ actif, son libellé ni l'action principale. Sur ordinateur, limiter la largeur de lecture à une colonne confortable. Aucun comportement ne dépend du survol. L'interface est une page web ; le bouton « Retour » en haut à gauche suit la convention mobile sans reproduire une navigation native.
 
 ## Key Flows
 
 ### UJ-1 — Camille évalue sa conversation en trois étapes
 
-1. Camille ouvre le calculateur sur son téléphone, lit la phrase d'accueil et choisit « Commencer ».
+1. Camille ouvre le calculateur sur son téléphone, lit le titre et la phrase d'accueil, vérifie que la langue lui convient (sinon la change sous « Méthodologie ») et choisit « Commencer ».
 2. À l'étape 1/3 « Votre IA », elle lit pourquoi on lui demande son IA, indique son chatbot et son abonnement ; le modèle estimé est déduit et modifiable. Son pays est déduit de la langue du navigateur. Elle active « Continuer ».
 3. À l'étape 2/3 « Votre conversation », elle colle sa question puis la réponse de l'IA ; réflexion affichée, fichier créé par l'IA et fichiers joints restent optionnels.
 4. Elle ajoute une question / réponse : la première devient une carte compacte dépliable, le nouveau champ de question reçoit le focus.
