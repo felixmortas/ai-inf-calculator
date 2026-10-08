@@ -242,7 +242,7 @@ export function ConversationBlocks({ state, dispatch, onEditParameters, random }
                 </div>;
               })}
               <details className="optional-contents">
-                <summary>{messages.optionalContents}</summary>
+                <summary>{messages.optionalContents}<span aria-hidden="true" className="chevron"><Icon name="chev" /></span></summary>
                 {optionalFields.map(({ name, label }) => {
                   const id = `conversation-${block.blockId}-${name}`;
                   return <div className="field" key={name}>

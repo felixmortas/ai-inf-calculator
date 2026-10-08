@@ -14,7 +14,7 @@ describe('styles d’accessibilité et responsive', () => {
   it('fait tourner les chevrons des menus et des échanges selon leur état', () => {
     expect(styleSource).toContain('.advanced-settings[open] > summary .chevron');
     expect(styleSource).toContain('.conversation-block.is-expanded .conversation-block-heading .chevron');
-    expect(styleSource).toContain('.optional-contents[open] > summary::after');
+    expect(styleSource).toContain('.optional-contents[open] > summary .chevron');
     expect(styleSource).toContain('transform: rotate(180deg)');
   });
 

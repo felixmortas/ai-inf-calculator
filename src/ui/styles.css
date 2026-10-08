@@ -172,10 +172,8 @@ button {
 .advanced-settings > summary, .optional-contents > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.75rem; cursor: pointer; font-weight: 600; list-style: none; }
 .advanced-settings > summary { padding: .35rem 1rem; border: 1px solid var(--outline); border-radius: 999px; background: var(--muted); }
 .advanced-settings > summary::-webkit-details-marker, .optional-contents > summary::-webkit-details-marker { display: none; }
-.optional-contents > summary::after { content: '⌄'; display: inline-block; transition: transform .16s ease; }
-.optional-contents[open] > summary::after { transform: rotate(180deg); }
 .chevron { display: inline-flex; transition: transform .16s ease; }
-.advanced-settings[open] > summary .chevron, .conversation-block.is-expanded .conversation-block-heading .chevron { transform: rotate(180deg); }
+.advanced-settings[open] > summary .chevron, .optional-contents[open] > summary .chevron, .conversation-block.is-expanded .conversation-block-heading .chevron { transform: rotate(180deg); }
 .summary-message a { display: inline-flex; align-items: center; min-height: 2.75rem; overflow-wrap: anywhere; }
 .conversation-actions > *, .conversation-block-heading > * { min-width: 0; }
 .conversation-blocks-header, .conversation-block-heading {
