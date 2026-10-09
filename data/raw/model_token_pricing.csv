@@ -96,3 +96,5 @@ qwen-turbo,,,,,,
 claude-3-haiku,,,,,,
 gpt-5.4-nano,0.17850768,1.11567297,0.01785077,0.16,0.10000001,https://openrouter.ai/openai/gpt-5.4-nano
 nova-micro,,,,,,
+DeepSeek-V4.1-Flash,1.2,0.3,0.006,0.25,0.02,https://api-docs.deepseek.com/quick_start/pricing/?article_id=article_1779470751466_8
+DeepSeek-V4-Pro,3.96,1.32,0.044,0.33333333,0.03333333,https://api-docs.deepseek.com/quick_start/pricing/?article_id=article_1779470751466_8

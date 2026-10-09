@@ -114,7 +114,7 @@ export interface HostingCountryOption {
 export interface UserCountryOption extends HostingCountryOption {}
 
 /** Pays d’hébergement proposés ; les libellés sont calculés à l’affichage. */
-const countryOptions: readonly string[] = Object.freeze(['BR', 'CH', 'FR', 'IN', 'US']);
+const countryOptions: readonly string[] = Object.freeze(['CN', 'CH', 'FR', 'IN', 'US']);
 
 /** Codes ISO des pays effectivement présents dans le catalogue carbone local. */
 const countryNames: Readonly<Record<string, string>> = Object.freeze({
