@@ -187,7 +187,7 @@ export const fr = {
     smallEffort: 'Réduisez le paramètre "effort" des modèles comme Claude ou Gemini. Le niveau le plus bas est généralement suffisant pour réaliser la plupart des tâches.',
     shortOutputs: 'Limitez la quantité de texte générée en spécifiant le format exact de la réponse. Cela facilite la lecture en réduisant la verbosité du modèle.',
     stopMessage: 'Arrêtez tout de suite la génération de la réponse si vous voyez qu’elle ne correspond pas du tout à ce que vous attendez.',
-    useBrowser: 'Priorisez une recherche sur un moteur de recherche pour une question simple. Attention à bien désactiver la recherche par IA automatique pour choisir vous-même quand l’utiliser pour vos recherches.',
+    useBrowser: 'Priorisez une recherche sur un moteur de recherche pour une question simple. Attention à bien désactiver la recherche par IA automatique.',
     branchTopics: 'Créez des branches de conversation en modifiant un message. Cela maintient également un contexte propre.',
     removeConversations: 'Supprimez les conversations de votre historique.',
     emptyMemory: 'Supprimez la mémoire à long terme du chatbot dans les paramètres ou dans une nouvelle conversation.',
