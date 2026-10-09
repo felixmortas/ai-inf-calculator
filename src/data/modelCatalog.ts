@@ -113,9 +113,6 @@ export interface HostingCountryOption {
 }
 export interface UserCountryOption extends HostingCountryOption {}
 
-/** Pays d’hébergement proposés ; les libellés sont calculés à l’affichage. */
-const countryOptions: readonly string[] = Object.freeze(['CN', 'CH', 'FR', 'IN', 'US']);
-
 /** Codes ISO des pays effectivement présents dans le catalogue carbone local. */
 const countryNames: Readonly<Record<string, string>> = Object.freeze({
   AL: 'Albania', AR: 'Argentina', AM: 'Armenia', AU: 'Australia', AT: 'Austria', AZ: 'Azerbaijan',
@@ -151,16 +148,19 @@ export function countryLabel(code: string, locale: string, worldLabel: string): 
   try { return displayNames.get(locale)?.of(code) ?? countryNames[code] ?? code; } catch { return countryNames[code] ?? code; }
 }
 
+function sortedCountryOptions(locale: string, worldLabel: string): readonly HostingCountryOption[] {
+  return Object.keys(countryNames).filter((code) => code !== 'WORLD')
+    .map((code) => Object.freeze({ code, label: countryLabel(code, locale, worldLabel) }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale));
+}
+
+/** Tous les pays du catalogue carbone, triés par libellé localisé, Monde en dernier. */
 export function hostingCountryOptions(locale: string, worldLabel: string): readonly HostingCountryOption[] {
-  return countryOptions.map((code) => Object.freeze({ code, label: countryLabel(code, locale, worldLabel) }));
+  return userCountryOptions(locale, worldLabel);
 }
 /** Pays proposés uniquement pour l’équivalence douche, indépendamment de l’hébergement. */
 export function userCountryOptions(locale: string, worldLabel: string): readonly UserCountryOption[] {
-  return Object.freeze([
-    ...Object.keys(countryNames).filter((code) => code !== 'WORLD').map((code) => Object.freeze({ code, label: countryLabel(code, locale, worldLabel) }))
-      .sort((a, b) => a.label.localeCompare(b.label, locale)),
-    Object.freeze({ code: 'WORLD', label: worldLabel }),
-  ]);
+  return Object.freeze([...sortedCountryOptions(locale, worldLabel), Object.freeze({ code: 'WORLD', label: worldLabel })]);
 }
 
 /** Normalise les libellés historiques des catalogues vers les codes ISO de session. */
@@ -171,7 +171,7 @@ export function normalizeCountry(country: string): string | undefined {
 }
 
 export function isHostingCountry(country: string): boolean {
-  return countryOptions.includes(country);
+  return Object.hasOwn(countryNames, country);
 }
 export function isUserCountry(country: string): boolean {
   return Object.hasOwn(countryNames, country);

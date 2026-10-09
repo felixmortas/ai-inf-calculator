@@ -1,6 +1,14 @@
 provider,country,cloud
-MistralAI,Switzerland,microsoft
 ChatGPT,United States,microsoft
-Gemini,United States,google
 Claude,United States,aws
+Gemini,United States,google
+Xiaomi,China,aws
+Tencent,China,aws
+Zhipu,China,aws
+Alibaba,China,aws
+ByteDance,China,aws
+xAI,United States,aws
+StepFun,China,aws
+MiniMax,China,aws
+MistralAI,Switzerland,microsoft
 DeepSeek,China,aws

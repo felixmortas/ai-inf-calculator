@@ -128,6 +128,9 @@ export type ConversationAction =
   | { readonly type: 'ledEquivalenceResolved'; readonly fingerprint: string; readonly equivalence: LedEquivalence }
   | { readonly type: 'showerEquivalenceResolved'; readonly blockId?: string; readonly fingerprint: string; readonly equivalence: ShowerEquivalence };
 
+const initialHostingCountry = resolveHostingCountry(chatGptProvider);
+if (!initialHostingCountry) throw new Error(`Aucun pays d’hébergement catalogué pour ${chatGptProvider}`);
+
 const initialSubscription: ChatGptSubscription = defaultChatGptSubscription;
 
 export const initialConversationState: ConversationState = Object.freeze({
@@ -135,7 +138,7 @@ export const initialConversationState: ConversationState = Object.freeze({
   subscription: initialSubscription,
   mistralMode: 'fast',
   modelId: resolveChatGptModel(initialSubscription),
-  hostingCountry: resolveHostingCountry(chatGptProvider)!,
+  hostingCountry: initialHostingCountry,
   userCountry: detectUserCountry(),
   blocks: [],
   tokenizations: {},
@@ -299,13 +302,14 @@ export function conversationReducer(state: ConversationState, action: Conversati
     case 'providerSelected': {
       if (action.provider === state.provider) return state;
       const modelId = firstModelId(action.provider);
-      if (!modelId) return state;
+      const hostingCountry = resolveHostingCountry(action.provider);
+      if (!modelId || !hostingCountry) return state;
       return keepChangedResultsStale(state, invalidateCalculationsAndTokenizations({
         ...state,
         provider: action.provider,
         modelId: action.provider === chatGptProvider ? resolveChatGptModel(state.subscription)
           : action.provider === mistralProvider ? resolveMistralModel(state.mistralMode) : modelId,
-        hostingCountry: resolveHostingCountry(action.provider)!,
+        hostingCountry,
       }));
     }
     case 'subscriptionSelected':

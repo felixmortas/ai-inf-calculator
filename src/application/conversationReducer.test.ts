@@ -17,6 +17,13 @@ import {
 import { tokenizationEncoding, tokenizationFingerprint } from '../domain/tokenization';
 
 describe('conversationReducer', () => {
+  it('accepte un pays du catalogue, refuse un pays inconnu et résout DeepSeek', () => {
+    const german = conversationReducer(initialConversationState, { type: 'hostingCountrySelected', country: 'DE' });
+    expect(german.hostingCountry).toBe('DE');
+    expect(conversationReducer(german, { type: 'hostingCountrySelected', country: 'ZZ' })).toBe(german);
+    expect(conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'DeepSeek' }).hostingCountry).toBe('CN');
+  });
+
   it('garde un modèle ChatGPT résolu dans la conversation', () => {
     const state = conversationReducer(initialConversationState, {
       type: 'subscriptionSelected', subscription: 'with-paid-subscription',

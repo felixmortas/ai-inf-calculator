@@ -62,6 +62,14 @@ describe('sélection de modèle', () => {
   it('expose le pays d’hébergement', () => {
     expect(resolveHostingCountry('ChatGPT')).toBe('US');
     expect(resolveHostingCountry('Mistral AI')).toBe('CH');
+    expect(resolveHostingCountry('DeepSeek')).toBe('CN');
+  });
+
+  it('résout les paramètres d’un fournisseur hébergé hors de l’ancienne liste', () => {
+    const model = modelCatalog.models.find((entry) => entry.provider === 'DeepSeek')!;
+    expect(resolveImpactParameters('DeepSeek', model.id)).toBeDefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'DE')).toBeDefined();
+    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'ZZ')).toBeUndefined();
   });
 
   it('résout sans mutation la valeur pays, le repli Monde, zéro et l’absence complète', () => {

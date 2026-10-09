@@ -31,6 +31,15 @@ describe('configuration de conversation', () => {
     expect(model).toHaveValue('gemini-2.5-flash');
   });
 
+  it('affiche la douche et le mode expert pour DeepSeek (hébergé en Chine)', async () => {
+    const user = userEvent.setup();
+    await startSelection(user);
+    await user.selectOptions(screen.getByLabelText('Chatbot'), 'DeepSeek');
+    expect(screen.getByText('Mode expert')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Débit de votre douche/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Où est hébergée l’IA/i)).toHaveValue('CN');
+  });
+
   it('reste opérable au clavier avec un focus visible natif', async () => {
     const user = userEvent.setup();
     await startSelection(user);
