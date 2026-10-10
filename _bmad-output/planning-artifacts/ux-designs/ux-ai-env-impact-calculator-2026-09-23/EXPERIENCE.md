@@ -26,7 +26,7 @@ Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fa
 | « Valider » et « Appliquer les paramètres » concurrents | Un seul « Continuer » collant ; les paramètres valides sont appliqués automatiquement. |
 | Paramètres avancés mélangés au choix du chatbot | « Mode avancé » replié sous le choix du modèle (paramètres compréhensibles) ; « Mode expert » replié à l'intérieur du Mode avancé (paramètres techniques). |
 | « Calculer cet échange uniquement » et « Calculer toute la conversation » | Un seul « Calculer » : il calcule et affiche tout à chaque fois. Plus de calcul par échange ni de recalcul du seul total. |
-| Bilan sur un écran séparé, dense, unités seules, cinq conseils en fin d'écran | Résultat sous la conversation, sur la même page : douche en grand, puis valeurs, comparaison LED, interprétation, une bonne pratique, bouton « Partager ». |
+| Bilan sur un écran séparé, dense, unités seules, cinq conseils en fin d'écran | Résultat sous la conversation, sur la même page : douche et ampoule LED en grand au même niveau, puis valeurs, interprétation, une bonne pratique, bouton « Partager ». |
 | Bouton « ? » menant à la méthodologie | Lien libellé « Méthodologie ». Pas de tutoriel ni d'aide pas à pas. |
 | Boutons à icône seule | Icône et texte visibles partout. |
 
@@ -38,7 +38,7 @@ Principe directeur (audit du 2026-10-07) : dire à chaque instant ce que l'on fa
 | Étape 1/3 — Votre IA | « Commencer » ; « Changer d'IA » depuis le fil | Choisir chatbot et abonnement/mode ; modèle déduit modifiable ; pays de la personne déduit ; « Mode avancé » replié sous le choix du modèle, qui contient le « Mode expert » replié. |
 | Étape 2/3 — Votre conversation | « Continuer » | Saisir, relire, modifier, ajouter et supprimer les questions / réponses. [Maquette](mockups/conversation.html). |
 | Carte question / réponse | Dans le fil de l'étape 2/3 ; valeurs affichées après « Calculer » | Lire carbone et eau estimés dans l'en-tête ; voir l'état d'actualité. |
-| Étape 3/3 — Résultat | « Calculer », sans nouvel écran : section sous la conversation, sur la même page | Lire la douche en grand, les valeurs, la comparaison LED, l'interprétation, une bonne pratique ; partager. [Maquette](mockups/bilan.html). |
+| Étape 3/3 — Résultat | « Calculer », sans nouvel écran : section sous la conversation, sur la même page | Lire la douche et l'ampoule LED en grand, les valeurs, l'interprétation, une bonne pratique ; partager. [Maquette](mockups/bilan.html). |
 | Mode avancé | Section repliable sous le choix du modèle, étape 1/3 | Corriger pays de l'utilisateur, paramètres douche et ampoule. |
 | Mode expert | Section repliable à l'intérieur du Mode avancé | Corriger pays d'hébergement et hypothèses techniques. |
 | Méthodologie | Lien libellé « Méthodologie », uniquement sur l'accueil, sous le bouton « Commencer » | Document de référence pour les curieux ; bouton « Retour » libellé tout en haut, au-dessus d'un seul titre principal. |
@@ -85,9 +85,9 @@ L'incertitude est mentionnée auprès des résultats : estimation de l'usage fon
 | Sticky action bar | L'action principale de l'étape (« Continuer », « Calculer ») est visible en bas de l'écran. Elle devient statique (non collante) à fort zoom ou en hauteur réduite et ne masque jamais le champ en focus. |
 | Exchange card | Cartes compactes ordonnées. En-tête : numéro seul (sans le libellé « Question / réponse »), aperçu de la question et de la réponse sur au moins deux lignes séparées, état d'actualité, puis carbone et eau si l'estimation est à jour, présentés par une icône et la valeur avec son unité, sans mot de libellé (le nom complet reste dans le nom accessible). Commandes texte « Voir détails » / « Masquer les détails » ; déplier révèle contenu, modification, suppression. Pas d'action de calcul propre à la carte. |
 | Exchange editor | Question puis réponse ; « Ajouter du contenu (optionnel) » regroupe réflexion affichée par l'IA, contenu du fichier créé par l'IA et fichiers joints. « Ajouter une question / réponse » ouvre un nouvel éditeur sans imposer de calcul. |
-| Result hero | Équivalence douche en grand, premier élément du résultat, avec nom accessible complet de l'unité. |
+| Result hero | Équivalence douche en grand, premier des deux héros du résultat, avec nom accessible complet de l'unité. |
 | Result values | Carbone, eau, électricité en second plan, avec unités adaptées. |
-| Everyday comparison | Durée d'ampoule LED 5W allumée et phrase d'interprétation ; la phrase est neutre. |
+| Comparison hero | Durée d'ampoule LED 5W allumée, en grand, juste sous le Result hero et avec exactement le même poids visuel ; même structure (libellé, valeur, unité complète en nom accessible). Chaque héros est un titre de section de même niveau. Suit une phrase d'interprétation neutre. |
 | Practice tip | Une bonne pratique tirée au hasard, stable pour un même résultat, avec « Voir toutes les bonnes pratiques ». |
 | Result actions | Un seul bouton libellé « Partager ». |
 | Button primary | Une action principale par étape, nommée explicitement. Aucune action concurrente de même poids. |
@@ -167,7 +167,7 @@ Sur mobile, une seule colonne : indicateur d'étape, puis contenu de l'étape (l
 2. À l'étape 1/3 « Votre IA », elle lit pourquoi on lui demande son IA, indique son chatbot et son abonnement ; le modèle estimé est déduit et modifiable. Son pays est déduit de la langue du navigateur. Elle active « Continuer ».
 3. À l'étape 2/3 « Votre conversation », elle colle sa question puis la réponse de l'IA ; réflexion affichée, fichier créé par l'IA et fichiers joints restent optionnels.
 4. Elle ajoute une question / réponse : la première devient une carte compacte dépliable, le nouveau champ de question reçoit le focus.
-5. Elle active « Calculer ». **Climax :** sous sa conversation, sans nouvel écran, l'étape 3/3 montre en grand une durée de douche chaude équivalente, puis carbone, eau et électricité, une comparaison à une ampoule LED et une phrase d'interprétation ; chaque carte montre carbone et eau dans son en-tête avec « ✓ ».
+5. Elle active « Calculer ». **Climax :** sous sa conversation, sans nouvel écran, l'étape 3/3 montre en grand, avec le même poids visuel, une durée de douche chaude équivalente et une durée d'ampoule LED allumée, puis carbone, eau et électricité et une phrase d'interprétation ; chaque carte montre carbone et eau dans son en-tête avec « ✓ ».
 6. Elle lit une bonne pratique, et utilise « Partager » si elle le souhaite.
 
 Échec : un paramètre indispensable manque → le calcul explique le blocage près de l'action sans effacer les textes. Si Camille modifie une question / réponse déjà calculée, le résultat dépendant devient « à recalculer » jusqu'au prochain « Calculer ».

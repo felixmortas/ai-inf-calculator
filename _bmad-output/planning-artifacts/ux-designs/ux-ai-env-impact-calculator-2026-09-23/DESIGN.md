@@ -60,6 +60,7 @@ components:
   step-indicator: {text: '{colors.ink-secondary}'}
   action-bar: {background: '{colors.surface-raised}', shadow: '{elevation.action-bar}'}
   result-hero: {background: '{colors.accent-tint}', text: '{colors.ink-primary}', radius: '{rounded.lg}'}
+  comparison-hero: {background: '{colors.accent-tint}', text: '{colors.ink-primary}', radius: '{rounded.lg}'}
   text-link: {text: '{colors.accent}'}
   exchange-card: {background: '{colors.surface-raised}', shadow: '{elevation.card}', radius: '{rounded.md}'}
   exchange-editor: {background: '{colors.surface-raised}', shadow: '{elevation.active}', radius: '{rounded.lg}'}
@@ -131,9 +132,9 @@ Iconographie : icônes au trait de 1,75 px, 24 px, extrémités et jonctions arr
 | Answer field | Champ de réponse de l'IA : fond blanc avec `{elevation.card}`, aligné à gauche, `{rounded.lg}`. Libellé visible « Réponse de l'IA ». Aucune bulle ne représente le calculateur. |
 | Field input | Champs numériques et listes des modes avancé et expert : pilule ou `{rounded.sm}`, fond `{colors.surface-muted}`, flèche de liste minimaliste, libellé au-dessus ; jamais une case de formulaire HTML brute. |
 | Metric badge | Étiquette pilule `*-surface` avec icône, valeur et unité en `*-ink` (par ex. carbone « 11,6 mgCO₂e »). Utilisée dans l'en-tête des cartes. Voir [conversation](mockups/conversation.html). |
-| Result hero | Fond `{colors.accent-tint}`, `{rounded.lg}`, icône de douche, équivalence douche en `{typography.metric-hero}` avec unité complète ; premier élément visuel du résultat. Voir [bilan](mockups/bilan.html). |
+| Result hero | Fond `{colors.accent-tint}`, `{rounded.lg}`, icône de douche, équivalence douche en `{typography.metric-hero}` avec unité complète ; premier des deux héros du résultat. Jumeau exact du Comparison hero : même fond, rayon, marges, taille de valeur et de libellé. Voir [bilan](mockups/bilan.html). |
 | Metric card | Une carte par quantité (carbone, eau, électricité) : disque d'icône, libellé, valeur en `{typography.metric}` et unité, couleurs de données. Nettement moins saillante que le Result hero. |
-| Everyday comparison | Carte neutre pour la comparaison ampoule LED (icône d'ampoule) et la phrase d'interprétation en `{typography.body}`, sans accent d'alerte ni couleur de donnée. |
+| Comparison hero | Deuxième héros du résultat, placé juste sous le Result hero : fond `{colors.accent-tint}`, `{rounded.lg}`, icône d'ampoule dans un disque blanc, durée d'ampoule LED en `{typography.metric-hero}` avec unité complète. Mêmes fond, rayon, marges, tailles et poids que le Result hero ; aucun des deux n'est plus saillant. Sous les deux héros, la phrase d'interprétation en `{typography.body}` et `{colors.ink-secondary}`, sans accent d'alerte. |
 | Practice tip | Callout `{colors.accent-tint}` avec bordure gauche épaisse (4 px) `{colors.accent-brand}`, `{rounded.sm}` ; une seule bonne pratique, avec « Voir toutes les bonnes pratiques » en lien. |
 | Share button | Pilule `{colors.surface-muted}`, texte `{colors.ink-primary}`, libellé « Partager » ; moins saillant que l'action principale ; icône décorative et texte visibles. |
 | Text link | `{typography.link}` en `{colors.accent}`, souligné ; pas de contour de bouton. |
@@ -156,7 +157,7 @@ Iconographie : icônes au trait de 1,75 px, 24 px, extrémités et jonctions arr
 | Montrer les textes et résultats près des échanges. | Faire croire que le calculateur répond aux questions collées (aucune bulle du calculateur). |
 | Adapter les unités à la taille des quantités. | Afficher de longues suites de zéros ou des nombres sans unité. |
 | Afficher le résultat sous la conversation, sans nouvel écran. | Un écran de bilan séparé. |
-| Mettre la douche en grand, puis les valeurs techniques en cartes plus discrètes. | Présenter carbone, eau et électricité au même niveau sans comparaison du quotidien. |
+| Mettre la douche et l'ampoule LED en grand, avec un traitement identique, puis les valeurs techniques en cartes plus discrètes. | Rétrograder l'ampoule LED en carte neutre, ou présenter carbone, eau et électricité au même niveau sans comparaison du quotidien. |
 | Une action principale par étape, les autres en lien discret. | Deux boutons de calcul ou de validation concurrents. |
 | Garder un contour fin sur les champs de saisie. | Supprimer toute limite visible d'un champ (1,1:1). |
 | Présenter un état initial normal de façon neutre. | Utiliser une surface d'erreur ou d'avertissement pour un champ vide. |
