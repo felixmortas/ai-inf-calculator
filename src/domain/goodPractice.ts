@@ -1,5 +1,5 @@
 /** URL provisoire de l’article de blog des bonnes pratiques (pas encore rédigé) : à remplacer ici uniquement. */
-export const goodPracticesBlogUrl = 'https://example.org/bonnes-pratiques-ia';
+export const goodPracticesBlogUrl = 'https://felixmortas.com/ai-env-impact-knowledge';
 
 /** Identifiants du catalogue ; les textes vivent dans `fr.goodPractices`. Aucun gain chiffré. */
 export const goodPracticeIds = ['smallModel', 'noDetailedReasoning', 'shortTexts', 'newConversation', 'editMessage', 'useBrowser', 'branchTopics', 'removeConversations', 'emptyMemory', 'smallEffort', 'shortOutputs', 'stopMessage'] as const;
