@@ -271,9 +271,9 @@ button {
 .share-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 2.75rem; min-height: 2.75rem; padding: .35rem 1.25rem; border-radius: 999px; background: var(--muted); color: var(--ink); font-weight: 600; white-space: normal; }
 .share-feedback { margin: .5rem 0 0; }
 .share-feedback textarea { display: block; box-sizing: border-box; width: 100%; margin-top: .25rem; font: inherit; }
-.good-practices { margin-top: 1rem; padding: 1rem; border-left: 4px solid var(--accent); border-radius: 12px; background: var(--tint); }
-.good-practices h4 { margin: 0 0 .25rem; color: var(--accent); font-size: .875rem; font-weight: 600; line-height: 1.35; }
-.good-practices p { margin: 0; }
+.good-practices { margin-top: 1rem; padding: 1.25rem 1.25rem 1.25rem 1.5rem; border: 2px solid var(--brand); border-left-width: 8px; border-radius: 12px; background: linear-gradient(135deg, var(--tint), #ffffff 140%); box-shadow: 0 6px 20px rgba(16,163,127,.28), 0 0 0 4px rgba(16,163,127,.12); }
+.good-practices h4 { margin: 0 0 .5rem; color: var(--accent); font-size: 1.0625rem; font-weight: 700; letter-spacing: .01em; line-height: 1.35; }
+.good-practices p { margin: 0; color: var(--ink); font-size: 1.0625rem; font-weight: 500; line-height: 1.5; }
 
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .conversation-block:focus { outline: 3px solid var(--focus); outline-offset: 3px; }

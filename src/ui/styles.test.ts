@@ -45,6 +45,6 @@ describe('styles d’accessibilité et responsive', () => {
       expect(styleSource).toContain(token);
     }
     expect(styleSource).toContain('border-radius: 999px');
-    expect(styleSource).toContain('border-left: 4px solid var(--accent)');
+    expect(styleSource).toContain('border-left-width: 8px');
   });
 });
