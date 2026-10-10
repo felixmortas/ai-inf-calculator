@@ -464,7 +464,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
     render(<ConversationBlocks state={state} dispatch={() => undefined} random={() => 0} />);
     const text = document.querySelector('.result-section')!.textContent!.replace(/\s/gu, ' ');
-    const order = ['douche chaude', 'Carbone', 'Eau', 'Électricité', 'Ampoule LED allumée (5 W)', '12 min', 'Une conversation pèse peu', '100 conversations', 'Ne compte que l’électricité des serveurs', 'pas sur une mesure', 'Une bonne pratique', 'Voir les bonnes pratiques'];
+    const order = ['douche chaude', 'Ampoule LED allumée (5 W)', '12 min', 'Carbone', 'Eau', 'Électricité', 'Une conversation pèse peu', '100 conversations', 'Ne compte que l’électricité des serveurs', 'pas sur une mesure', 'Une bonne pratique', 'Voir les bonnes pratiques'];
     const positions = order.map((part) => text.indexOf(part));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect([...positions].sort((x, y) => x - y)).toEqual(positions);
@@ -502,7 +502,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
     state = conversationReducer(state, { type: 'parametersApplied', overrides: { shower: { ledPowerW: 9 } } });
     render(<ConversationBlocks state={state} dispatch={() => undefined} />);
-    expect(screen.getByText(/Ampoule LED allumée/).closest('li')).toHaveTextContent('À recalculer');
+    expect(screen.getByText(/Ampoule LED allumée/).closest('.result-hero')).toHaveTextContent('À recalculer');
     expect(document.querySelector('.metric-hero')).toHaveTextContent('1,5 min');
     expect(screen.getByText('Carbone').closest('li')).toHaveTextContent('2 gCO₂e');
     expect(screen.queryByText(/pour afficher un résultat à jour/)).not.toBeInTheDocument();
@@ -554,7 +554,7 @@ describe('composition de la conversation', () => {
     expect(screen.getByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
 
-    expect(document.querySelector('.metric-hero')).toHaveTextContent(/Environ .* de douche chaude/);
+    expect(document.querySelector('.metric-hero')).toHaveTextContent(/\d+,\d+ ms/);
     expect(screen.getByText('Électricité').closest('li')!.textContent).toBe(summaryEnergy);
   });
 

@@ -69,25 +69,27 @@ export function ResultSection({ state, random }: ResultSectionProps) {
       {!current ? <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.resultStale}</p> : <>
         <div className="result-hero">
           {shower?.status === 'available' ? <>
-            <p className="metric-hero">
+            <p className="metric-hero-label">
               <span className="disc" aria-hidden="true"><Icon name="shower" /></span>
-              <span aria-hidden="true">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).display)}</span>
-              <span className="visually-hidden">{messages.resultShower(formatQuantity(shower.seconds, 'duration', messages, locale).accessible)}</span>
+              <span>{messages.resultShowerTitle}</span>
             </p>
+            <p className="metric-hero"><Quantity messages={messages} locale={locale} value={shower.seconds} kind="duration" /></p>
             <p className="impact-note">{worldCountry ? messages.resultCountryWorld(countryLabel) : messages.resultCountry(countryLabel)}</p>
           </> : shower ? <p>{messages.resultShowerUnavailable}</p> : <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.resultShowerStale}</p>}
+        </div>
+        <div className="result-hero result-hero-led">
+          <p className="metric-hero-label">
+            <span className="disc" aria-hidden="true"><Icon name="bulb" /></span>
+            <span>{messages.resultLed(ledPower === undefined ? '' : messages.resultLedPower(new Intl.NumberFormat(locale, { maximumSignificantDigits: 3 }).format(ledPower)))}</span>
+          </p>
+          {!led
+            ? <p className="impact-stale"><span aria-hidden="true">↻ </span>{messages.staleEstimate}</p>
+            : led.status === 'available' ? <p className="metric-hero"><Quantity messages={messages} locale={locale} value={led.seconds} kind="duration" /></p> : <p>{messages.resultLedUnavailable}</p>}
         </div>
         <ul className="metrics">
           <li className="metric metric-carbon"><span className="disc" aria-hidden="true"><Icon name="leaf" /></span><span className="metric-label">{messages.resultCarbon}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.carbonGco2e} kind="carbon" /></span></li>
           <li className="metric metric-water"><span className="disc" aria-hidden="true"><Icon name="drop" /></span><span className="metric-label">{messages.resultWater}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.waterL} kind="water" /></span></li>
           <li className="metric metric-power"><span className="disc" aria-hidden="true"><Icon name="bolt" /></span><span className="metric-label">{messages.resultElectricity}</span> <span className="metric-value"><Quantity messages={messages} locale={locale} value={total.energyWh} kind="energy" /></span></li>
-          <li className="metric metric-led">
-            <span className="disc" aria-hidden="true"><Icon name="bulb" /></span>
-            <span className="metric-label">{messages.resultLed(ledPower === undefined ? '' : messages.resultLedPower(new Intl.NumberFormat(locale, { maximumSignificantDigits: 3 }).format(ledPower)))}</span>{' '}
-            <span className="metric-value">{!led
-              ? <span className="impact-stale"><span aria-hidden="true">↻ </span>{messages.staleEstimate}</span>
-              : led.status === 'available' ? <Quantity messages={messages} locale={locale} value={led.seconds} kind="duration" /> : <span>{messages.resultLedUnavailable}</span>}</span>
-          </li>
         </ul>
         <p className="result-interpretation">{messages.resultInterpretation}</p>
         <p className="impact-note">{messages.resultScope}</p>

@@ -115,7 +115,7 @@ describe('fil et estimations', () => {
     await user.click(screen.getByRole('button', { name: 'Calculer' }));
     expect(await screen.findByRole('heading', { name: 'Étape 3/3 : Résultat' })).toBeVisible();
     expect(document.querySelectorAll('.compact-impact')).toHaveLength(2);
-    const ledRow = screen.getByText(/Ampoule LED allumée/).closest('li');
+    const ledRow = screen.getByText(/Ampoule LED allumée/).closest('.result-hero');
     expect(ledRow).not.toBeNull();
     expect(ledRow).not.toHaveTextContent(/À recalculer|non calculable/);
     expect(ledRow).toHaveTextContent(/\d/);
