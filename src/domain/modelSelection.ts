@@ -1,6 +1,6 @@
 export const chatGptSubscriptions = Object.freeze([
-  { id: 'without-paid-subscription', modelId: 'gpt-4o-mini', label: 'subscriptionFree', isDefault: true },
-  { id: 'with-paid-subscription', modelId: 'gpt-4o', label: 'subscriptionPaid' },
+  { id: 'without-paid-subscription', modelId: 'gpt-5.4-mini', label: 'subscriptionFree', isDefault: true },
+  { id: 'with-paid-subscription', modelId: 'gpt-5.5-pro', label: 'subscriptionPaid' },
 ] as const);
 
 export type ChatGptSubscription = typeof chatGptSubscriptions[number]['id'];
