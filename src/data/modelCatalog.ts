@@ -177,8 +177,20 @@ export function isUserCountry(country: string): boolean {
   return Object.hasOwn(countryNames, country);
 }
 
-/** Heuristique locale, sans réseau, géolocalisation ni fuseau horaire : la région de la langue du navigateur, sinon Monde. Le contrôle utilisateur prévaut. */
-export function detectUserCountry(language?: string): string {
+const timeZoneCountries: Readonly<Record<string, string>> = Object.freeze({
+  'Europe/Paris': 'FR', 'Europe/Zurich': 'CH', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES',
+  'Europe/Rome': 'IT', 'Europe/London': 'GB', 'Europe/Amsterdam': 'NL', 'Europe/Brussels': 'BE',
+  'Europe/Stockholm': 'SE', 'Europe/Oslo': 'NO', 'Europe/Warsaw': 'PL', 'Europe/Lisbon': 'PT',
+  'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US', 'America/Toronto': 'CA',
+  'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR', 'America/Argentina/Buenos_Aires': 'AR',
+  'Asia/Kolkata': 'IN', 'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
+  'Asia/Bangkok': 'TH', 'Asia/Jakarta': 'ID', 'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
+});
+
+/** Heuristique locale, sans réseau ni géolocalisation : fuseau horaire, sinon région de la langue du navigateur, sinon Monde. Le contrôle utilisateur prévaut. */
+export function detectUserCountry(timeZone?: string, language?: string): string {
+  const zone = timeZone ?? (typeof Intl === 'undefined' ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
+  if (zone && Object.hasOwn(timeZoneCountries, zone)) return timeZoneCountries[zone];
   const locale = language ?? (typeof navigator === 'undefined' ? undefined : navigator.language);
   const region = locale?.match(/[-_]([A-Za-z]{2})\b/)?.[1]?.toUpperCase();
   return region && isUserCountry(region) ? region : 'WORLD';

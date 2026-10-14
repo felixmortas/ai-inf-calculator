@@ -41,10 +41,10 @@ describe('sélection de modèle', () => {
   });
 
   it('détecte le pays utilisateur localement puis replie sur Monde', () => {
-    expect(detectUserCountry('fr-FR')).toBe('FR');
-    expect(detectUserCountry('fr')).toBe('WORLD');
-    expect(detectUserCountry('en-XX')).toBe('WORLD');
-    expect(detectUserCountry('fr_FR')).toBe('FR');
+    expect(detectUserCountry('Europe/Paris', 'en-US')).toBe('FR');
+    expect(detectUserCountry('Europe/Berlin', 'fr-FR')).toBe('DE');
+    expect(detectUserCountry('', 'fr-FR')).toBe('FR');
+    expect(detectUserCountry('Unknown/Zone', 'fr')).toBe('WORLD');
     expect(resolveUserCarbonIntensity('FR')).toEqual({ status: 'country', value: 41.44 });
     expect(resolveUserCarbonIntensity('ID')).toMatchObject({ status: 'world', value: 473 });
     expect(resolveUserCarbonIntensity('ZZ')).toMatchObject({ status: 'world', value: 473 });

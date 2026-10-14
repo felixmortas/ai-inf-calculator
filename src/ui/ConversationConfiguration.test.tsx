@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { resolveChatGptModel } from '../domain/modelSelection';
+import { initialConversationState } from '../application/conversationReducer';
 
 async function startSelection(user: ReturnType<typeof userEvent.setup>) {
   const view = render(<App />);
@@ -71,13 +72,14 @@ describe('configuration de conversation', () => {
     expect(screen.queryByRole('button', { name: 'Appliquer les paramètres' })).not.toBeInTheDocument();
   });
 
-  it('présente le pays estimé (langue du navigateur) et le laisse corriger, distinct de l’hébergement', async () => {
+  it('présente le pays estimé (fuseau horaire, sinon langue du navigateur) et le laisse corriger, distinct de l’hébergement', async () => {
     const user = userEvent.setup();
     await startSelection(user);
     const country = screen.getByLabelText('Pays estimé : où vous vous trouvez');
-    expect(country).toHaveValue('US');
-    await user.selectOptions(country, 'ID');
-    expect(country).toHaveValue('ID');
+    expect(country).toHaveValue(initialConversationState.userCountry);
+    const other = initialConversationState.userCountry === 'ID' ? 'FR' : 'ID';
+    await user.selectOptions(country, other);
+    expect(country).toHaveValue(other);
     expect(screen.getByLabelText('Où est hébergée l’IA (pays des serveurs)')).toHaveValue('US');
   });
 
