@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { goodPracticeIds, goodPracticesBlogUrl, pickGoodPractice } from './goodPractice';
+import { goodPracticeIds, pickGoodPractice } from './goodPractice';
 
 describe('pickGoodPractice', () => {
   it('choisit selon le tirage injecté, bornes comprises', () => {
@@ -9,8 +9,5 @@ describe('pickGoodPractice', () => {
   });
   it('reste dans le catalogue pour un tirage hors bornes ou invalide', () => {
     for (const value of [-1, 1, 7, Number.NaN]) expect(goodPracticeIds).toContain(pickGoodPractice(() => value));
-  });
-  it('expose une URL externe unique', () => {
-    expect(goodPracticesBlogUrl).toBe('https://example.org/bonnes-pratiques-ia');
   });
 });

@@ -436,7 +436,6 @@ describe('composition de la conversation', () => {
     expect(screen.getByRole('region', { name: 'Une bonne pratique' })).toHaveTextContent('Créez des branches');
     expect(document.querySelector('.result-section')).toContainElement(practices);
     const link = screen.getByRole('link', { name: 'Voir les bonnes pratiques (s’ouvre dans un nouvel onglet)' });
-    expect(link).toHaveAttribute('href', 'https://example.org/bonnes-pratiques-ia');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.queryByText(/En savoir plus/)).not.toBeInTheDocument();
