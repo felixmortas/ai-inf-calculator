@@ -19,7 +19,7 @@ context:
 
 ## Boundaries & Constraints
 
-**Always:** Textes via `fr.ts`. Formules inchangées (méthodologie §8.2 déjà à jour) ; durée LED = `E_total` non arrondie / `ledPowerW` (5 W par défaut), en `formatQuantity` (ms → j) avec nom accessible complet. Seul le carbone dépend du pays de la personne ; l’eau n’est jamais comparée. Phrase d’interprétation fixe : « Une conversation pèse peu, mais ça s’additionne : 100 conversations comme celle-ci ont un impact plus conséquent. » (« 100 » présenté comme convention d’illustration, jamais choisie ni qualifiée selon la valeur, aucun gain promis). Périmètre : « Ne compte que l’électricité des serveurs, pas la fabrication du matériel ni l’entraînement de l’IA », sans lien ni bouton « En savoir plus », et mention visible « estimation fondée sur des hypothèses, pas sur une mesure ». Bonne pratique tirée par une fonction injectable, stable pour un même résultat (pas de nouveau tirage au re-rendu), sans gain chiffré. Bouton-lien « Voir les bonnes pratiques » vers l’article de blog (pas encore rédigé) : URL provisoire dans une constante unique, facile à remplacer ; lien externe qui ne renvoie jamais à la méthodologie de la page, ouvert dans un nouvel onglet (`target="_blank"`, `rel="noopener noreferrer"`, mention « s’ouvre dans un nouvel onglet » dans le nom accessible). URL provisoire : `https://example.org/bonnes-pratiques-ia`. Rien n’est stocké ni envoyé. Aucun statut par la couleur seule ; reflow 320 px, zoom 200 %/400 %, ordre de lecture = ordre visuel, aucune métrique tronquée.
+**Always:** Textes via `fr.ts`. Formules inchangées (méthodologie §8.2 déjà à jour) ; durée LED = `E_total` non arrondie / `ledPowerW` (5 W par défaut), en `formatQuantity` (ms → j) avec nom accessible complet. Seul le carbone dépend du pays de la personne ; l’eau n’est jamais comparée. Phrase d’interprétation fixe : « Une conversation pèse peu, mais ça s’additionne : 100 conversations comme celle-ci ont un impact plus conséquent. » (« 100 » présenté comme convention d’illustration, jamais choisie ni qualifiée selon la valeur, aucun gain promis). Périmètre : « Ne compte que l’électricité des serveurs, pas la fabrication du matériel ni l’entraînement de l’IA », sans lien ni bouton « En savoir plus », et mention visible « estimation fondée sur des hypothèses, pas sur une mesure ». Bonne pratique tirée par une fonction injectable, stable pour un même résultat (pas de nouveau tirage au re-rendu), sans gain chiffré. Bouton-lien « Voir plus de bonnes pratiques » vers l’article de blog (pas encore rédigé) : URL provisoire dans une constante unique, facile à remplacer ; lien externe qui ne renvoie jamais à la méthodologie de la page, ouvert dans un nouvel onglet (`target="_blank"`, `rel="noopener noreferrer"`, mention « s’ouvre dans un nouvel onglet » dans le nom accessible). URL provisoire : `https://example.org/bonnes-pratiques-ia`. Rien n’est stocké ni envoyé. Aucun statut par la couleur seule ; reflow 320 px, zoom 200 %/400 %, ordre de lecture = ordre visuel, aucune métrique tronquée.
 
 **Ask First:** Modifier formules, moteur, tokenisation ou `impactFingerprint`/`summaryFingerprint`.
 
@@ -36,7 +36,7 @@ context:
 | Résultat périmé | Texte, modèle, pays d’hébergement ou paramètre change | Section « à recalculer » (texte + pictogramme), anciennes valeurs retirées, aucun total présenté comme actuel | N/A |
 | Pays non déduit | `resolveUserCarbonIntensity` → `world` | Repli « Monde » présenté comme estimation corrigeable près de la douche | N/A |
 | Tirage | Re-rendu sans nouveau calcul | Même bonne pratique ; nouveau calcul → nouveau tirage | N/A |
-| Bonnes pratiques | Clic sur « Voir les bonnes pratiques » | Ouverture de l’URL provisoire dans un nouvel onglet ; la page et la conversation restent intactes | N/A |
+| Bonnes pratiques | Clic sur « Voir plus de bonnes pratiques » | Ouverture de l’URL provisoire dans un nouvel onglet ; la page et la conversation restent intactes | N/A |
 
 </frozen-after-approval>
 
@@ -64,7 +64,7 @@ context:
 - [x] Tests -- chaque ligne de la matrice ; formateur (zéro, sous-seuil, bascule, dépassement) ; absence d’ancien panneau ; ordre de lecture
 
 **Acceptance Criteria:**
-- Given un résultat à jour, when il s’affiche, then l’ordre est douche (hero), carbone, eau, électricité, LED, phrase, périmètre/incertitude, bonne pratique, bouton « Voir les bonnes pratiques », avec unités complètes en noms accessibles.
+- Given un résultat à jour, when il s’affiche, then l’ordre est douche (hero), carbone, eau, électricité, LED, phrase, périmètre/incertitude, bonne pratique, bouton « Voir plus de bonnes pratiques », avec unités complètes en noms accessibles.
 - Given un changement d’entrée ou de paramètre, when la section est affichée, then elle indique « à recalculer » sans aucune ancienne valeur ni total ancien.
 - Given la section résultat, when elle est parcourue au clavier à 320 px et 400 %, then rien n’est tronqué et le focus n’est jamais masqué par la barre collante.
 

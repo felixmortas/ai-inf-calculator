@@ -435,7 +435,7 @@ describe('composition de la conversation', () => {
     expect(random).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('region', { name: 'Une bonne pratique' })).toHaveTextContent('Créez des branches');
     expect(document.querySelector('.result-section')).toContainElement(practices);
-    const link = screen.getByRole('link', { name: 'Voir les bonnes pratiques (s’ouvre dans un nouvel onglet)' });
+    const link = screen.getByRole('link', { name: 'Voir plus de bonnes pratiques (s’ouvre dans un nouvel onglet)' });
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.queryByText(/En savoir plus/)).not.toBeInTheDocument();
@@ -463,7 +463,7 @@ describe('composition de la conversation', () => {
     state = conversationReducer(state, { type: 'ledEquivalenceResolved', fingerprint: ledFingerprint(state, 1), equivalence: { status: 'available', seconds: 720 } });
     render(<ConversationBlocks state={state} dispatch={() => undefined} random={() => 0} />);
     const text = document.querySelector('.result-section')!.textContent!.replace(/\s/gu, ' ');
-    const order = ['douche chaude', 'Ampoule LED allumée (5 W)', '12 min', 'Carbone', 'Eau', 'Électricité', 'Une conversation pèse peu', '100 conversations', 'Ne compte que l’électricité des serveurs', 'pas sur une mesure', 'Une bonne pratique', 'Voir les bonnes pratiques'];
+    const order = ['douche chaude', 'Ampoule LED allumée (5 W)', '12 min', 'Carbone', 'Eau', 'Électricité', 'Une conversation pèse peu', '100 conversations', 'Ne compte que l’électricité des serveurs', 'pas sur une mesure', 'Une bonne pratique', 'Voir plus de bonnes pratiques'];
     const positions = order.map((part) => text.indexOf(part));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect([...positions].sort((x, y) => x - y)).toEqual(positions);

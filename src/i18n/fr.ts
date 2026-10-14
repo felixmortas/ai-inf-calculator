@@ -176,7 +176,7 @@ export const fr = {
   shareFailed: 'Le partage et la copie automatique ont échoué sur cet appareil.',
   shareManualInstruction: 'Copiez ce texte à la main.',
   goodPracticeTitle: 'Une bonne pratique',
-  goodPracticesAction: 'Voir les bonnes pratiques',
+  goodPracticesAction: 'Voir plus de bonnes pratiques',
   goodPracticesNewTab: '(s’ouvre dans un nouvel onglet)',
   goodPractices: {
     smallModel: 'Choisissez un modèle plus petit et adapté à votre besoin lorsque cela est suffisant. Un modèle de petite ou moyenne taille est généralement suffisant pour réaliser la plupart des tâches.',
