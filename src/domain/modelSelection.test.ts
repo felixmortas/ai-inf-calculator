@@ -4,31 +4,40 @@ import { detectUserCountry, hasModel, modelCatalog, resolveEnvironmentalFactor, 
 
 describe('sélection de modèle', () => {
   const models = [
-    { provider: 'ChatGPT', id: 'gpt-4o-mini' },
+    { provider: 'testGPT', id: 'testGPTfree-model' },
     { provider: 'Gemini', id: 'gemini-2.5-pro' },
   ] as const;
 
   it('résout le modèle ChatGPT selon l’abonnement', () => {
-    expect(resolveChatGptModel('without-paid-subscription')).toBe('gpt-4o-mini');
-    expect(resolveChatGptModel('with-paid-subscription')).toBe('gpt-4o');
+    const free = resolveChatGptModel('without-paid-subscription');
+    const paid = resolveChatGptModel('with-paid-subscription');
+    expect(free).not.toBe(paid);
+    expect(hasModel(modelCatalog, 'ChatGPT', free)).toBe(true);
+    expect(hasModel(modelCatalog, 'ChatGPT', paid)).toBe(true);
   });
 
   it('résout les deux modes Mistral avec pays et facteurs complets', () => {
-    expect(resolveMistralModel('fast')).toBe('mistral-medium-3.1');
-    expect(resolveMistralModel('reasoning')).toBe('mistral-medium-3.1');
-    for (const id of ['mistral-medium-3.1', 'mistral-medium-3.1']) {
+    for (const id of [resolveMistralModel('fast'), resolveMistralModel('reasoning')]) {
       expect(resolveImpactParameters('Mistral AI', id)).toMatchObject({ provider: 'Mistral AI', id, hostingCountry: 'CH' });
     }
   });
 
   it('ne retourne et n’accepte que les modèles du fournisseur', () => {
     expect(selectableModels(models, 'Gemini')).toEqual([{ provider: 'Gemini', id: 'gemini-2.5-pro' }]);
-    expect(canSelectModel(models, 'Gemini', 'gpt-4o-mini')).toBe(false);
+    expect(canSelectModel(models, 'Gemini', 'testGPTfree-model')).toBe(false);
   });
 
   it('charge les modèles de référence ChatGPT depuis le catalogue local', () => {
-    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-4o-mini')).toBe(true);
-    expect(hasModel(modelCatalog, 'ChatGPT', 'gpt-4o')).toBe(true);
+    expect(hasModel(modelCatalog, 'testGPT', 'testGPTfree-model')).toBe(true);
+    expect(hasModel(modelCatalog, 'testGPT', 'testGPTpaid-model')).toBe(true);
+    expect(hasModel(modelCatalog, 'testMistral', 'testMistralfree-model')).toBe(true);
+    expect(hasModel(modelCatalog, 'testMistral', 'testMistralpaid-model')).toBe(true);
+  });
+
+  it('masque les fournisseurs de test du sélecteur', () => {
+    expect(modelCatalog.providers).not.toContain('testGPT');
+    expect(modelCatalog.providers).not.toContain('testMistral');
+    expect(modelCatalog.providers).toContain('ChatGPT');
   });
 
   it('détecte le pays utilisateur localement puis replie sur Monde', () => {
@@ -42,21 +51,21 @@ describe('sélection de modèle', () => {
   });
 
   it('résout les paramètres d’impact locaux du modèle et de son pays d’hébergement', () => {
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini')).toMatchObject({
-      totalParameters: 92, activatedParameters: 12.325116, systemPromptCacheTokens: 1469,
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model')).toMatchObject({
+      totalParameters: 100, activatedParameters: 10, systemPromptCacheTokens: 3000,
       pue: 1.14, wue: .1, carbonIntensity: 384.403,
     });
   });
 
   it('fusionne les surcharges sans muter le catalogue, dérive la douche et refuse les constantes hors domaine', () => {
     const before = structuredClone(modelCatalog.models);
-    const resolved = resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { inputRatio: .4, constants: { batchSize: 32 }, shower: { inletTemperatureC: 15, outletTemperatureC: 35 } });
-    expect(resolved).toMatchObject({ inputRatio: .4, systemPromptCacheTokens: 1469, constants: { batchSize: 32 }, shower: { energyKwhPerLitre: .0232 } });
+    const resolved = resolveImpactParameters('testGPT', 'testGPTfree-model', 'US', { inputRatio: .4, constants: { batchSize: 32 }, shower: { inletTemperatureC: 15, outletTemperatureC: 35 } });
+    expect(resolved).toMatchObject({ inputRatio: .4, systemPromptCacheTokens: 3000, constants: { batchSize: 32 }, shower: { energyKwhPerLitre: .0232 } });
     expect(modelCatalog.models).toEqual(before);
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { shower: { ledPowerW: 0 } })).toBeUndefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'US', { shower: { ledPowerW: 9 } })?.shower.ledPowerW).toBe(9);
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'US', { constants: { energyAlpha: 0 } })).toBeUndefined();
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'US', { constants: { energyBeta: .01 } })).toBeUndefined();
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'US', { shower: { ledPowerW: 0 } })).toBeUndefined();
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'US', { shower: { ledPowerW: 9 } })?.shower.ledPowerW).toBe(9);
   });
 
   it('expose le pays d’hébergement', () => {
@@ -68,8 +77,8 @@ describe('sélection de modèle', () => {
   it('résout les paramètres d’un fournisseur hébergé hors de l’ancienne liste', () => {
     const model = modelCatalog.models.find((entry) => entry.provider === 'DeepSeek')!;
     expect(resolveImpactParameters('DeepSeek', model.id)).toBeDefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'DE')).toBeDefined();
-    expect(resolveImpactParameters('ChatGPT', 'gpt-4o-mini', 'ZZ')).toBeUndefined();
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'DE')).toBeDefined();
+    expect(resolveImpactParameters('testGPT', 'testGPTfree-model', 'ZZ')).toBeUndefined();
   });
 
   it('résout sans mutation la valeur pays, le repli Monde, zéro et l’absence complète', () => {

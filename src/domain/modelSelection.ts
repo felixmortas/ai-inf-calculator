@@ -13,6 +13,8 @@ export interface ModelOption {
 
 export const chatGptProvider = 'ChatGPT';
 export const mistralProvider = 'Mistral AI';
+/** Fournisseurs de test : présents dans le catalogue mais jamais proposés dans le sélecteur. */
+export const hiddenProviders: readonly string[] = Object.freeze(['testGPT', 'testMistral']);
 export const defaultChatGptSubscription = chatGptSubscriptions.find((subscription) => 'isDefault' in subscription && subscription.isDefault)!.id;
 export const chatGptSubscriptionModels: Readonly<Record<ChatGptSubscription, string>> = Object.freeze(
   Object.fromEntries(chatGptSubscriptions.map(({ id, modelId }) => [id, modelId])) as Record<ChatGptSubscription, string>,

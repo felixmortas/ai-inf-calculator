@@ -3,6 +3,7 @@ import { renderWithI18n as render } from '../test/renderWithI18n';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
+import { resolveChatGptModel } from '../domain/modelSelection';
 
 async function startSelection(user: ReturnType<typeof userEvent.setup>) {
   const view = render(<App />);
@@ -14,9 +15,9 @@ describe('configuration de conversation', () => {
   it('affiche et résout le modèle estimé selon l’abonnement, la liste toujours visible', async () => {
     const user = userEvent.setup();
     await startSelection(user);
-    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o-mini');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue(resolveChatGptModel('without-paid-subscription'));
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
-    expect(screen.getByLabelText('Modèle estimé')).toHaveValue('gpt-4o');
+    expect(screen.getByLabelText('Modèle estimé')).toHaveValue(resolveChatGptModel('with-paid-subscription'));
   });
 
   it('masque l’abonnement et limite les modèles pour un autre fournisseur', async () => {
@@ -26,7 +27,7 @@ describe('configuration de conversation', () => {
     expect(screen.queryByLabelText('Abonnement')).not.toBeInTheDocument();
     const model = screen.getByLabelText('Modèle estimé');
     expect(model).toHaveValue('gemini-2.5-pro');
-    expect(screen.queryByRole('option', { name: 'gpt-4o-mini' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: resolveChatGptModel('without-paid-subscription') })).not.toBeInTheDocument();
     await user.selectOptions(model, 'gemini-2.5-flash');
     expect(model).toHaveValue('gemini-2.5-flash');
   });
@@ -86,7 +87,7 @@ describe('configuration de conversation', () => {
     await user.selectOptions(screen.getByLabelText('Abonnement'), 'with-paid-subscription');
     first.unmount();
     await startSelection(user);
-    expect(screen.getByText('gpt-4o-mini')).toBeVisible();
+    expect(screen.getByText(resolveChatGptModel('without-paid-subscription'))).toBeVisible();
   });
 
   it('ne persiste pas les sélections dans le navigateur', async () => {
@@ -218,7 +219,7 @@ describe('configuration de conversation', () => {
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.3);
     await user.click(screen.getByRole('button', { name: 'Rétablir les valeurs par défaut' }));
     expect(screen.getByLabelText('PUE (sans unité)')).toHaveValue(1.14);
-    expect(screen.getByText('gpt-4o')).toBeVisible();
+    expect(screen.getByText(resolveChatGptModel('with-paid-subscription'))).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
     expect(screen.getByLabelText('Collez ici votre message')).toHaveValue('Texte conservé');
   });

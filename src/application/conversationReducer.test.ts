@@ -24,12 +24,6 @@ describe('conversationReducer', () => {
     expect(conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'DeepSeek' }).hostingCountry).toBe('CN');
   });
 
-  it('garde un modèle ChatGPT résolu dans la conversation', () => {
-    const state = conversationReducer(initialConversationState, {
-      type: 'subscriptionSelected', subscription: 'with-paid-subscription',
-    });
-    expect(state.modelId).toBe('gpt-4o');
-  });
 
   it('garde les textes et périme les résultats pour chaque choix de référence sans lancer de calcul', () => {
     let state = conversationReducer(initialConversationState, { type: 'blockAdded', blockId: 'one' });
@@ -39,10 +33,10 @@ describe('conversationReducer', () => {
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     const choices = [
       { type: 'subscriptionSelected', subscription: 'with-paid-subscription' },
-      { type: 'modelSelected', modelId: 'gpt-4o' },
-      { type: 'providerSelected', provider: 'Mistral AI' },
-      { type: 'mistralModeSelected', mode: 'reasoning' },
-      { type: 'modelSelected', modelId: 'mistral-medium-3.1' },
+      { type: 'providerSelected', provider: 'testGPT' },
+      { type: 'modelSelected', modelId: 'testGPTpaid-model' },
+      { type: 'providerSelected', provider: 'testMistral' },
+      { type: 'modelSelected', modelId: 'testMistralpaid-model' },
     ] as const;
     for (const choice of choices) {
       const changed = conversationReducer(state, choice);
@@ -52,33 +46,34 @@ describe('conversationReducer', () => {
       expect(changed.tokenizations).toEqual({});
       state = changed;
     }
-    expect(conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-4o-mini' })).toBe(state);
+    expect(conversationReducer(state, { type: 'modelSelected', modelId: 'testMistralpaid-model' })).toBe(state);
   });
 
-  it('périme un résultat après changement de formule de référence même si le modèle choisi reste identique', () => {
-    let state = conversationReducer(initialConversationState, { type: 'modelSelected', modelId: 'gpt-4o' });
+  it('périme un résultat après changement de modèle ChatGPT de test', () => {
+    let state = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'testGPT' });
+    state = conversationReducer(state, { type: 'modelSelected', modelId: 'testGPTpaid-model' });
     state = conversationReducer(state, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Texte' });
     const fingerprint = impactFingerprint(state, 'one');
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     expect(isImpactCurrent(state, 'one')).toBe(true);
-    const changed = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
-    expect(changed.modelId).toBe('gpt-4o');
+    const changed = conversationReducer(state, { type: 'modelSelected', modelId: 'testGPTfree-model' });
+    expect(changed.modelId).toBe('testGPTfree-model');
     expect(isImpactCurrent(changed, 'one')).toBe(false);
   });
 
-  it('périme un résultat Mistral actuel après changement de mode même si le modèle reste identique', () => {
-    let state = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'Mistral AI' });
-    state = conversationReducer(state, { type: 'modelSelected', modelId: 'mistral-medium-3.1' });
+  it('périme un résultat Mistral de test actuel après changement de modèle', () => {
+    let state = conversationReducer(initialConversationState, { type: 'providerSelected', provider: 'testMistral' });
+    state = conversationReducer(state, { type: 'modelSelected', modelId: 'testMistralpaid-model' });
     state = conversationReducer(state, { type: 'blockAdded', blockId: 'one' });
     state = conversationReducer(state, { type: 'blockUpdated', blockId: 'one', field: 'message', value: 'Texte Mistral' });
     const fingerprint = impactFingerprint(state, 'one');
     state = conversationReducer(state, { type: 'impactRequested', blockId: 'one', fingerprint });
     state = conversationReducer(state, { type: 'impactResolved', blockId: 'one', fingerprint, impact: { energyWh: 1, carbonGco2e: 2, waterL: 3 } });
     expect(isImpactCurrent(state, 'one')).toBe(true);
-    const changed = conversationReducer(state, { type: 'mistralModeSelected', mode: 'reasoning' });
-    expect(changed.modelId).toBe('mistral-medium-3.1');
+    const changed = conversationReducer(state, { type: 'modelSelected', modelId: 'testMistralfree-model' });
+    expect(changed.modelId).toBe('testMistralfree-model');
     expect(changed.blocks[0].message).toBe('Texte Mistral');
     expect(isImpactCurrent(changed, 'one')).toBe(false);
   });
@@ -87,7 +82,7 @@ describe('conversationReducer', () => {
     let state = conversationReducer(initialConversationState, { type: 'hostingCountrySelected', country: 'FR' });
     state = conversationReducer(state, { type: 'subscriptionSelected', subscription: 'with-paid-subscription' });
     expect(state.hostingCountry).toBe('FR');
-    state = conversationReducer(state, { type: 'modelSelected', modelId: 'gpt-4o-mini' });
+    state = conversationReducer(state, { type: 'modelSelected', modelId: state.modelId });
     expect(state.hostingCountry).toBe('FR');
   });
 

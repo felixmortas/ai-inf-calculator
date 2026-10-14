@@ -4,7 +4,7 @@ import wueCsv from '../../data/clean/wue.csv?raw';
 import providerCountryCsv from '../../data/clean/provider_country.csv?raw';
 import carbonCsv from '../../data/clean/carbon_emissions_intensity_2025.csv?raw';
 import { defaultImpactConstants, type ImpactConstants } from '../domain/impact';
-import { chatGptProvider, chatGptSubscriptionModels, mistralModeModels, mistralProvider } from '../domain/modelSelection';
+import { chatGptProvider, chatGptSubscriptionModels, hiddenProviders, mistralModeModels, mistralProvider } from '../domain/modelSelection';
 
 export interface ShowerParameters { readonly flowLitresPerMinute: number; readonly inletTemperatureC: number; readonly outletTemperatureC: number; readonly ledPowerW: number; readonly energyKwhPerLitre: number; }
 export const defaultShowerParameters: Readonly<ShowerParameters> = Object.freeze({ flowLitresPerMinute: 15, inletTemperatureC: 18, outletTemperatureC: 38, ledPowerW: 5, energyKwhPerLitre: 0.00116 * 20 });
@@ -60,7 +60,7 @@ function parseCsv(source: string): readonly CatalogModel[] {
 }
 
 const models = parseCsv(modelsParamsCsv);
-const providers = Object.freeze([...new Set(models.map((model) => model.provider))]);
+const providers = Object.freeze([...new Set(models.map((model) => model.provider))].filter((provider) => !hiddenProviders.includes(provider)));
 
 for (const [provider, ids] of [[chatGptProvider, Object.values(chatGptSubscriptionModels)], [mistralProvider, Object.values(mistralModeModels)]] as const) {
   for (const modelId of ids) if (!models.some((model) => model.provider === provider && model.id === modelId)) {
